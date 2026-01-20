@@ -3,59 +3,179 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
+model Chain {
+  id      Int    @id @default(autoincrement())
+  name    String
+  chainId Int    @unique @map("chain_id")
 
-
-model Contract {
-  chainId         Int
-  address         String
-  firstSeenBlock  Int?
-  lastSyncedBlock Int?
-  codeHash        String?
-  abiJson         String?
-  abiSource       String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@id([chainId, address])
+  @@map("chains")
 }
 
-model Tx {
-  chainId     Int
-  txHash      String
-  blockNumber Int?
-  fromAddr    String?
-  toAddr      String?
-  methodSig   String?
-  decodedJson String?
-  summaryText String?
-  createdAt   DateTime @default(now())
+model Block {
+  id         Int    @id @default(autoincrement())
+  chainId    Int    @map("chain_id")
+  number     BigInt
+  hash       String
+  parentHash String @map("parent_hash")
+  timestamp  Int
 
-  @@id([chainId, txHash])
+  @@unique([chainId, number])
+  @@map("blocks")
 }
 
-model Event {
-  id          Int      @id @default(autoincrement())
-  chainId     Int
+model Transaction {
+  id          Int     @id @default(autoincrement())
+  chainId     Int     @map("chain_id")
+  hash        String
+  blockNumber BigInt  @map("block_number")
+  from        String  @map("from")
+  to          String? @map("to")
+  value       BigInt
+  status      Int?
+
+  @@unique([chainId, hash])
+  @@map("transactions")
+}
+
+model Log {
+  id          Int    @id @default(autoincrement())
+  chainId     Int    @map("chain_id")
+  txHash      String @map("tx_hash")
+  logIndex    Int    @map("log_index")
+  blockNumber BigInt @map("block_number")
   address     String
-  blockNumber Int?
-  txHash      String
-  topic0      String?
-  eventName   String?
-  decodedJson String?
-  createdAt   DateTime @default(now())
+  topic0      String? @map("topic0")
+  topics      Json
+  data        String
+
+  @@unique([chainId, txHash, logIndex])
+  @@map("logs")
 }
 
-model Alert {
+model TokenTransfer {
+  id          Int    @id @default(autoincrement())
+  chainId     Int    @map("chain_id")
+  txHash      String @map("tx_hash")
+  logIndex    Int    @map("log_index")
+  blockNumber BigInt @map("block_number")
+  token       String
+  from        String @map("from")
+  to          String @map("to")
+  amountRaw   BigInt @map("amount_raw")
+  amountDec   String @map("amount_dec")
+  timestamp   Int
+
+  @@unique([chainId, txHash, logIndex])
+  @@map("token_transfers")
+}
+
+model Swap {
+  id           Int    @id @default(autoincrement())
+  chainId      Int    @map("chain_id")
+  txHash       String @map("tx_hash")
+  logIndex     Int    @map("log_index")
+  blockNumber  BigInt @map("block_number")
+  dex          String
+  pool         String
+  trader       String?
+  tokenIn      String @map("token_in")
+  tokenOut     String @map("token_out")
+  amountInRaw  BigInt @map("amount_in_raw")
+  amountOutRaw BigInt @map("amount_out_raw")
+  amountInDec  String @map("amount_in_dec")
+  amountOutDec String @map("amount_out_dec")
+  timestamp    Int
+
+  @@unique([chainId, txHash, logIndex])
+  @@map("swaps")
+}
+
+model Token {
+  id       Int    @id @default(autoincrement())
+  chainId  Int    @map("chain_id")
+  address  String
+  symbol   String
+  decimals Int
+  name     String
+
+  @@unique([chainId, address])
+  @@map("tokens")
+}
+
+model Price {
+  id              Int     @id @default(autoincrement())
+  chainId         Int     @map("chain_id")
+  token           String
+  timestampMinute Int     @map("timestamp_minute")
+  priceUsd        Decimal @map("price_usd")
+
+  @@unique([chainId, token, timestampMinute])
+  @@map("prices")
+}
+
+model WalletPosition {
+  id         Int      @id @default(autoincrement())
+  chainId    Int      @map("chain_id")
+  wallet     String
+  token      String
+  balanceRaw BigInt   @map("balance_raw")
+  balanceDec String   @map("balance_dec")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([chainId, wallet, token])
+  @@map("wallet_positions")
+}
+
+model WalletTokenPnl {
+  id                 Int      @id @default(autoincrement())
+  chainId            Int      @map("chain_id")
+  wallet             String
+  token              String
+  realizedPnlUsd30d  Decimal  @map("realized_pnl_usd_30d")
+  realizedPnlUsdAll  Decimal  @map("realized_pnl_usd_all")
+  winTrades30d       Int      @map("win_trades_30d")
+  lossTrades30d      Int      @map("loss_trades_30d")
+  avgHoldSeconds30d  Int      @map("avg_hold_seconds_30d")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@unique([chainId, wallet, token])
+  @@map("wallet_token_pnl")
+}
+
+model WalletScore {
   id          Int      @id @default(autoincrement())
-  chainId     Int
-  address     String
-  txHash      String?
-  type        String
-  severity    String
-  detailsJson String?
-  createdAt   DateTime @default(now())
+  chainId     Int      @map("chain_id")
+  wallet      String
+  window      String
+  score       Int
+  featuresJson Json    @map("features_json")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([chainId, wallet, window])
+  @@map("wallet_scores")
+}
+
+model Label {
+  id       Int    @id @default(autoincrement())
+  label    String @unique
+  category String
+
+  @@map("labels")
+}
+
+model AddressLabel {
+  id         Int      @id @default(autoincrement())
+  chainId    Int      @map("chain_id")
+  address    String
+  labelId    Int      @map("label_id")
+  confidence Decimal
+  source     String
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([chainId, address, labelId])
+  @@map("address_labels")
 }
