@@ -1,6 +1,7 @@
 import { Queue, Worker } from "bullmq";
 import { listChains } from "@/services/chainConfig";
 import { getChainHead, getLastProcessedBlock, ingestRange } from "@/services/ingest/ingest";
+import { logger } from "@/services/logger";
 
 const connection = {
   connection: {
@@ -9,6 +10,7 @@ const connection = {
 };
 
 const queue = new Queue("ingest", connection);
+const analyticsQueue = new Queue("analytics", connection);
 
 new Worker(
   "ingest",
@@ -19,11 +21,15 @@ new Worker(
       toBlock: string;
     };
 
+    logger.info({ chainId, fromBlock, toBlock }, "ingest job start");
     await ingestRange({
       chainId,
       fromBlock: BigInt(fromBlock),
       toBlock: BigInt(toBlock),
     });
+
+    await analyticsQueue.add("analytics-range", { chainId, fromBlock, toBlock });
+    logger.info({ chainId, fromBlock, toBlock }, "ingest job complete");
   },
   connection
 );

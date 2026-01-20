@@ -16,7 +16,8 @@ export type ChainConfig = {
   dexes: DexConfig[];
 };
 
-// TODO: expand dex factory/router lists per chain as protocols are added.\nconst chains: ChainConfig[] = [
+// TODO: expand dex factory/router lists per chain as protocols are added.
+const chains: ChainConfig[] = [
   {
     id: 1,
     name: "Ethereum",

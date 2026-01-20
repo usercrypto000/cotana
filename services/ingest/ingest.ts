@@ -6,6 +6,7 @@ import {
   http,
   type PublicClient,
 } from "viem";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/services/prisma";
 import { listChains, resolveRpcUrl } from "@/services/chainConfig";
 import { erc20TransferEvent, uniV2SwapEvent, uniV3SwapEvent } from "@/services/ingest/abi";
@@ -57,43 +58,45 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
       await resetBlock(chainId, current);
     }
 
-    await prisma.block.upsert({
-      where: { chainId_number: { chainId, number: current } },
-      update: {
-        hash: block.hash.toLowerCase(),
-        parentHash: block.parentHash.toLowerCase(),
-        timestamp: Number(block.timestamp ?? 0n),
-      },
-      create: {
-        chainId,
-        number: current,
-        hash: block.hash.toLowerCase(),
-        parentHash: block.parentHash.toLowerCase(),
-        timestamp: Number(block.timestamp ?? 0n),
-      },
-    });
+    await prisma.$executeRaw(
+      Prisma.sql`
+        INSERT INTO blocks (chain_id, number, hash, parent_hash, timestamp)
+        VALUES (${chainId}, ${current}, ${block.hash.toLowerCase()}, ${block.parentHash.toLowerCase()}, ${
+        Number(block.timestamp ?? 0n)
+      })
+        ON CONFLICT (chain_id, number)
+        DO UPDATE SET hash = EXCLUDED.hash, parent_hash = EXCLUDED.parent_hash, timestamp = EXCLUDED.timestamp
+      `
+    );
 
     const txMap = new Map<string, (typeof block.transactions)[number]>();
-    for (const tx of block.transactions) {
-      txMap.set(tx.hash.toLowerCase(), tx);
-      await prisma.transaction.upsert({
-        where: { chainId_hash: { chainId, hash: tx.hash.toLowerCase() } },
-        update: {
-          blockNumber: current,
-          from: tx.from.toLowerCase(),
-          to: tx.to ? tx.to.toLowerCase() : null,
-          value: tx.value ?? 0n,
-        },
-        create: {
-          chainId,
-          hash: tx.hash.toLowerCase(),
-          blockNumber: current,
-          from: tx.from.toLowerCase(),
-          to: tx.to ? tx.to.toLowerCase() : null,
-          value: tx.value ?? 0n,
-          status: null,
-        },
-      });
+    const txValues = block.transactions.map((tx) => {
+      const hash = tx.hash.toLowerCase();
+      txMap.set(hash, tx);
+      return Prisma.sql`(
+        ${chainId},
+        ${hash},
+        ${current},
+        ${tx.from.toLowerCase()},
+        ${tx.to ? tx.to.toLowerCase() : null},
+        ${tx.value ?? 0n},
+        ${null}
+      )`;
+    });
+
+    if (txValues.length > 0) {
+      await prisma.$executeRaw(
+        Prisma.sql`
+          INSERT INTO transactions (chain_id, hash, block_number, "from", "to", value, status)
+          VALUES ${Prisma.join(txValues)}
+          ON CONFLICT (chain_id, hash)
+          DO UPDATE SET
+            block_number = EXCLUDED.block_number,
+            "from" = EXCLUDED."from",
+            "to" = EXCLUDED."to",
+            value = EXCLUDED.value
+        `
+      );
     }
 
     const transferLogs = await client.getLogs({
@@ -116,34 +119,46 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
 
     const logs = [...transferLogs, ...v2Logs, ...v3Logs];
 
-    for (const log of logs) {
-      await prisma.log.upsert({
-        where: {
-          chainId_txHash_logIndex: {
-            chainId,
-            txHash: log.transactionHash.toLowerCase(),
-            logIndex: log.logIndex,
-          },
-        },
-        update: {
-          blockNumber: current,
-          address: log.address.toLowerCase(),
-          topic0: log.topics[0]?.toLowerCase() ?? null,
-          topics: log.topics.map((topic) => topic.toLowerCase()),
-          data: log.data.toLowerCase(),
-        },
-        create: {
-          chainId,
-          txHash: log.transactionHash.toLowerCase(),
-          logIndex: log.logIndex,
-          blockNumber: current,
-          address: log.address.toLowerCase(),
-          topic0: log.topics[0]?.toLowerCase() ?? null,
-          topics: log.topics.map((topic) => topic.toLowerCase()),
-          data: log.data.toLowerCase(),
-        },
+    if (logs.length > 0) {
+      const logValues = logs.map((log) => {
+        const topics = log.topics.map((topic) => topic.toLowerCase());
+        return Prisma.sql`(
+          ${chainId},
+          ${log.transactionHash.toLowerCase()},
+          ${log.logIndex},
+          ${current},
+          ${log.address.toLowerCase()},
+          ${log.topics[0]?.toLowerCase() ?? null},
+          ${Prisma.sql`${JSON.stringify(topics)}`}::jsonb,
+          ${log.data.toLowerCase()}
+        )`;
       });
+
+      await prisma.$executeRaw(
+        Prisma.sql`
+          INSERT INTO logs (chain_id, tx_hash, log_index, block_number, address, topic0, topics, data)
+          VALUES ${Prisma.join(logValues)}
+          ON CONFLICT (chain_id, tx_hash, log_index)
+          DO UPDATE SET
+            block_number = EXCLUDED.block_number,
+            address = EXCLUDED.address,
+            topic0 = EXCLUDED.topic0,
+            topics = EXCLUDED.topics,
+            data = EXCLUDED.data
+        `
+      );
     }
+
+    const tokenMetas = new Map<string, { symbol: string; decimals: number; name: string }>();
+    const transferRows: Array<{
+      txHash: string;
+      logIndex: number;
+      token: string;
+      from: string;
+      to: string;
+      amountRaw: bigint;
+      amountDec: string;
+    }> = [];
 
     for (const log of transferLogs) {
       const decoded = decodeEventLog({ abi: [erc20TransferEvent], data: log.data, topics: log.topics });
@@ -152,43 +167,37 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
       const value = decoded.args.value as bigint;
       const tokenAddress = log.address.toLowerCase();
 
-      const meta = await getTokenMeta(client, tokenAddress);
-      await prisma.token.upsert({
-        where: { chainId_address: { chainId, address: tokenAddress } },
-        update: { symbol: meta.symbol, decimals: meta.decimals, name: meta.name },
-        create: { chainId, address: tokenAddress, symbol: meta.symbol, decimals: meta.decimals, name: meta.name },
-      });
+      let meta = tokenMetas.get(tokenAddress);
+      if (!meta) {
+        const fetched = await getTokenMeta(client, tokenAddress);
+        meta = { symbol: fetched.symbol, decimals: fetched.decimals, name: fetched.name };
+        tokenMetas.set(tokenAddress, meta);
+      }
 
-      await prisma.tokenTransfer.upsert({
-        where: {
-          chainId_txHash_logIndex: {
-            chainId,
-            txHash: log.transactionHash.toLowerCase(),
-            logIndex: log.logIndex,
-          },
-        },
-        update: {
-          token: tokenAddress,
-          from,
-          to,
-          amountRaw: value,
-          amountDec: formatUnits(value, meta.decimals),
-          timestamp: Number(block.timestamp ?? 0n),
-        },
-        create: {
-          chainId,
-          txHash: log.transactionHash.toLowerCase(),
-          logIndex: log.logIndex,
-          blockNumber: current,
-          token: tokenAddress,
-          from,
-          to,
-          amountRaw: value,
-          amountDec: formatUnits(value, meta.decimals),
-          timestamp: Number(block.timestamp ?? 0n),
-        },
+      transferRows.push({
+        txHash: log.transactionHash.toLowerCase(),
+        logIndex: log.logIndex,
+        token: tokenAddress,
+        from,
+        to,
+        amountRaw: value,
+        amountDec: formatUnits(value, meta.decimals),
       });
     }
+
+    const swapRows: Array<{
+      txHash: string;
+      logIndex: number;
+      dex: string;
+      pool: string;
+      trader: string | null;
+      tokenIn: string;
+      tokenOut: string;
+      amountInRaw: bigint;
+      amountOutRaw: bigint;
+      amountInDec: string;
+      amountOutDec: string;
+    }> = [];
 
     for (const log of v2Logs) {
       const decoded = decodeEventLog({ abi: [uniV2SwapEvent], data: log.data, topics: log.topics });
@@ -219,56 +228,32 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
         continue;
       }
 
-      const metaIn = await getTokenMeta(client, tokenIn);
-      const metaOut = await getTokenMeta(client, tokenOut);
+      let metaIn = tokenMetas.get(tokenIn);
+      if (!metaIn) {
+        const fetched = await getTokenMeta(client, tokenIn);
+        metaIn = { symbol: fetched.symbol, decimals: fetched.decimals, name: fetched.name };
+        tokenMetas.set(tokenIn, metaIn);
+      }
 
-      await prisma.token.upsert({
-        where: { chainId_address: { chainId, address: tokenIn } },
-        update: { symbol: metaIn.symbol, decimals: metaIn.decimals, name: metaIn.name },
-        create: { chainId, address: tokenIn, symbol: metaIn.symbol, decimals: metaIn.decimals, name: metaIn.name },
-      });
-      await prisma.token.upsert({
-        where: { chainId_address: { chainId, address: tokenOut } },
-        update: { symbol: metaOut.symbol, decimals: metaOut.decimals, name: metaOut.name },
-        create: { chainId, address: tokenOut, symbol: metaOut.symbol, decimals: metaOut.decimals, name: metaOut.name },
-      });
+      let metaOut = tokenMetas.get(tokenOut);
+      if (!metaOut) {
+        const fetched = await getTokenMeta(client, tokenOut);
+        metaOut = { symbol: fetched.symbol, decimals: fetched.decimals, name: fetched.name };
+        tokenMetas.set(tokenOut, metaOut);
+      }
 
-      await prisma.swap.upsert({
-        where: {
-          chainId_txHash_logIndex: {
-            chainId,
-            txHash: log.transactionHash.toLowerCase(),
-            logIndex: log.logIndex,
-          },
-        },
-        update: {
-          dex: "uniswap-v2",
-          pool: log.address.toLowerCase(),
-          trader: tx?.from.toLowerCase() ?? null,
-          tokenIn,
-          tokenOut,
-          amountInRaw: amountIn,
-          amountOutRaw: amountOut,
-          amountInDec: formatUnits(amountIn, metaIn.decimals),
-          amountOutDec: formatUnits(amountOut, metaOut.decimals),
-          timestamp: Number(block.timestamp ?? 0n),
-        },
-        create: {
-          chainId,
-          txHash: log.transactionHash.toLowerCase(),
-          logIndex: log.logIndex,
-          blockNumber: current,
-          dex: "uniswap-v2",
-          pool: log.address.toLowerCase(),
-          trader: tx?.from.toLowerCase() ?? null,
-          tokenIn,
-          tokenOut,
-          amountInRaw: amountIn,
-          amountOutRaw: amountOut,
-          amountInDec: formatUnits(amountIn, metaIn.decimals),
-          amountOutDec: formatUnits(amountOut, metaOut.decimals),
-          timestamp: Number(block.timestamp ?? 0n),
-        },
+      swapRows.push({
+        txHash: log.transactionHash.toLowerCase(),
+        logIndex: log.logIndex,
+        dex: "uniswap-v2",
+        pool: log.address.toLowerCase(),
+        trader: tx?.from.toLowerCase() ?? null,
+        tokenIn,
+        tokenOut,
+        amountInRaw: amountIn,
+        amountOutRaw: amountOut,
+        amountInDec: formatUnits(amountIn, metaIn.decimals),
+        amountOutDec: formatUnits(amountOut, metaOut.decimals),
       });
     }
 
@@ -299,57 +284,149 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
         continue;
       }
 
-      const metaIn = await getTokenMeta(client, tokenIn);
-      const metaOut = await getTokenMeta(client, tokenOut);
+      let metaIn = tokenMetas.get(tokenIn);
+      if (!metaIn) {
+        const fetched = await getTokenMeta(client, tokenIn);
+        metaIn = { symbol: fetched.symbol, decimals: fetched.decimals, name: fetched.name };
+        tokenMetas.set(tokenIn, metaIn);
+      }
 
-      await prisma.token.upsert({
-        where: { chainId_address: { chainId, address: tokenIn } },
-        update: { symbol: metaIn.symbol, decimals: metaIn.decimals, name: metaIn.name },
-        create: { chainId, address: tokenIn, symbol: metaIn.symbol, decimals: metaIn.decimals, name: metaIn.name },
-      });
-      await prisma.token.upsert({
-        where: { chainId_address: { chainId, address: tokenOut } },
-        update: { symbol: metaOut.symbol, decimals: metaOut.decimals, name: metaOut.name },
-        create: { chainId, address: tokenOut, symbol: metaOut.symbol, decimals: metaOut.decimals, name: metaOut.name },
-      });
+      let metaOut = tokenMetas.get(tokenOut);
+      if (!metaOut) {
+        const fetched = await getTokenMeta(client, tokenOut);
+        metaOut = { symbol: fetched.symbol, decimals: fetched.decimals, name: fetched.name };
+        tokenMetas.set(tokenOut, metaOut);
+      }
 
-      await prisma.swap.upsert({
-        where: {
-          chainId_txHash_logIndex: {
-            chainId,
-            txHash: log.transactionHash.toLowerCase(),
-            logIndex: log.logIndex,
-          },
-        },
-        update: {
-          dex: "uniswap-v3",
-          pool: log.address.toLowerCase(),
-          trader: tx?.from.toLowerCase() ?? null,
-          tokenIn,
-          tokenOut,
-          amountInRaw: amountIn,
-          amountOutRaw: amountOut,
-          amountInDec: formatUnits(amountIn, metaIn.decimals),
-          amountOutDec: formatUnits(amountOut, metaOut.decimals),
-          timestamp: Number(block.timestamp ?? 0n),
-        },
-        create: {
-          chainId,
-          txHash: log.transactionHash.toLowerCase(),
-          logIndex: log.logIndex,
-          blockNumber: current,
-          dex: "uniswap-v3",
-          pool: log.address.toLowerCase(),
-          trader: tx?.from.toLowerCase() ?? null,
-          tokenIn,
-          tokenOut,
-          amountInRaw: amountIn,
-          amountOutRaw: amountOut,
-          amountInDec: formatUnits(amountIn, metaIn.decimals),
-          amountOutDec: formatUnits(amountOut, metaOut.decimals),
-          timestamp: Number(block.timestamp ?? 0n),
-        },
+      swapRows.push({
+        txHash: log.transactionHash.toLowerCase(),
+        logIndex: log.logIndex,
+        dex: "uniswap-v3",
+        pool: log.address.toLowerCase(),
+        trader: tx?.from.toLowerCase() ?? null,
+        tokenIn,
+        tokenOut,
+        amountInRaw: amountIn,
+        amountOutRaw: amountOut,
+        amountInDec: formatUnits(amountIn, metaIn.decimals),
+        amountOutDec: formatUnits(amountOut, metaOut.decimals),
       });
+    }
+
+    if (tokenMetas.size > 0) {
+      const tokenValues = Array.from(tokenMetas.entries()).map(([address, meta]) =>
+        Prisma.sql`(${chainId}, ${address}, ${meta.symbol}, ${meta.decimals}, ${meta.name})`
+      );
+
+      await prisma.$executeRaw(
+        Prisma.sql`
+          INSERT INTO tokens (chain_id, address, symbol, decimals, name)
+          VALUES ${Prisma.join(tokenValues)}
+          ON CONFLICT (chain_id, address)
+          DO UPDATE SET
+            symbol = EXCLUDED.symbol,
+            decimals = EXCLUDED.decimals,
+            name = EXCLUDED.name
+        `
+      );
+    }
+
+    if (transferRows.length > 0) {
+      const transferValues = transferRows.map((transfer) =>
+        Prisma.sql`(
+          ${chainId},
+          ${transfer.txHash},
+          ${transfer.logIndex},
+          ${current},
+          ${transfer.token},
+          ${transfer.from},
+          ${transfer.to},
+          ${transfer.amountRaw},
+          ${transfer.amountDec},
+          ${Number(block.timestamp ?? 0n)}
+        )`
+      );
+
+      await prisma.$executeRaw(
+        Prisma.sql`
+          INSERT INTO token_transfers (
+            chain_id,
+            tx_hash,
+            log_index,
+            block_number,
+            token,
+            "from",
+            "to",
+            amount_raw,
+            amount_dec,
+            timestamp
+          )
+          VALUES ${Prisma.join(transferValues)}
+          ON CONFLICT (chain_id, tx_hash, log_index)
+          DO UPDATE SET
+            token = EXCLUDED.token,
+            "from" = EXCLUDED."from",
+            "to" = EXCLUDED."to",
+            amount_raw = EXCLUDED.amount_raw,
+            amount_dec = EXCLUDED.amount_dec,
+            timestamp = EXCLUDED.timestamp
+        `
+      );
+    }
+
+    if (swapRows.length > 0) {
+      const swapValues = swapRows.map((swap) =>
+        Prisma.sql`(
+          ${chainId},
+          ${swap.txHash},
+          ${swap.logIndex},
+          ${current},
+          ${swap.dex},
+          ${swap.pool},
+          ${swap.trader},
+          ${swap.tokenIn},
+          ${swap.tokenOut},
+          ${swap.amountInRaw},
+          ${swap.amountOutRaw},
+          ${swap.amountInDec},
+          ${swap.amountOutDec},
+          ${Number(block.timestamp ?? 0n)}
+        )`
+      );
+
+      await prisma.$executeRaw(
+        Prisma.sql`
+          INSERT INTO swaps (
+            chain_id,
+            tx_hash,
+            log_index,
+            block_number,
+            dex,
+            pool,
+            trader,
+            token_in,
+            token_out,
+            amount_in_raw,
+            amount_out_raw,
+            amount_in_dec,
+            amount_out_dec,
+            timestamp
+          )
+          VALUES ${Prisma.join(swapValues)}
+          ON CONFLICT (chain_id, tx_hash, log_index)
+          DO UPDATE SET
+            dex = EXCLUDED.dex,
+            pool = EXCLUDED.pool,
+            trader = EXCLUDED.trader,
+            token_in = EXCLUDED.token_in,
+            token_out = EXCLUDED.token_out,
+            amount_in_raw = EXCLUDED.amount_in_raw,
+            amount_out_raw = EXCLUDED.amount_out_raw,
+            amount_in_dec = EXCLUDED.amount_in_dec,
+            amount_out_dec = EXCLUDED.amount_out_dec,
+            timestamp = EXCLUDED.timestamp
+        `
+      );
     }
 
     if (block.transactions.length === 0) {

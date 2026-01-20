@@ -9,7 +9,8 @@
                     "lint":  "eslint",
                     "worker":  "tsx worker/ingest.ts live",
                     "ingest:live":  "tsx worker/ingest.ts live",
-                    "ingest:backfill":  "tsx worker/ingest.ts backfill"
+                    "ingest:backfill":  "tsx worker/ingest.ts backfill",
+                    "worker:analytics":  "tsx worker/analytics.ts"
                 },
     "dependencies":  {
                          "@prisma/client":  "^6.19.0",

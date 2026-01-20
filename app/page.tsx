@@ -1,114 +1,50 @@
-"use client";
+import Link from "next/link";
 
-import { useEffect, useMemo, useState } from "react";
+type NavItem = {
+  label: string;
+  href?: string;
+};
 
-type SmartMoneyItem = {
-  chainId: number;
-  chainName: string;
-  type: "native" | "erc20" | "deploy";
-  txHash: string;
-  blockNumber: number;
-  timestamp: number | null;
-  from?: string | null;
-  to?: string | null;
-  tokenSymbol?: string;
-  tokenAddress?: string;
-  amount?: string;
-  valueUsd?: number;
-  detail: string;
-  isFresh?: boolean;
+type NavSection = {
+  title: string;
+  items: NavItem[];
+  active: number;
 };
 
 export default function Home() {
-  const sections = [
+  const sections: NavSection[] = [
     {
       title: "Capital & Behavior",
-      items: ["Smart Money Tracker", "Wallet Profiler", "Cross-Chain Flows"],
-      active: 0,
+      items: [
+        { label: "Smart Money Tracker", href: "/smart-money-tracker" },
+        { label: "Wallet Profiler" },
+        { label: "Cross-Chain Flows" },
+      ],
+      active: -1,
     },
     {
       title: "Protocol Monitoring",
-      items: ["Contract Alerts", "Token Supply Watch", "Liquidity Health"],
+      items: [
+        { label: "Contract Alerts" },
+        { label: "Token Supply Watch" },
+        { label: "Liquidity Health" },
+      ],
       active: -1,
     },
     {
       title: "Narrative Insights",
-      items: ["Sentiment Analysis", "Narrative Trends", "Dev Activity"],
+      items: [
+        { label: "Sentiment Analysis" },
+        { label: "Narrative Trends" },
+        { label: "Dev Activity" },
+      ],
       active: -1,
     },
     {
       title: "Catalyst Events",
-      items: ["Unlock Calendar", "Governance Watch"],
+      items: [{ label: "Unlock Calendar" }, { label: "Governance Watch" }],
       active: -1,
     },
-  ];
-
-  const chainOptions = [
-    { id: 1, name: "Ethereum" },
-    { id: 42161, name: "Arbitrum" },
-    { id: 8453, name: "Base" },
-    { id: 56, name: "BNB Chain" },
-  ];
-
-  const [selectedChains, setSelectedChains] = useState<number[]>(
-    chainOptions.map((chain) => chain.id)
-  );
-  const [minUsd, setMinUsd] = useState("50000");
-  const [blockCount, setBlockCount] = useState("60");
-  const [includeNative, setIncludeNative] = useState(true);
-  const [includeErc20, setIncludeErc20] = useState(true);
-  const [includeFresh, setIncludeFresh] = useState(false);
-  const [includeDeployers, setIncludeDeployers] = useState(true);
-  const [smartMoneyItems, setSmartMoneyItems] = useState<SmartMoneyItem[]>([]);
-  const [smartMoneyLoading, setSmartMoneyLoading] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-
-  const queryString = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set("chains", selectedChains.join(","));
-    params.set("minUsd", minUsd);
-    params.set("blocks", blockCount);
-    params.set("native", String(includeNative));
-    params.set("erc20", String(includeErc20));
-    params.set("fresh", String(includeFresh));
-    params.set("deployers", String(includeDeployers));
-    params.set("limit", "30");
-    return params.toString();
-  }, [
-    selectedChains,
-    minUsd,
-    blockCount,
-    includeNative,
-    includeErc20,
-    includeFresh,
-    includeDeployers,
-  ]);
-
-  async function fetchSmartMoney() {
-    setSmartMoneyLoading(true);
-    try {
-      const res = await fetch(`/api/smart-money?${queryString}`);
-      const data = (await res.json()) as { items?: SmartMoneyItem[]; updatedAt?: string };
-      setSmartMoneyItems(data.items ?? []);
-      setLastUpdated(data.updatedAt ?? null);
-    } catch {
-      setSmartMoneyItems([]);
-      setLastUpdated(null);
-    } finally {
-      setSmartMoneyLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchSmartMoney();
-    const timer = setInterval(fetchSmartMoney, 20000);
-    return () => clearInterval(timer);
-  }, [queryString]);
-
-  const topMoves = [
-    { change: "-20%", text: "Deployed into XYZ Token", tone: "warning" },
-    { change: "+15%", text: "Whale Accumulating ABC", tone: "positive" },
-    { change: "+12%", text: "Fresh Wallet Buys DEF", tone: "positive" },
   ];
 
   const contractWatch = [
@@ -155,15 +91,24 @@ export default function Home() {
           {sections.map((section) => (
             <div key={section.title} className="nav-section">
               <h4>{section.title}</h4>
-              {section.items.map((item, index) => (
-                <div
-                  key={item}
-                  className={`nav-item ${section.active === index ? "active" : ""}`}
-                >
-                  <span className="nav-dot" />
-                  {item}
-                </div>
-              ))}
+              {section.items.map((item, index) => {
+                const isActive = section.active === index;
+                const className = `nav-item ${isActive ? "active" : ""}`;
+                if (item.href) {
+                  return (
+                    <Link key={item.label} href={item.href} className={className}>
+                      <span className="nav-dot" />
+                      {item.label}
+                    </Link>
+                  );
+                }
+                return (
+                  <div key={item.label} className={className}>
+                    <span className="nav-dot" />
+                    {item.label}
+                  </div>
+                );
+              })}
             </div>
           ))}
           <div className="nav-section">
@@ -181,118 +126,15 @@ export default function Home() {
               <section className="card">
                 <div className="card-header">
                   <div className="title">Smart Money Tracker</div>
-                  <div className="actions">{smartMoneyLoading ? "Syncing" : "Live"}</div>
-                </div>
-                <div className="subhead">Filters</div>
-                <div className="filter-row">
-                  <div className="filter-group">
-                    <label>Min USD</label>
-                    <input
-                      value={minUsd}
-                      onChange={(event) => setMinUsd(event.target.value)}
-                      type="number"
-                      min="0"
-                    />
-                  </div>
-                  <div className="filter-group">
-                    <label>Blocks</label>
-                    <input
-                      value={blockCount}
-                      onChange={(event) => setBlockCount(event.target.value)}
-                      type="number"
-                      min="10"
-                      max="500"
-                    />
-                  </div>
-                  <button className="btn" type="button" onClick={fetchSmartMoney}>
-                    Refresh
-                  </button>
-                </div>
-                <div className="filter-row">
-                  {chainOptions.map((chain) => (
-                    <button
-                      key={chain.id}
-                      type="button"
-                      className={`pill ${selectedChains.includes(chain.id) ? "active" : ""}`}
-                      onClick={() =>
-                        setSelectedChains((prev) =>
-                          prev.includes(chain.id)
-                            ? prev.filter((id) => id !== chain.id)
-                            : [...prev, chain.id]
-                        )
-                      }
-                    >
-                      {chain.name}
-                    </button>
-                  ))}
-                </div>
-                <div className="filter-row">
-                  <label className="check">
-                    <input
-                      type="checkbox"
-                      checked={includeNative}
-                      onChange={(event) => setIncludeNative(event.target.checked)}
-                    />
-                    Native transfers
-                  </label>
-                  <label className="check">
-                    <input
-                      type="checkbox"
-                      checked={includeErc20}
-                      onChange={(event) => setIncludeErc20(event.target.checked)}
-                    />
-                    Token transfers
-                  </label>
-                  <label className="check">
-                    <input
-                      type="checkbox"
-                      checked={includeDeployers}
-                      onChange={(event) => setIncludeDeployers(event.target.checked)}
-                    />
-                    New deployers
-                  </label>
-                  <label className="check">
-                    <input
-                      type="checkbox"
-                      checked={includeFresh}
-                      onChange={(event) => setIncludeFresh(event.target.checked)}
-                    />
-                    Fresh wallets only
-                  </label>
-                </div>
-                <div className="subhead">
-                  Recent Activity{" "}
-                  {lastUpdated ? `· ${new Date(lastUpdated).toLocaleTimeString()}` : ""}
+                  <div className="actions">Live feed</div>
                 </div>
                 <div className="list">
-                  {smartMoneyItems.length === 0 ? (
-                    <div className="list-item">
-                      <span>No matches yet. Try lowering the USD threshold.</span>
-                    </div>
-                  ) : (
-                    smartMoneyItems.map((item) => (
-                      <div key={`${item.txHash}-${item.type}`} className="list-item">
-                        <div>
-                          <strong>{item.chainName}</strong>
-                          <div className="meta">{item.detail}</div>
-                        </div>
-                        <span className={`badge ${item.type === "deploy" ? "warning" : "positive"}`}>
-                          {item.valueUsd ? `$${item.valueUsd.toFixed(0)}` : item.type}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div className="subhead" style={{ marginTop: 14 }}>
-                  Top Moves
-                </div>
-                <div className="list">
-                  {topMoves.map((move) => (
-                    <div key={move.text} className="list-item">
-                      <span className={`badge ${move.tone}`}>{move.change}</span>
-                      <span>{move.text}</span>
-                    </div>
-                  ))}
+                  <div className="list-item">
+                    <span>Track real-time flows from top wallets across chains.</span>
+                    <Link className="btn" href="/smart-money-tracker">
+                      Open Tracker
+                    </Link>
+                  </div>
                 </div>
               </section>
 

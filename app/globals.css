@@ -185,6 +185,7 @@ body {
   border-radius: 10px;
   border: 1px solid transparent;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .nav-item.active {
@@ -239,6 +240,24 @@ body {
   font-weight: 600;
 }
 
+.tracker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.tracker-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.tracker-status {
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .card-header .title {
   display: flex;
   align-items: center;
@@ -286,6 +305,15 @@ body {
 }
 
 .filter-group input {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--stroke);
+  background: rgba(18, 24, 36, 0.9);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.filter-group select {
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid var(--stroke);
@@ -429,6 +457,9 @@ body {
   background: rgba(20, 26, 38, 0.9);
   color: var(--text);
   font-size: 12px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 
 .small-note {

@@ -1,0 +1,15 @@
+[
+  { "label": "binance", "category": "cex" },
+  { "label": "coinbase", "category": "cex" },
+  { "label": "okx", "category": "cex" },
+  { "label": "kraken", "category": "cex" },
+  { "label": "bridge", "category": "bridge" },
+  { "label": "router", "category": "router" },
+  { "label": "protocol", "category": "protocol" },
+  { "label": "fund", "category": "fund" },
+  { "label": "whale", "category": "whale" },
+  { "label": "market-maker", "category": "market-maker" },
+  { "label": "mev", "category": "mev" },
+  { "label": "treasury", "category": "treasury" },
+  { "label": "deployer", "category": "deployer" }
+]
