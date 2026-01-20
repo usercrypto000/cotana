@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+
+
+model Contract {
+  chainId         Int
+  address         String
+  firstSeenBlock  Int?
+  lastSyncedBlock Int?
+  codeHash        String?
+  abiJson         String?
+  abiSource       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@id([chainId, address])
+}
+
+model Tx {
+  chainId     Int
+  txHash      String
+  blockNumber Int?
+  fromAddr    String?
+  toAddr      String?
+  methodSig   String?
+  decodedJson String?
+  summaryText String?
+  createdAt   DateTime @default(now())
+
+  @@id([chainId, txHash])
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  chainId     Int
+  address     String
+  blockNumber Int?
+  txHash      String
+  topic0      String?
+  eventName   String?
+  decodedJson String?
+  createdAt   DateTime @default(now())
+}
+
+model Alert {
+  id          Int      @id @default(autoincrement())
+  chainId     Int
+  address     String
+  txHash      String?
+  type        String
+  severity    String
+  detailsJson String?
+  createdAt   DateTime @default(now())
+}
