@@ -128,6 +128,7 @@ export default function IncentivesRadarPage() {
   const [initialized, setInitialized] = useState(false);
   const [availableChains, setAvailableChains] = useState<string[]>([]);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [error, setError] = useState<string | null>(null);
 
   const drawerIncentive = selectedDetail ?? selected;
   const otherChainCount = useMemo(() => {
@@ -157,8 +158,7 @@ export default function IncentivesRadarPage() {
       | "light"
       | "dark"
       | null;
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const nextTheme = stored ?? (prefersDark ? "dark" : "light");
+    const nextTheme = stored ?? "light";
     setTheme(nextTheme);
     document.documentElement.dataset.theme = nextTheme;
   }, []);
@@ -212,19 +212,31 @@ export default function IncentivesRadarPage() {
     }
     const load = async () => {
       setLoading(true);
-      const res = await fetch(`/api/incentives?${queryString}`);
-      const data = await res.json();
-      const items = (data.items ?? []) as IncentiveRecord[];
-      setIncentives(items);
-      const chainSet = new Set<string>();
-      items.forEach((item) => {
-        item.project.chains.forEach((chain) => chainSet.add(chain));
-      });
-      setAvailableChains(Array.from(chainSet).sort());
-      const nextSelected = items.find((item) => item.id === selected?.id) ?? items[0] ?? null;
-      setSelected(nextSelected);
-      setSelectedDetail(null);
-      setLoading(false);
+      setError(null);
+      try {
+        const res = await fetch(`/api/incentives?${queryString}`);
+        if (!res.ok) {
+          throw new Error("Failed to load incentives");
+        }
+        const data = await res.json();
+        const items = (data.items ?? []) as IncentiveRecord[];
+        setIncentives(items);
+        const chainSet = new Set<string>();
+        items.forEach((item) => {
+          item.project.chains.forEach((chain) => chainSet.add(chain));
+        });
+        setAvailableChains(Array.from(chainSet).sort());
+        const nextSelected =
+          items.find((item) => item.id === selected?.id) ?? items[0] ?? null;
+        setSelected(nextSelected);
+        setSelectedDetail(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load incentives");
+        setIncentives([]);
+        setAvailableChains([]);
+      } finally {
+        setLoading(false);
+      }
     };
     void load();
   }, [queryString, initialized]);
@@ -264,10 +276,7 @@ export default function IncentivesRadarPage() {
     <div className="app-shell">
       <header className="topbar topbar-logo-left">
         <div className="topbar-logo">
-          <img
-            src={theme === "dark" ? "/cotanablack.png" : "/cotanawhite.png"}
-            alt="Cotana logo"
-          />
+          <span className="logo-text">Cotana</span>
         </div>
         <div className="topbar-actions">
           <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
@@ -419,6 +428,8 @@ export default function IncentivesRadarPage() {
           <section className="incentive-grid">
             {loading ? (
               <div className="small-note">Loading incentives...</div>
+            ) : error ? (
+              <div className="small-note">{error}</div>
             ) : incentives.length === 0 ? (
               <div className="small-note">No incentives match your filters.</div>
             ) : (

@@ -153,7 +153,7 @@ const buildOauthHeader = (method: string, url: string, params: Record<string, st
   )}`;
   const signature = crypto.createHmac("sha1", signingKey).update(baseString).digest("base64");
 
-  const headerParams = {
+  const headerParams: Record<string, string> = {
     ...oauthParams,
     oauth_signature: signature,
   };

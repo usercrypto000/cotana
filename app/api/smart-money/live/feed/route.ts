@@ -214,7 +214,7 @@ export async function GET(req: Request) {
     const last = swaps[swaps.length - 1];
     const nextCursor = last ? `${last.timestamp}:${last.log_index}` : null;
 
-    return NextResponse.json({ items, nextCursor, groupByToken });
+    return NextResponse.json({ items, nextCursor });
   } catch (err) {
     return NextResponse.json({ error: "internal error", detail: String(err) }, { status: 500 });
   }

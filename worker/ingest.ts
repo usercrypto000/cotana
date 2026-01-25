@@ -92,11 +92,11 @@ async function runLive() {
       if (queue) {
         await queue.add("ingest-range", {
           chainId: chain.id,
-          fromBlock: (last + 1n).toString(),
+          fromBlock: (last + BigInt(1)).toString(),
           toBlock: target.toString(),
         });
       } else {
-        const fromBlock = last + 1n;
+        const fromBlock = last + BigInt(1);
         const toBlock = target;
         logger.info(
           { chainId: chain.id, fromBlock: fromBlock.toString(), toBlock: toBlock.toString() },

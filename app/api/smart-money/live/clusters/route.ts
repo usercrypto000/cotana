@@ -92,7 +92,8 @@ function computeSparkline(values: Array<{ timestamp: number; value: number }>, w
     if (counts[i] === 0) {
       series[i] = null;
     } else if (series[i] !== null) {
-      series[i] = series[i] / counts[i];
+      const value = series[i] ?? 0;
+      series[i] = value / counts[i];
     }
   }
 
@@ -270,12 +271,12 @@ export async function GET(req: Request) {
         chainId: swap.chain_id,
         token,
         bucket: groupByToken ? bucket : swap.timestamp,
-        swaps: [],
+        swaps: [] as ClusterSwap[],
         buyUsd: 0,
         sellUsd: 0,
         wallets: new Map(),
-        pricePoints: [],
-        flowPoints: [],
+        pricePoints: [] as Array<{ timestamp: number; value: number }>,
+        flowPoints: [] as Array<{ timestamp: number; value: number }>,
       };
 
       cluster.swaps.push({

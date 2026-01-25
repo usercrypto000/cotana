@@ -422,7 +422,7 @@ export default function TrackerPage() {
                         <summary className="tracker-row-summary">
                           {card.columns.map((column) => (
                             <span key={column.key} className={`tracker-cell ${column.key}`}>
-                              {item[column.key as keyof typeof item]}
+                              {String(item[column.key as keyof typeof item] ?? "")}
                             </span>
                           ))}
                         </summary>

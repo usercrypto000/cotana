@@ -39,8 +39,8 @@ export async function updateWalletPositions(chainId: number, fromBlock: bigint, 
     const amountRaw = decimalToBigInt(transfer.amountRaw);
     const fromKey = `${transfer.from}:${transfer.token}`;
     const toKey = `${transfer.to}:${transfer.token}`;
-    deltas.set(fromKey, (deltas.get(fromKey) ?? 0n) - amountRaw);
-    deltas.set(toKey, (deltas.get(toKey) ?? 0n) + amountRaw);
+    deltas.set(fromKey, (deltas.get(fromKey) ?? BigInt(0)) - amountRaw);
+    deltas.set(toKey, (deltas.get(toKey) ?? BigInt(0)) + amountRaw);
     tokens.add(transfer.token);
     wallets.add(transfer.from);
     wallets.add(transfer.to);
@@ -61,10 +61,10 @@ export async function updateWalletPositions(chainId: number, fromBlock: bigint, 
   const existingMap = new Map(existing.map((row) => [`${row.wallet}:${row.token}`, row]));
 
   for (const [key, delta] of deltas.entries()) {
-    if (delta === 0n) continue;
+    if (delta === BigInt(0)) continue;
     const [wallet, token] = key.split(":");
     const current = existingMap.get(key);
-    const currentRaw = current ? decimalToBigInt(current.balanceRaw) : 0n;
+    const currentRaw = current ? decimalToBigInt(current.balanceRaw) : BigInt(0);
     const nextRaw = currentRaw + delta;
     const decimals = tokenMap.get(token)?.decimals ?? 18;
     const nextDec = formatUnits(nextRaw, decimals);
@@ -145,7 +145,7 @@ function computePnlStats(swaps: Array<{
       let holdSecondsSum = 0;
       let holdCount = 0;
 
-      while (remaining > 0n && list.length > 0) {
+      while (remaining > BigInt(0) && list.length > 0) {
         const lot = list[0];
         const take = remaining < lot.amountRaw ? remaining : lot.amountRaw;
         const takeRatio = Number(take) / Number(lot.amountRaw);
@@ -159,7 +159,7 @@ function computePnlStats(swaps: Array<{
 
         remaining -= take;
         lot.amountRaw -= take;
-        if (lot.amountRaw === 0n) list.shift();
+        if (lot.amountRaw === BigInt(0)) list.shift();
       }
 
       const stat = stats.get(key) ?? {

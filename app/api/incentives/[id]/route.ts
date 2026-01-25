@@ -3,11 +3,12 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { prisma } from "@/services/prisma";
 
-type Params = { params: { id: string } };
+type Params = { params: { id: string } | Promise<{ id: string }> };
 
 export async function GET(_: Request, { params }: Params) {
   try {
-    const id = Number(params.id);
+    const resolved = await Promise.resolve(params);
+    const id = Number(resolved.id);
     if (!Number.isFinite(id)) {
       return NextResponse.json({ error: "invalid id" }, { status: 400 });
     }

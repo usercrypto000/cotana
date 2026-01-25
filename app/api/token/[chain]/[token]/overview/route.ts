@@ -9,13 +9,17 @@ function normalizeAddress(value: string) {
   return value.trim().toLowerCase();
 }
 
-export async function GET(req: Request, context: { params: { chain: string; token: string } }) {
+export async function GET(
+  req: Request,
+  context: { params: { chain: string; token: string } | Promise<{ chain: string; token: string }> }
+) {
   try {
-    const chainId = Number(context.params.chain);
+    const resolved = await Promise.resolve(context.params);
+    const chainId = Number(resolved.chain);
     if (!Number.isFinite(chainId)) {
       return NextResponse.json({ error: "invalid chain" }, { status: 400 });
     }
-    const token = normalizeAddress(context.params.token);
+    const token = normalizeAddress(resolved.token);
 
     const tokenRow = await prisma.token.findUnique({
       where: { chainId_address: { chainId, address: token } },

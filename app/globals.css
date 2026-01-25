@@ -90,6 +90,13 @@ body {
   justify-content: flex-start;
 }
 
+.logo-text {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.4px;
+  color: var(--text);
+}
+
 .topbar-actions {
   margin-left: auto;
   display: flex;
@@ -1640,23 +1647,35 @@ body {
   .topbar {
     flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 12px;
   }
 
   .topbar-logo-left {
     flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .topbar-actions {
-    position: absolute;
-    right: 16px;
+    position: static;
+    margin-left: auto;
   }
 
   .topbar-logo img {
     height: 30px;
+  }
+
+  .filters-card {
+    order: 3;
+  }
+
+  .incentive-grid {
+    order: 2;
+  }
+
+  .page-footer {
+    order: 4;
   }
 
   .searchbar {

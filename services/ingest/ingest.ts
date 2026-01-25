@@ -52,14 +52,14 @@ async function resetBlock(chainId: number, blockNumber: bigint) {
 }
 
 function abs(value: bigint) {
-  return value < 0n ? value * -1n : value;
+  return value < BigInt(0) ? value * BigInt(-1) : value;
 }
 
 export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
   const client = getClient(chainId);
   const stablecoins = getStablecoinSet(chainId);
 
-  for (let current = fromBlock; current <= toBlock; current += 1n) {
+  for (let current = fromBlock; current <= toBlock; current += BigInt(1)) {
     const block = await client.getBlock({ blockNumber: current, includeTransactions: true });
     if (!block) continue;
 
@@ -80,7 +80,7 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
           ${sqlBigInt(current)},
           ${block.hash.toLowerCase()},
           ${block.parentHash.toLowerCase()},
-          ${Number(block.timestamp ?? 0n)}
+          ${Number(block.timestamp ?? BigInt(0))}
         )
         ON CONFLICT (chain_id, number)
         DO UPDATE SET hash = EXCLUDED.hash, parent_hash = EXCLUDED.parent_hash, timestamp = EXCLUDED.timestamp
@@ -97,7 +97,7 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
         ${sqlBigInt(current)},
         ${tx.from.toLowerCase()},
         ${tx.to ? tx.to.toLowerCase() : null},
-        ${sqlNumeric(tx.value ?? 0n)},
+        ${sqlNumeric(tx.value ?? BigInt(0))},
         ${null}
       )`;
     });
@@ -171,7 +171,7 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
       string,
       { symbol: string; decimals: number; name: string; firstSeenBlock: bigint; firstSeenAt: Date }
     >();
-    const blockSeenAt = new Date(Number(block.timestamp ?? 0n) * 1000);
+    const blockSeenAt = new Date(Number(block.timestamp ?? BigInt(0)) * 1000);
     const transferRows: Array<{
       txHash: string;
       logIndex: number;
@@ -251,15 +251,15 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
 
       let tokenIn = "";
       let tokenOut = "";
-      let amountIn = 0n;
-      let amountOut = 0n;
+      let amountIn = BigInt(0);
+      let amountOut = BigInt(0);
 
-      if (amount0In > 0n && amount1Out > 0n) {
+      if (amount0In > BigInt(0) && amount1Out > BigInt(0)) {
         tokenIn = pairTokens.token0;
         tokenOut = pairTokens.token1;
         amountIn = amount0In;
         amountOut = amount1Out;
-      } else if (amount1In > 0n && amount0Out > 0n) {
+      } else if (amount1In > BigInt(0) && amount0Out > BigInt(0)) {
         tokenIn = pairTokens.token1;
         tokenOut = pairTokens.token0;
         amountIn = amount1In;
@@ -339,15 +339,15 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
 
       let tokenIn = "";
       let tokenOut = "";
-      let amountIn = 0n;
-      let amountOut = 0n;
+      let amountIn = BigInt(0);
+      let amountOut = BigInt(0);
 
-      if (amount0 > 0n && amount1 < 0n) {
+      if (amount0 > BigInt(0) && amount1 < BigInt(0)) {
         tokenIn = poolTokens.token0;
         tokenOut = poolTokens.token1;
         amountIn = amount0;
         amountOut = abs(amount1);
-      } else if (amount1 > 0n && amount0 < 0n) {
+      } else if (amount1 > BigInt(0) && amount0 < BigInt(0)) {
         tokenIn = poolTokens.token1;
         tokenOut = poolTokens.token0;
         amountIn = amount1;
@@ -462,7 +462,7 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
           ${transfer.to},
           ${sqlNumeric(transfer.amountRaw)},
           ${transfer.amountDec},
-          ${Number(block.timestamp ?? 0n)}
+          ${Number(block.timestamp ?? BigInt(0))}
         )`
       );
 
@@ -511,7 +511,7 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
           ${swap.amountOutDec},
           ${swap.usdValue ?? null},
           ${swap.priced},
-          ${Number(block.timestamp ?? 0n)}
+          ${Number(block.timestamp ?? BigInt(0))}
         )`
       );
 
@@ -559,7 +559,7 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
     }
 
     for (const tx of block.transactions) {
-      if (!tx.to || tx.value === 0n) continue;
+      if (!tx.to || tx.value === BigInt(0)) continue;
       const valueEth = Number(formatEther(tx.value));
       if (valueEth <= 0) continue;
     }
@@ -571,7 +571,7 @@ export async function getLastProcessedBlock(chainId: number): Promise<bigint> {
     where: { chainId },
     _max: { number: true },
   });
-  return (result._max.number as bigint) ?? 0n;
+  return (result._max.number as bigint) ?? BigInt(0);
 }
 
 export async function getChainHead(chainId: number): Promise<bigint> {

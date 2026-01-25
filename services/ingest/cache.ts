@@ -1,4 +1,4 @@
-import type { PublicClient } from "viem";
+import type { Address, PublicClient } from "viem";
 import { erc20MetaAbi, pairMetaAbi, poolMetaAbi } from "@/services/ingest/abi";
 
 type TokenMeta = {
@@ -22,6 +22,8 @@ export async function getTokenMeta(client: PublicClient, address: string): Promi
   const cached = tokenCache.get(key);
   if (cached) return cached;
 
+  const addressHex = address as Address;
+
   if (process.env.SKIP_TOKEN_META === "1") {
     const meta = { address: key, symbol: "TOKEN", decimals: 18, name: "TOKEN" };
     tokenCache.set(key, meta);
@@ -36,9 +38,9 @@ export async function getTokenMeta(client: PublicClient, address: string): Promi
     const results = await client.multicall({
       allowFailure: true,
       contracts: [
-        { address, abi: erc20MetaAbi, functionName: "symbol" },
-        { address, abi: erc20MetaAbi, functionName: "decimals" },
-        { address, abi: erc20MetaAbi, functionName: "name" },
+        { address: addressHex, abi: erc20MetaAbi, functionName: "symbol" },
+        { address: addressHex, abi: erc20MetaAbi, functionName: "decimals" },
+        { address: addressHex, abi: erc20MetaAbi, functionName: "name" },
       ],
     });
 
@@ -47,9 +49,9 @@ export async function getTokenMeta(client: PublicClient, address: string): Promi
     name = typeof results[2].result === "string" ? results[2].result : symbol;
   } catch {
     const [sym, dec, nm] = await Promise.allSettled([
-      client.readContract({ address, abi: erc20MetaAbi, functionName: "symbol" }),
-      client.readContract({ address, abi: erc20MetaAbi, functionName: "decimals" }),
-      client.readContract({ address, abi: erc20MetaAbi, functionName: "name" }),
+      client.readContract({ address: addressHex, abi: erc20MetaAbi, functionName: "symbol" }),
+      client.readContract({ address: addressHex, abi: erc20MetaAbi, functionName: "decimals" }),
+      client.readContract({ address: addressHex, abi: erc20MetaAbi, functionName: "name" }),
     ]);
 
     if (sym.status === "fulfilled" && typeof sym.value === "string") symbol = sym.value;
@@ -66,10 +68,11 @@ export async function getPairTokens(client: PublicClient, address: string): Prom
   const key = address.toLowerCase();
   const cached = pairCache.get(key);
   if (cached) return cached;
+  const addressHex = address as Address;
 
   const [token0, token1] = await Promise.all([
-    client.readContract({ address, abi: pairMetaAbi, functionName: "token0" }),
-    client.readContract({ address, abi: pairMetaAbi, functionName: "token1" }),
+    client.readContract({ address: addressHex, abi: pairMetaAbi, functionName: "token0" }),
+    client.readContract({ address: addressHex, abi: pairMetaAbi, functionName: "token1" }),
   ]);
 
   const meta = {
@@ -84,10 +87,11 @@ export async function getPoolTokens(client: PublicClient, address: string): Prom
   const key = address.toLowerCase();
   const cached = poolCache.get(key);
   if (cached) return cached;
+  const addressHex = address as Address;
 
   const [token0, token1] = await Promise.all([
-    client.readContract({ address, abi: poolMetaAbi, functionName: "token0" }),
-    client.readContract({ address, abi: poolMetaAbi, functionName: "token1" }),
+    client.readContract({ address: addressHex, abi: poolMetaAbi, functionName: "token0" }),
+    client.readContract({ address: addressHex, abi: poolMetaAbi, functionName: "token1" }),
   ]);
 
   const meta = {

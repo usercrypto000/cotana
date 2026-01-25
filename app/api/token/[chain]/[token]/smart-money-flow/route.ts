@@ -21,14 +21,15 @@ function clamp(value: number, min: number, max: number) {
 
 export async function GET(
   req: Request,
-  context: { params: { chain: string; token: string } }
+  context: { params: { chain: string; token: string } | Promise<{ chain: string; token: string }> }
 ) {
   try {
-    const chainId = Number(context.params.chain);
+    const resolved = await Promise.resolve(context.params);
+    const chainId = Number(resolved.chain);
     if (!Number.isFinite(chainId)) {
       return NextResponse.json({ error: "chain param required" }, { status: 400 });
     }
-    const token = normalizeAddress(context.params.token);
+    const token = normalizeAddress(resolved.token);
 
     const { searchParams } = new URL(req.url);
     const window = searchParams.get("window") ?? "30d";
@@ -71,8 +72,8 @@ export async function GET(
       },
     });
 
-    let buys = 0n;
-    let sells = 0n;
+    let buys = BigInt(0);
+    let sells = BigInt(0);
 
     for (const swap of swaps) {
       if (swap.tokenOut === token) buys += BigInt(swap.amountOutRaw.toFixed(0));

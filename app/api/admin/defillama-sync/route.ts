@@ -82,6 +82,10 @@ export async function POST(req: Request) {
       select: { id: true, defillamaSlug: true },
     });
 
+    if (!incentive) {
+      return NextResponse.json({ error: "incentive not found" }, { status: 404 });
+    }
+
     const slug = incentive?.defillamaSlug?.trim();
     if (!slug) {
       return NextResponse.json({ error: "defillamaSlug missing" }, { status: 400 });

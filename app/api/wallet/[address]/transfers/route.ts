@@ -12,14 +12,18 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-export async function GET(req: Request, context: { params: { address: string } }) {
+export async function GET(
+  req: Request,
+  context: { params: { address: string } | Promise<{ address: string }> }
+) {
   try {
     const { searchParams } = new URL(req.url);
     const chainIdParam = searchParams.get("chain");
     const chainId = chainIdParam ? Number(chainIdParam) : null;
     const limit = clamp(Number(searchParams.get("limit") ?? 50), 1, 200);
     const page = clamp(Number(searchParams.get("page") ?? 0), 0, 1000);
-    const address = normalizeAddress(context.params.address);
+    const resolved = await Promise.resolve(context.params);
+    const address = normalizeAddress(resolved.address);
 
     const transfers = await prisma.tokenTransfer.findMany({
       where: {

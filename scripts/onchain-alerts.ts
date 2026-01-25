@@ -305,9 +305,10 @@ const processChain = async (chain: ChainConfig, state: StateFile) => {
   const client = createPublicClient({ transport: http(chain.rpcUrl) });
   const latest = await client.getBlockNumber();
   const lastSeen = BigInt(state.lastSeenBlock?.[chain.name] ?? "0");
-  const start = lastSeen > 0n ? lastSeen + 1n : latest;
+  const start = lastSeen > BigInt(0) ? lastSeen + BigInt(1) : latest;
   const maxBlocks = BigInt(MAX_BLOCKS_PER_RUN);
-  const effectiveStart = latest - start > maxBlocks ? latest - maxBlocks + 1n : start;
+  const effectiveStart =
+    latest - start > maxBlocks ? latest - maxBlocks + BigInt(1) : start;
 
   const watched = WATCHED_CONTRACTS[chain.name] ?? [];
   if (!watched.length) {
@@ -316,7 +317,7 @@ const processChain = async (chain: ChainConfig, state: StateFile) => {
     return;
   }
 
-  for (let blockNumber = effectiveStart; blockNumber <= latest; blockNumber += 1n) {
+  for (let blockNumber = effectiveStart; blockNumber <= latest; blockNumber += BigInt(1)) {
     const block = await client.getBlock({ blockNumber, includeTransactions: true });
     for (const tx of block.transactions) {
       if (!tx.to) {
