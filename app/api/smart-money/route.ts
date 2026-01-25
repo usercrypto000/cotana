@@ -76,7 +76,7 @@ export async function GET(req: Request) {
           tokenSymbol: symbolOut,
           tokenAddress: swap.tokenOut,
           amount: swap.amountOutDec,
-          valueUsd: null,
+          valueUsd: swap.priced && swap.usdValue ? Number(swap.usdValue) : null,
           detail: `Swap ${swap.amountInDec} ${symbolIn} -> ${swap.amountOutDec} ${symbolOut}`,
         };
       }),

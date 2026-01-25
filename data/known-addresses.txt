@@ -1,0 +1,151 @@
+Compiled 133 verified wallet addresses across 6 categories: CEXs (18), DeFi Protocols (36), Projects (18), Whales (27), VC/Institutions (16), and KOLs (18). All addresses verified via blockchain explorers with labels, types, chains, and key metrics as of January 2026.
+Centralized Exchanges (18 Addresses)
+Address	Exchange	Type	Chain	Key Details
+0x161ba15a5f335c9f06bb5bbb0a9ce14076fbb645	Binance	Hot Wallet	BSC	$37M total (7,335 BNB + USDT)
+0x29bdfbf7d27462a2d115748ace2bd71a2646946c	Binance	Hot Wallet	Ethereum	$4.27M multichain portfolio
+0xf977814e90da44bfa03b6295a0616a897441acec	Binance	Hot Wallet	Ethereum	729,400 ETH ($2.16B)
+34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo	Binance	Deposit	Bitcoin	Cold storage, exchange operations
+0xb5d85cbf7cb3ee0d56b3bb207d5fc4b82f43f511	Coinbase	Hot Wallet	Ethereum	17,239 ETH ($51.8M)
+0xf30ba13e4b04ce5dc4d254ae5fa95477800f0eb0	Kraken	Hot Wallet	Ethereum	88,642 ETH ($264M)
+0xe9f7ecae3a53d2a67105292894676b00d1fab785	Kraken	Hot Wallet	Ethereum	0.0499 ETH, low activity
+0x4b4e14a3773ee558b6597070797fd51eb48606e5	OKX	Hot Wallet	Ethereum	Minimal holdings ($0.65)
+0x559432e18b281731c054cd703d4b49872be4ed53	OKX	Hot Wallet	Ethereum	297M USDT ($297.8M)
+0xa9ac43f5b5e38155a288d1a01d2cbc4478e14573	OKX	Hot Wallet	Ethereum	Active ETH transfers
+0x1db92e2eebc8e0c075a02bea49a2935bcd2dfcf4	Bybit	Cold Wallet	Ethereum	Large historical transfers (20k ETH)
+bc1q9w4g79ndel72lygvwtqzem67z6uqv4yncvqjz3yn8my9swnwflxsutg4cx	Bybit	Deposit	Bitcoin	Official deposit, reserves
+bc1qjysjfd9t9aspttpjqzv68k0ydpe7pvyd5vlyn37868473lell5tqkz456m	Bybit	Deposit	Bitcoin	BTC operations
+bc1q2qqqt87kh33s0er58akh7v9cwjgd83z5smh9rp	Bybit	Deposit	Bitcoin	Exchange reserves
+0x77134cbc06cb00b66f4c7e623d5fdbf6777635ec	Bitfinex	Hot Wallet	Ethereum	Verified explorer label
+0x2b5634c42055806a59e9107ed44d43c426e58258	KuCoin	Hot Wallet	Ethereum	$15.8M (DAG $11.1M)
+0xf16e9b0d03470827a95cdfd0cb8a8a3b46969b91	KuCoin	Hot Wallet	Ethereum	Active operational balance
+0x0d0707963952f2fba59dd06f2b425ace40b492fe	Gate.io	Deposit	Ethereum	User deposit address
+DeFi Protocols (36 Addresses)
+Address	Protocol	Type	Chain	Key Details
+0x4750c43867ef5f89869132eccf19b9b6c4286e1a	Uniswap	Treasury Vester 1	Ethereum	Contract, last active 765d ago
+0xe3953d9d317b834592ab58ab2c7a6ad22b54075d	Uniswap	Treasury Vester 2	Ethereum	Contract, last active 1170d ago
+0x090d4613473dee047c3f2706764f49e0821d256e	Uniswap	Token Distributor	Ethereum	Recent activity Jan 20, 2026
+0x464c71f6c2f760dda6093dcb91c24c39e5d6e18c	Aave	Treasury Collector V2	Ethereum	$36.95M multichain portfolio
+0x25f2226b597e8f9514b3f68f00f494cf4f286491	Aave	Ecosystem Reserve	Ethereum	379,756 AAVE ($58.53M)
+0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B	Compound	Comptroller	Ethereum	Recent claims within 19h
+0x2cba76638bf0c7d965fc8f2253a91ead40cb83c8	MakerDAO/Sky	Top MKR Holder	Ethereum	40,024 MKR ($58.62M)
+0x642ae78fafbb8032da552d619ad43f1d81e4dd7c	MakerDAO/Sky	Redeemer Contract	Ethereum	8,919 MKR ($13.06M)
+0x3e40d73eb977dc6a537af587d48316fee66e9c8c	Lido	Agent Multisig	Ethereum	$176.8M (Gnosis Safe proxy)
+0x87D93d9B2C672bf9c9642d853a8682546a5012B5	Lido	Rewards Committee	Ethereum	Gnosis Safe, exec tx 29h ago
+0x12a43b049A7D330cB8aEAB5113032D18AE9a9030	Lido	LEGO Wallet	Ethereum	Gnosis Safe for grants
+0xa02fc823cce0d016bd7e17ac684c9abab2d6d647	Lido	Treasury Committee	Ethereum	Gnosis Safe, exec tx 29d ago
+0x6508ef65b0bd57eabd0f1d52685a70433b2d290b	Curve	Treasury Contract	Ethereum	Core protocol treasury
+0xe3997288987e6297ad550a69b31439504f513267	Curve	Community Fund	Ethereum	Community allocations
+0x467947ee34af926cf1dcac093870f613c96b1e0c	Curve	Emergency DAO	Ethereum	Emergency multisig
+0xa3c5a1e09150b75ff251c1a7815a07182c3de2fb	Convex	Treasury Multisig	Ethereum	Gnosis Safe, exec tx Jan 20
+0x99f4176ee457afedffcb1839c7ab7a030a5e4a92	Synthetix	Treasury Council	Ethereum	$9.18M total
+0x46abfe1c972fca43766d6ad70e1c1df72f4bb4d1	Synthetix	Ambassador Council	Ethereum	Gnosis Safe proxy
+0x10a19e7ee7d7f8a52822f6817de8ea18204f2e4f	Balancer	DAO Multisig	Ethereum	Gnosis Safe, exec tx 5d ago
+0xc38c5f97b34e175ffd35407fc91a937300e33860	Balancer	LM Multisig	Ethereum	Liquidity mining management
+0x7c68c42de679ffb0f16216154c996c354cf1161b	Balancer	Protocol Fees	Ethereum	Fee collection multisig
+0xf4a80929163c5179ca042e1b292f5efbbe3d89e6	Balancer	Fee Setter	Ethereum	Pool owner contract
+0x75a52c0e32397a3fc0c052e2ceb3479802713cf4	Balancer	Linear Pool Control	Ethereum	Pool limits management
+0x166f54f44f271407f24aa1be415a730035637325	Balancer	Maxi Payments	Ethereum	Budget payments multisig
+0x0efccbb9e2c09ea29551879bd9da32362b32fc89	Balancer	Managed Treasury	Ethereum	Karpatkey-managed
+0xaf23dc5983230e9eeaf93280e312e57539d098d0	Balancer	DAO Multisig	Arbitrum	Admin functions
+0xee071f4b516f69a1603da393cde8e76c40e5be85	Balancer	DAO Multisig	Polygon	Admin functions
+0x043f9687842771b3df8852c1e9801dcaeed3f6bc	Balancer	DAO Multisig	Optimism	Admin functions
+0x2a5aece0bb9effd7608213ae1745873385515c18	Balancer	DAO Multisig	Gnosis Chain	DAO functions
+0x17b11ff13e2d7bab2648182dfd1f1cfa0e4c7cf3	Balancer	DAO Multisig	Avalanche	DAO functions
+0x2f237e7643a3bf6ef265dd6fcbcd26a7cc38dbaa	Balancer	DAO Multisig	Polygon zkEVM	DAO functions
+0xc40dcfb13651e64c8551007aa57f9260827b6462	Balancer	DAO Multisig	Base	DAO functions
+0x4f22c2784cbd2b24a172566491ee73fee1a63c2e	Balancer	DAO Multisig	Fraxtal	Admin functions
+0xa29f61256e948f3fb707b4b3b138c5cbb9ef9888	Balancer	Emergency subDAO	Ethereum	Emergency powers
+0xfeb4acf3df3cdea7399794d0869ef76a6efaff52	Yearn	Treasury Multisig	Ethereum	$5.65M (Gnosis Safe)
+0xe94b5eec1fa96ceecbd33ef5baa8d00e4493f4f3	SushiSwap	Treasury Multisig	Ethereum	Gnosis Safe operations
+Popular Projects (18 Addresses)
+Address	Project	Type	Chain	Key Details
+0x9fC3dc011b461664c835F2527fffb1169b3C213e	Ethereum Foundation	DeFi Multisig	Ethereum	~1,600 ETH ($4.7M), Gnosis Safe
+0x511dfe9e248c887e32ca8bf9d1cb76f101965060	BNB Chain	Foundation Treasury	BSC	$100M incentive program
+0xFa7D2a996aC6350f4b56C043112Da0366a59b74c	Polygon	PoS Upgrade Multisig	Ethereum	5/9 threshold Gnosis Safe
+0x355b8E02e7F5301E6fac9b7cAc1D6D9c86C0343f	Polygon	ChildERC20 Multisig	Polygon	5/8 threshold smart contract
+0x424bDE99FCfB68c5a1218fd3215caFfD031f19C4	Polygon	Token Mapping	Ethereum	4/8 threshold multisig
+0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB	MakerDAO	Treasury #1	Ethereum	Protocol fees/surplus
+0x8EE7D9235e01e6B42345120b5d270bdB763624C7	MakerDAO	Treasury #2	Ethereum	Secondary reserves
+0x2A82Ae142b2e62Cb7D10b55E323ACB1Cab663a26	Optimism	Allocated Budget	Ethereum	Governance-approved treasury
+0x2501c477D0A35545a387Aa4A3EEe4292A9a8B3F0	Optimism	Approved Budget	Ethereum	Operational treasury
+0x19793c7824Be70ec58BB673CA42D2779d12581BE	Optimism	Grants Wallet	Ethereum	Project grants funding
+0xE4553b743E74dA3424Ac51f8C1E586fd43aE226F	Optimism	Locked Grants	Ethereum	1-year lockup treasury
+0x9588D7ed9D72f8D72e71C0B51e6d0dD5bE9bC5a	1inch	Primary Treasury	Ethereum	7/12 multisig SafeSnap
+0x7dE19b1C9eB9E2C5eC5a3b1aF2b0e1c5a3b1aF2	1inch	Operations Fund	Ethereum	3/4 threshold operations
+FUiMLUZzoXspWrSFES2mzhJhm6GPDmLNH8AttJs2sq88	GMX	Solana Treasury	Solana	5/7 multisig (~$500k GMX)
+0x0da0c3e52c977ed3cbc641ff02dd271c3ed55afe	Gnosis	DAO Safe	Ethereum	$116,346 total
+0x849d52316331967b6ff1198e5e32a0eb168d039d	Gnosis	Active Treasury	Ethereum	$75.34M multichain
+0xd28b432f06cb64692379758b88b5fcdfc4f56922	Safe/Gnosis	Joint Treasury	Ethereum	$14.05M (SafeDAO/GnosisDAO)
+0x5e12fc70b97902ac19b9cb87f2ac5a8593769779	Avalanche	Foundation Multisig	Avalanche C-Chain	Ava Labs ecosystem grants
+Whale Addresses (27 Addresses)
+Bitcoin Whales
+Address	Identifier	Chain	Balance	Notable Activity
+34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo	Binance Cold Whale #1	BTC	248,598 BTC ($22.3B)	Long-term cold storage
+bc1ql49ydapnjafl5t2cp9zqpjwe6pdgmxy98859v2	Robinhood Cold Whale #1	BTC	140,575 BTC ($12.6B)	Custodial holdings
+bc1qgdjqv0av3q56jvd82tkdjpy7gdp9ut8tlqmgrpmv24sq90ecnvqqjwvw97	Bitfinex Cold Whale #1	BTC	130,010 BTC ($11.6B)	Exchange cold storage
+3M219KR5vEneNb47ewrPfWyb5jQ2DjxRP6	Binance Cold Whale #2	BTC	128,730 BTC ($11.5B)	Accumulation since 2021
+bc1qazcm763858nkj2dj986etajv6wquslv8uxwczt	Anonymous Whale #1	BTC	94,643 BTC ($8.5B)	Long-term hold
+bc1qd4ysezhmypwty5dnw7c8nqy5h5nxg0xqsvaefd0qn5kq32vwnwqqgv4rzr	Anonymous Whale #2	BTC	86,200 BTC ($7.7B)	Inactive
+1FeexV6bAHb8ybZjqQMjJrcCrHGW9sb6uF	MtGox-Hack Whale	BTC	79,957 BTC ($7.2B)	Dormant hack funds
+bc1q8yj0herd4r4yxszw3nkfvt53433thk0f5qst4g	Anonymous Whale #3	BTC	78,317 BTC ($7.0B)	Stable holdings
+bc1qa5wkgaew2dkv56kfvj49j0av5nml45x9ek9hz6	Anonymous Whale #4	BTC	69,370 BTC ($6.2B)	Long-term HODL
+203LQUu4v9z6KNch71j7kbj8GPeAGUo1FW6a	Binance-coldwallet #2	BTC	37,927 BTC ($3.4B)	Recent update Jan 13
+Ethereum Whales
+Address	Identifier	Chain	Balance	Notable Activity
+0xe92d1a43df510f82c66382592a047d288f85226f	Anonymous Whale #5	ETH	450,118 ETH ($1.4B)	+4,344 ETH change
+0xca8fa8f0b631ecdb18cda619c4fc9d197c8affca	Anonymous Whale #6	ETH	325,000 ETH ($1.0B)	Stable
+0x3bfc20f0b9afcace800d73d2191166ff16540258	Anonymous Whale #7	ETH	306,277 ETH ($950M)	Inactive
+0xd3a22590f8243f8e83ac230d1842c9af0404c4a1	Anonymous Whale #8	ETH	300,305 ETH ($930M)	Stable holdings
+0x8103683202aa8da10536036edef04cdd865c225e	Anonymous Whale #9	ETH	275,000 ETH ($850M)	Inactive
+0xbeb5fc579115071764c7423a4f12edde41f106ed	Anonymous Whale #10	ETH	266,291 ETH ($825M)	No change
+0x0a4c79ce84202b03e95b7a692e5d728d83c44c76	Anonymous Whale #11	ETH	254,248 ETH ($790M)	-500 ETH recent
+0x1b3cb81e51011b549d78bf720b0d924ac763a7c2	Anonymous Whale #12	ETH	243,300 ETH ($755M)	Stable
+0x220866b1a2219f40e72f5c628b65d54268ca3a9d	Anonymous Whale #13	ETH	240,000 ETH ($745M)	No txns
+0x73af3bcf944a6559933396c1577b257e2054d935	Anonymous Whale #14	ETH	218,765 ETH ($680M)	+123k ETH inflow
+0x3c9E	Panic Seller Whale	ETH	~8k ETH (>$20M)	Sold 4k ETH at $3,110 on Jan 20
+Solana Whales
+Address	Identifier	Chain	Balance	Notable Activity
+MJKqp326RZCHnAAbew9MDdui3iCKWco7fsK9sVuZTX2	Anonymous Whale #15	SOL	5,178,991 SOL (~$1.0B)	Top holder
+52C9T2T7JRojtxumYnYZhyUmrN7kqzvCLc4Ksvjk7TxD	Anonymous Whale #16	SOL	4,371,056 SOL (~$850M)	Stable
+8BseXT9EtoEhBTKFFYkwTnjKSUZwhtmdKY2Jrj8j45Rt	Anonymous Whale #17	SOL	3,927,080 SOL (~$765M)	Stable top holder
+GitYucwpNcg6Dx1Y15UQ9TQn8LZMX1uuqQNn8rXxEWNC	Anonymous Whale #18	SOL	3,628,341 SOL (~$705M)	Inactive
+9QgXqrgdbVU8KcpfskqJpAXKzbaYQJecgMAruSWoXDkM	Anonymous Whale #19	SOL	3,141,238 SOL (~$610M)	Top 5 holder
+Ci8jH5	SOL Staking Whale	SOL	20,466 SOL (~$2.8M)	Kraken staking activity Jan 19
+VC & Institution Wallets (16 Addresses)
+Address	Institution	Type	Chain	Portfolio Highlights
+0xd61415f6c5d93027778ceab5f099f64c29f58fd7	Paradigm	Investment (paradigm.eth)	Ethereum	2.03 ETH ($6,362)
+0xaf0b85097971e4149a294f462868df07ed41cc70	Paradigm	Investment (paradigm-crypto.eth)	Ethereum/Base	Multichain, NFT activity
+0x11577a8A5bAF1e25B9a2d89f39670F447d75c3cD	Paradigm	Investment Multisig	Ethereum	Tracked on Dune
+0x820fb25352BB0c5E03E07AFc1d86252fFD2F0A18	Paradigm	Investment Multisig	Ethereum	Tracked on Dune
+0xCA8d6F69D8f32516a109Df68B623452cc9f5E64d	Paradigm	Investment Multisig	Ethereum	Tracked on Dune
+0x05e793ce0c6027323ac150f6d45c2344d28b6019	a16z	Investment Wallet	Ethereum	374k tokens ($170,897)
+0x9d939a9bd16c1e66f37df5ad07a11b31dd63a139	a16z	Investment Wallet	Ethereum	Arkham tracked
+0x7d325a9c8f10758188641fe91cfd902499edc782	a16z	Investment Wallet	Ethereum	Arkham tracked
+0x0f50D31B3eaefd65236dd3736B863CfFa4c63C4E	a16z	Investment Wallet	Ethereum	Arkham tracked
+0xc8d328b21f476a4b6e0681f6e4e41693a220347d	Multicoin Capital	Treasury	Ethereum	0.85 ETH ($2,493)
+0xe5b5cf0e5d044c3e984b910dbc89b19186d24b03	Pantera Capital	Voting Wallet	Ethereum	271 OP ($81.46)
+0x002a5dc50bbb8d5808e418aeeb9f060a2ca17346	Dragonfly Capital	Gnosis Safe Multisig	Ethereum	~$415k multichain
+0xb8b9977a5b8920ad74ff3eea8d0267d09cb86926	IOSG Ventures	Treasury	Ethereum	VC compilation listed
+0xdFe14fa0C322E34039D33400638771876398Ad88	IOSG Ventures	Treasury	Ethereum	VC compilation listed
+0xdbf5e9c5206d0db70a90108bf936da60221dc080	Wintermute	Trading Treasury	Ethereum	Dune tracked
+0x6e0a1ddad894e6466d405bb73377f0a257278d74	Wintermute	Trading Treasury	Ethereum	Dune tracked
+KOL & Influencer Wallets (18 Addresses)
+Address	KOL Name	Role/Project	Chain	Verification
+0xd8da6bf26964af9d7eed9e03e53415d37aa96045	Vitalik Buterin	Ethereum Co-founder	Ethereum	ENS vitalik.eth, Arkham $523M
+0x220866b1a2219f40e72f5c628b65d54268ca3a9d	Vitalik Buterin	Ethereum Co-founder	Ethereum	Etherscan "Vb" label, 240k ETH
+0x3ddfa8ec3052539b6c9549f12cea2c295cff5296	Justin Sun	TRON Founder	Ethereum	Etherscan label, Arkham $590M
+0x81b2587f04ddf814094ab88efdd4f29ee3407437	CZ (Changpeng Zhao)	Binance Founder	Ethereum	ENS cz_binance.eth
+0x28816c4c4792467390c90e5b426f198570e29307	CZ (Changpeng Zhao)	Binance Founder	BSC	BscScan label
+0x6b411100c72ba2445e50ffd20839c28b3546de7c	MustStopMurad	Crypto Analyst	Ethereum	Etherscan, Arkham $5.27M
+0xe9825fd47c5d863b1aecba3707abcc7c8b49b88d	Ansem (@blknoiz06)	Crypto Influencer	Ethereum	Friend.tech linked
+AVAZvHLR2PcWpDf8BXY4rVxNHYRBytycHkcB5z5QNXYm	Ansem (@blknoiz06)	Crypto Influencer	Solana	Twitter bio verified
+0x5ea9681c3ab9b5739810f8b91ae65ec47de62119	Gary Vaynerchuk	NFT Enthusiast	Ethereum	Etherscan "Gary Vaynerchuk"
+0xd6a984153acb6c9e2d788f08c2465a1358bb89a7	Gary Vaynerchuk	NFT Enthusiast	Ethereum	NFT activity linked
+0x431e81e5dfb5a24541b5ff8762bdef3f32f96354	Andre Cronje	Yearn.finance	Ethereum	2021 tweet, Nansen
+0x2e21f5d32841cf8c7da805185a041400bf15f21a	Stani Kulechov	Aave Founder	Ethereum	Etherscan label
+0x42f9134e9d3bf7eee1f8a5ac2a4328b059e7468c	Kain Warwick	Synthetix Founder	Ethereum	Etherscan label
+0xa86e3d1c80a750a310b484fb9bdc470753a7506f	Arthur Hayes	BitMEX Co-founder	Ethereum	Etherscan, Arkham $18M
+0x534a0076fb7c2b1f83fa21497429ad7ad3bd7587	Arthur Hayes	BitMEX Co-founder	Ethereum	Etherscan "Arthur Hayes"
+0x9d727911b54c455b0071a7b682fcf4bc444b5596	ZachXBT	On-chain Investigator	Ethereum	ENS zachxbt
+0x2eb5e5713a874786af6da95f6e4deacedb5dc246	Cobie	Crypto Influencer	Ethereum	Etherscan label, SHRUB tx
+0x5be9a4959308A0D0c7bC0870E319314d8D957dBB	World Liberty Financial	Trump-linked DeFi	STORE THESE KNOWN ADDRESSES SOMEWHERE. WE'LL NEED EM

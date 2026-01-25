@@ -1,38 +1,44 @@
 import { Queue, Worker } from "bullmq";
 import { listChains } from "@/services/chainConfig";
 import { getChainHead, getLastProcessedBlock, ingestRange } from "@/services/ingest/ingest";
+import { updateWalletPnL, updateWalletPositions, updateWalletScores } from "@/services/analytics";
 import { logger } from "@/services/logger";
 
+const redisEnabled = process.env.DISABLE_REDIS !== "1";
 const connection = {
   connection: {
     url: process.env.REDIS_URL ?? "redis://localhost:6379",
   },
 };
 
-const queue = new Queue("ingest", connection);
-const analyticsQueue = new Queue("analytics", connection);
+const queue = redisEnabled ? new Queue("ingest", connection) : null;
+const analyticsQueue = redisEnabled ? new Queue("analytics", connection) : null;
 
-new Worker(
-  "ingest",
-  async (job) => {
-    const { chainId, fromBlock, toBlock } = job.data as {
-      chainId: number;
-      fromBlock: string;
-      toBlock: string;
-    };
+if (redisEnabled) {
+  new Worker(
+    "ingest",
+    async (job) => {
+      const { chainId, fromBlock, toBlock } = job.data as {
+        chainId: number;
+        fromBlock: string;
+        toBlock: string;
+      };
 
-    logger.info({ chainId, fromBlock, toBlock }, "ingest job start");
-    await ingestRange({
-      chainId,
-      fromBlock: BigInt(fromBlock),
-      toBlock: BigInt(toBlock),
-    });
+      logger.info({ chainId, fromBlock, toBlock }, "ingest job start");
+      await ingestRange({
+        chainId,
+        fromBlock: BigInt(fromBlock),
+        toBlock: BigInt(toBlock),
+      });
 
-    await analyticsQueue.add("analytics-range", { chainId, fromBlock, toBlock });
-    logger.info({ chainId, fromBlock, toBlock }, "ingest job complete");
-  },
-  connection
-);
+      await analyticsQueue?.add("analytics-range", { chainId, fromBlock, toBlock });
+      logger.info({ chainId, fromBlock, toBlock }, "ingest job complete");
+    },
+    connection
+  );
+} else {
+  logger.warn("Redis disabled; ingest will run inline without BullMQ.");
+}
 
 function parseArg(name: string) {
   const index = process.argv.findIndex((value) => value === name);
@@ -56,11 +62,21 @@ async function runBackfill() {
     throw new Error(`Unknown chain ${chainArg}`);
   }
 
-  await queue.add("ingest-range", {
-    chainId: chain.id,
-    fromBlock: fromArg,
-    toBlock: toArg,
-  });
+  if (queue) {
+    await queue.add("ingest-range", {
+      chainId: chain.id,
+      fromBlock: fromArg,
+      toBlock: toArg,
+    });
+    return;
+  }
+
+  logger.info({ chainId: chain.id, fromBlock: fromArg, toBlock: toArg }, "inline backfill start");
+  await ingestRange({ chainId: chain.id, fromBlock: BigInt(fromArg), toBlock: BigInt(toArg) });
+  await updateWalletPositions(chain.id, BigInt(fromArg), BigInt(toArg));
+  await updateWalletPnL(chain.id);
+  await updateWalletScores(chain.id);
+  logger.info({ chainId: chain.id, fromBlock: fromArg, toBlock: toArg }, "inline backfill complete");
 }
 
 async function runLive() {
@@ -73,11 +89,28 @@ async function runLive() {
       const last = await getLastProcessedBlock(chain.id);
       if (target <= last) continue;
 
-      await queue.add("ingest-range", {
-        chainId: chain.id,
-        fromBlock: (last + 1n).toString(),
-        toBlock: target.toString(),
-      });
+      if (queue) {
+        await queue.add("ingest-range", {
+          chainId: chain.id,
+          fromBlock: (last + 1n).toString(),
+          toBlock: target.toString(),
+        });
+      } else {
+        const fromBlock = last + 1n;
+        const toBlock = target;
+        logger.info(
+          { chainId: chain.id, fromBlock: fromBlock.toString(), toBlock: toBlock.toString() },
+          "inline ingest start"
+        );
+        await ingestRange({ chainId: chain.id, fromBlock, toBlock });
+        await updateWalletPositions(chain.id, fromBlock, toBlock);
+        await updateWalletPnL(chain.id);
+        await updateWalletScores(chain.id);
+        logger.info(
+          { chainId: chain.id, fromBlock: fromBlock.toString(), toBlock: toBlock.toString() },
+          "inline ingest complete"
+        );
+      }
     }
 
     await new Promise((resolve) => setTimeout(resolve, 12_000));

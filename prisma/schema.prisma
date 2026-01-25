@@ -34,7 +34,7 @@ model Transaction {
   blockNumber BigInt  @map("block_number")
   from        String  @map("from")
   to          String? @map("to")
-  value       BigInt
+  value       Decimal
   status      Int?
 
   @@unique([chainId, hash])
@@ -65,7 +65,7 @@ model TokenTransfer {
   token       String
   from        String @map("from")
   to          String @map("to")
-  amountRaw   BigInt @map("amount_raw")
+  amountRaw   Decimal @map("amount_raw")
   amountDec   String @map("amount_dec")
   timestamp   Int
 
@@ -84,10 +84,12 @@ model Swap {
   trader       String?
   tokenIn      String @map("token_in")
   tokenOut     String @map("token_out")
-  amountInRaw  BigInt @map("amount_in_raw")
-  amountOutRaw BigInt @map("amount_out_raw")
+  amountInRaw  Decimal @map("amount_in_raw")
+  amountOutRaw Decimal @map("amount_out_raw")
   amountInDec  String @map("amount_in_dec")
   amountOutDec String @map("amount_out_dec")
+  usdValue     Decimal? @map("usd_value")
+  priced       Boolean @default(false)
   timestamp    Int
 
   @@unique([chainId, txHash, logIndex])
@@ -101,6 +103,9 @@ model Token {
   symbol   String
   decimals Int
   name     String
+  firstSeenBlock BigInt? @map("first_seen_block")
+  firstSeenAt    DateTime? @map("first_seen_at")
+  verified Boolean @default(false)
 
   @@unique([chainId, address])
   @@map("tokens")
@@ -122,7 +127,7 @@ model WalletPosition {
   chainId    Int      @map("chain_id")
   wallet     String
   token      String
-  balanceRaw BigInt   @map("balance_raw")
+  balanceRaw Decimal  @map("balance_raw")
   balanceDec String   @map("balance_dec")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
@@ -178,4 +183,193 @@ model AddressLabel {
 
   @@unique([chainId, address, labelId])
   @@map("address_labels")
+}
+
+enum IncentiveStatus {
+  EARLY
+  ACTIVE
+  SATURATED
+  ENDING
+}
+
+enum RewardAssetType {
+  TOKEN
+  POINTS
+  FEES
+}
+
+enum CapitalRequirement {
+  NONE
+  LOW
+  MED
+  HIGH
+}
+
+enum TimeIntensity {
+  PASSIVE
+  SEMI
+  ACTIVE
+}
+
+enum LinkTier {
+  TIER1
+  TIER2
+  TIER3
+}
+
+enum LinkType {
+  APP
+  BRIDGE
+  DEX
+  DOCS
+  SNAPSHOT
+  REFERRAL
+  FORUM
+  GUIDE
+  BLOG
+  DASHBOARD
+  EXPLORER
+  OTHER
+}
+
+model Project {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?
+  raise       String?
+  website     String?
+  logoUrl     String?   @map("logo_url")
+  chains      String[]
+  tags        String[]
+  archived    Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  incentives  Incentive[]
+  links       ProjectLink[]
+
+  @@map("projects")
+}
+
+model ProjectLink {
+  id        Int      @id @default(autoincrement())
+  projectId Int      @map("project_id")
+  tier      LinkTier
+  type      LinkType
+  label     String
+  url       String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@map("project_links")
+}
+
+model Incentive {
+  id               Int              @id @default(autoincrement())
+  projectId        Int              @map("project_id")
+  title            String?
+  description      String?
+  status           IncentiveStatus
+  types            String[]
+  defillamaSlug    String?          @map("defillama_slug")
+  rewardAssetType  RewardAssetType  @map("reward_asset_type")
+  rewardAssetSymbol String?         @map("reward_asset_symbol")
+  rewardAssets     String?          @map("reward_assets")
+  rewardAssetAddress String?        @map("reward_asset_address")
+  rewardAssetChain  String?         @map("reward_asset_chain")
+  capitalRequired  CapitalRequirement @map("capital_required")
+  timeIntensity    TimeIntensity    @map("time_intensity")
+  riskFlags        String[]
+  riskScore        Int?             @map("risk_score")
+  saturationScore  Int?             @map("saturation_score")
+  roiLabel         String?          @map("roi_label")
+  effortLabel      String?          @map("effort_label")
+  flowSummary      String?          @map("flow_summary")
+  statusRationale  String?          @map("status_rationale")
+  howToExtract     String?          @map("how_to_extract")
+  xHandleUrl       String?          @map("x_handle_url")
+  participationUrl String?          @map("participation_url")
+  snapshotWindow   String?          @map("snapshot_window")
+  verified         Boolean          @default(false)
+  startAt          DateTime?        @map("start_at")
+  endAt            DateTime?        @map("end_at")
+  lastUpdatedAt    DateTime         @map("last_updated_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  project          Project          @relation(fields: [projectId], references: [id])
+  events           IncentiveEvent[]
+  links            IncentiveLink[]
+  proofs           IncentiveProof[]
+  metrics          IncentiveMetric?
+
+  @@map("incentives")
+}
+
+model IncentiveEvent {
+  id          Int      @id @default(autoincrement())
+  incentiveId Int      @map("incentive_id")
+  title       String
+  detail      String?
+  eventType   String   @map("event_type")
+  effectiveAt DateTime @map("effective_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  incentive Incentive @relation(fields: [incentiveId], references: [id])
+
+  @@map("incentive_events")
+}
+
+model IncentiveLink {
+  id          Int      @id @default(autoincrement())
+  incentiveId Int      @map("incentive_id")
+  type        LinkType
+  label       String
+  url         String
+  tier        LinkTier?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  incentive Incentive @relation(fields: [incentiveId], references: [id])
+
+  @@map("incentive_links")
+}
+
+model IncentiveProof {
+  id          Int      @id @default(autoincrement())
+  incentiveId Int      @map("incentive_id")
+  proofType   String   @map("proof_type")
+  label       String
+  url         String
+  chain       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  incentive Incentive @relation(fields: [incentiveId], references: [id])
+
+  @@map("incentive_proofs")
+}
+
+model IncentiveMetric {
+  id               Int      @id @default(autoincrement())
+  incentiveId      Int      @unique @map("incentive_id")
+  tvlUsd           Decimal? @map("tvl_usd")
+  volumeUsd24h     Decimal? @map("volume_usd_24h")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  incentive Incentive @relation(fields: [incentiveId], references: [id])
+
+  @@map("incentive_metrics")
+}
+
+model DataSource {
+  id           Int      @id @default(autoincrement())
+  name         String
+  tier         LinkTier
+  url          String?
+  ingestionType String  @map("ingestion_type")
+  lastSeenAt   DateTime? @map("last_seen_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("data_sources")
 }

@@ -15,6 +15,10 @@ const PROFITABLE_TOKEN_TARGET = 10;
 const CONSISTENCY_TOKEN_TARGET = 3;
 const AVOID_RUG_DAYS = 7;
 
+function decimalToBigInt(value: Prisma.Decimal) {
+  return BigInt(value.toFixed(0));
+}
+
 function getChain(chainId: number) {
   const chain = listChains().find((item) => item.id === chainId);
   if (!chain) throw new Error(`Unknown chain ${chainId}`);
@@ -32,10 +36,11 @@ export async function updateWalletPositions(chainId: number, fromBlock: bigint, 
   const wallets = new Set<string>();
 
   for (const transfer of transfers) {
+    const amountRaw = decimalToBigInt(transfer.amountRaw);
     const fromKey = `${transfer.from}:${transfer.token}`;
     const toKey = `${transfer.to}:${transfer.token}`;
-    deltas.set(fromKey, (deltas.get(fromKey) ?? 0n) - transfer.amountRaw);
-    deltas.set(toKey, (deltas.get(toKey) ?? 0n) + transfer.amountRaw);
+    deltas.set(fromKey, (deltas.get(fromKey) ?? 0n) - amountRaw);
+    deltas.set(toKey, (deltas.get(toKey) ?? 0n) + amountRaw);
     tokens.add(transfer.token);
     wallets.add(transfer.from);
     wallets.add(transfer.to);
@@ -59,14 +64,21 @@ export async function updateWalletPositions(chainId: number, fromBlock: bigint, 
     if (delta === 0n) continue;
     const [wallet, token] = key.split(":");
     const current = existingMap.get(key);
-    const nextRaw = (current?.balanceRaw ?? 0n) + delta;
+    const currentRaw = current ? decimalToBigInt(current.balanceRaw) : 0n;
+    const nextRaw = currentRaw + delta;
     const decimals = tokenMap.get(token)?.decimals ?? 18;
     const nextDec = formatUnits(nextRaw, decimals);
 
     await prisma.walletPosition.upsert({
       where: { chainId_wallet_token: { chainId, wallet, token } },
-      update: { balanceRaw: nextRaw, balanceDec: nextDec },
-      create: { chainId, wallet, token, balanceRaw: nextRaw, balanceDec: nextDec },
+      update: { balanceRaw: new Prisma.Decimal(nextRaw.toString()), balanceDec: nextDec },
+      create: {
+        chainId,
+        wallet,
+        token,
+        balanceRaw: new Prisma.Decimal(nextRaw.toString()),
+        balanceDec: nextDec,
+      },
     });
   }
 }
@@ -89,8 +101,8 @@ function computePnlStats(swaps: Array<{
   trader: string | null;
   tokenIn: string;
   tokenOut: string;
-  amountInRaw: bigint;
-  amountOutRaw: bigint;
+  amountInRaw: Prisma.Decimal;
+  amountOutRaw: Prisma.Decimal;
   amountInDec: string;
   amountOutDec: string;
   timestamp: number;
@@ -108,7 +120,11 @@ function computePnlStats(swaps: Array<{
       if (!Number.isFinite(costUsd) || costUsd <= 0) continue;
       const key = `${swap.trader}:${swap.tokenOut}`;
       const list = lots.get(key) ?? [];
-      list.push({ amountRaw: swap.amountOutRaw, costUsd, timestamp: swap.timestamp });
+      list.push({
+        amountRaw: decimalToBigInt(swap.amountOutRaw),
+        costUsd,
+        timestamp: swap.timestamp,
+      });
       lots.set(key, list);
       continue;
     }
@@ -124,7 +140,7 @@ function computePnlStats(swaps: Array<{
       const list = lots.get(key) ?? [];
       if (list.length === 0) continue;
 
-      let remaining = swap.amountInRaw;
+      let remaining = decimalToBigInt(swap.amountInRaw);
       let realized = 0;
       let holdSecondsSum = 0;
       let holdCount = 0;
@@ -133,7 +149,7 @@ function computePnlStats(swaps: Array<{
         const lot = list[0];
         const take = remaining < lot.amountRaw ? remaining : lot.amountRaw;
         const takeRatio = Number(take) / Number(lot.amountRaw);
-        const proceedsRatio = Number(take) / Number(swap.amountInRaw);
+        const proceedsRatio = Number(take) / Number(swap.amountInRaw.toString());
 
         const costPortion = lot.costUsd * takeRatio;
         const proceedsPortion = proceedsUsd * proceedsRatio;

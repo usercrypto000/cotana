@@ -22,18 +22,40 @@ export async function getTokenMeta(client: PublicClient, address: string): Promi
   const cached = tokenCache.get(key);
   if (cached) return cached;
 
-  const results = await client.multicall({
-    allowFailure: true,
-    contracts: [
-      { address, abi: erc20MetaAbi, functionName: "symbol" },
-      { address, abi: erc20MetaAbi, functionName: "decimals" },
-      { address, abi: erc20MetaAbi, functionName: "name" },
-    ],
-  });
+  if (process.env.SKIP_TOKEN_META === "1") {
+    const meta = { address: key, symbol: "TOKEN", decimals: 18, name: "TOKEN" };
+    tokenCache.set(key, meta);
+    return meta;
+  }
 
-  const symbol = typeof results[0].result === "string" ? results[0].result : "TOKEN";
-  const decimals = typeof results[1].result === "number" ? results[1].result : 18;
-  const name = typeof results[2].result === "string" ? results[2].result : symbol;
+  let symbol = "TOKEN";
+  let decimals = 18;
+  let name = "TOKEN";
+
+  try {
+    const results = await client.multicall({
+      allowFailure: true,
+      contracts: [
+        { address, abi: erc20MetaAbi, functionName: "symbol" },
+        { address, abi: erc20MetaAbi, functionName: "decimals" },
+        { address, abi: erc20MetaAbi, functionName: "name" },
+      ],
+    });
+
+    symbol = typeof results[0].result === "string" ? results[0].result : symbol;
+    decimals = typeof results[1].result === "number" ? results[1].result : decimals;
+    name = typeof results[2].result === "string" ? results[2].result : symbol;
+  } catch {
+    const [sym, dec, nm] = await Promise.allSettled([
+      client.readContract({ address, abi: erc20MetaAbi, functionName: "symbol" }),
+      client.readContract({ address, abi: erc20MetaAbi, functionName: "decimals" }),
+      client.readContract({ address, abi: erc20MetaAbi, functionName: "name" }),
+    ]);
+
+    if (sym.status === "fulfilled" && typeof sym.value === "string") symbol = sym.value;
+    if (dec.status === "fulfilled" && typeof dec.value === "number") decimals = dec.value;
+    if (nm.status === "fulfilled" && typeof nm.value === "string") name = nm.value;
+  }
 
   const meta = { address: key, symbol, decimals, name };
   tokenCache.set(key, meta);

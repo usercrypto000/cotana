@@ -19,19 +19,21 @@ function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-export async function GET(req: Request, context: { params: { address: string } }) {
+export async function GET(
+  req: Request,
+  context: { params: { chain: string; token: string } }
+) {
   try {
+    const chainId = Number(context.params.chain);
+    if (!Number.isFinite(chainId)) {
+      return NextResponse.json({ error: "chain param required" }, { status: 400 });
+    }
+    const token = normalizeAddress(context.params.token);
+
     const { searchParams } = new URL(req.url);
-    const chainIdParam = searchParams.get("chain");
-    const chainId = chainIdParam ? Number(chainIdParam) : null;
     const window = searchParams.get("window") ?? "30d";
     const minScore = Number(searchParams.get("minScore") ?? 70);
     const limit = clamp(Number(searchParams.get("limit") ?? 1000), 1, 5000);
-    const token = normalizeAddress(context.params.address);
-
-    if (!chainId) {
-      return NextResponse.json({ error: "chain param required" }, { status: 400 });
-    }
 
     const days = parseWindow(window);
     const since = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
@@ -73,8 +75,8 @@ export async function GET(req: Request, context: { params: { address: string } }
     let sells = 0n;
 
     for (const swap of swaps) {
-      if (swap.tokenOut === token) buys += swap.amountOutRaw;
-      if (swap.tokenIn === token) sells += swap.amountInRaw;
+      if (swap.tokenOut === token) buys += BigInt(swap.amountOutRaw.toFixed(0));
+      if (swap.tokenIn === token) sells += BigInt(swap.amountInRaw.toFixed(0));
     }
 
     const net = buys - sells;

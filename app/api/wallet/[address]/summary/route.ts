@@ -16,7 +16,7 @@ export async function GET(req: Request, context: { params: { address: string } }
     const window = searchParams.get("window") ?? "30d";
     const address = normalizeAddress(context.params.address);
 
-    const [positions, pnls, scores, labels] = await Promise.all([
+    const [positions, pnls, scores, labels, totalSwaps, pricedSwaps] = await Promise.all([
       prisma.walletPosition.findMany({
         where: { wallet: address, ...(chainId ? { chainId } : {}) },
         orderBy: { updatedAt: "desc" },
@@ -30,6 +30,12 @@ export async function GET(req: Request, context: { params: { address: string } }
       }),
       prisma.addressLabel.findMany({
         where: { address, ...(chainId ? { chainId } : {}) },
+      }),
+      prisma.swap.count({
+        where: { trader: address, ...(chainId ? { chainId } : {}) },
+      }),
+      prisma.swap.count({
+        where: { trader: address, priced: true, ...(chainId ? { chainId } : {}) },
       }),
     ]);
 
@@ -53,9 +59,19 @@ export async function GET(req: Request, context: { params: { address: string } }
     const labelMap = new Map(labelRows.map((label) => [label.id, label]));
     const chainMap = new Map(listChains().map((chain) => [chain.id, chain.name]));
 
+    const updatedTimestamps = [
+      ...positions.map((pos) => pos.updatedAt?.getTime()),
+      ...pnls.map((pnl) => pnl.updatedAt?.getTime()),
+      ...scores.map((score) => score.updatedAt?.getTime()),
+    ].filter((value): value is number => typeof value === "number");
+
+    const lastUpdated = updatedTimestamps.length ? new Date(Math.max(...updatedTimestamps)) : null;
+
     return NextResponse.json({
       wallet: address,
       chainId: chainId ?? null,
+      totalSwaps,
+      lastUpdated,
       positions: positions.map((pos) => {
         const token = tokenMap.get(`${pos.chainId}:${pos.token}`);
         return {
@@ -91,6 +107,7 @@ export async function GET(req: Request, context: { params: { address: string } }
         features: score.featuresJson,
         updatedAt: score.updatedAt,
       })),
+      pricedCoverage: totalSwaps > 0 ? Math.round((pricedSwaps / totalSwaps) * 100) : 0,
       labels: labels.map((label) => {
         const row = labelMap.get(label.labelId);
         return {

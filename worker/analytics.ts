@@ -2,6 +2,12 @@ import { Queue, Worker } from "bullmq";
 import { updateWalletPnL, updateWalletPositions, updateWalletScores } from "@/services/analytics";
 import { logger } from "@/services/logger";
 
+const redisEnabled = process.env.DISABLE_REDIS !== "1";
+if (!redisEnabled) {
+  logger.warn("Redis disabled; analytics worker will not start.");
+  process.exit(0);
+}
+
 const connection = {
   connection: {
     url: process.env.REDIS_URL ?? "redis://localhost:6379",

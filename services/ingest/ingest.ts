@@ -18,6 +18,19 @@ type RangeInput = {
   toBlock: bigint;
 };
 
+function sqlBigInt(value: bigint) {
+  return Prisma.sql`${value.toString()}::bigint`;
+}
+
+function sqlNumeric(value: bigint) {
+  return Prisma.sql`${value.toString()}::numeric`;
+}
+
+function getStablecoinSet(chainId: number) {
+  const chain = listChains().find((item) => item.id === chainId);
+  return new Set((chain?.stablecoins ?? []).map((token) => token.toLowerCase()));
+}
+
 function getClient(chainId: number): PublicClient {
   const chain = listChains().find((item) => item.id === chainId);
   if (!chain) {
@@ -44,6 +57,7 @@ function abs(value: bigint) {
 
 export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
   const client = getClient(chainId);
+  const stablecoins = getStablecoinSet(chainId);
 
   for (let current = fromBlock; current <= toBlock; current += 1n) {
     const block = await client.getBlock({ blockNumber: current, includeTransactions: true });
@@ -61,9 +75,13 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
     await prisma.$executeRaw(
       Prisma.sql`
         INSERT INTO blocks (chain_id, number, hash, parent_hash, timestamp)
-        VALUES (${chainId}, ${current}, ${block.hash.toLowerCase()}, ${block.parentHash.toLowerCase()}, ${
-        Number(block.timestamp ?? 0n)
-      })
+        VALUES (
+          ${chainId},
+          ${sqlBigInt(current)},
+          ${block.hash.toLowerCase()},
+          ${block.parentHash.toLowerCase()},
+          ${Number(block.timestamp ?? 0n)}
+        )
         ON CONFLICT (chain_id, number)
         DO UPDATE SET hash = EXCLUDED.hash, parent_hash = EXCLUDED.parent_hash, timestamp = EXCLUDED.timestamp
       `
@@ -76,10 +94,10 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
       return Prisma.sql`(
         ${chainId},
         ${hash},
-        ${current},
+        ${sqlBigInt(current)},
         ${tx.from.toLowerCase()},
         ${tx.to ? tx.to.toLowerCase() : null},
-        ${tx.value ?? 0n},
+        ${sqlNumeric(tx.value ?? 0n)},
         ${null}
       )`;
     });
@@ -126,7 +144,7 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
           ${chainId},
           ${log.transactionHash.toLowerCase()},
           ${log.logIndex},
-          ${current},
+          ${sqlBigInt(current)},
           ${log.address.toLowerCase()},
           ${log.topics[0]?.toLowerCase() ?? null},
           ${Prisma.sql`${JSON.stringify(topics)}`}::jsonb,
@@ -149,7 +167,11 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
       );
     }
 
-    const tokenMetas = new Map<string, { symbol: string; decimals: number; name: string }>();
+    const tokenMetas = new Map<
+      string,
+      { symbol: string; decimals: number; name: string; firstSeenBlock: bigint; firstSeenAt: Date }
+    >();
+    const blockSeenAt = new Date(Number(block.timestamp ?? 0n) * 1000);
     const transferRows: Array<{
       txHash: string;
       logIndex: number;
@@ -161,7 +183,12 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
     }> = [];
 
     for (const log of transferLogs) {
-      const decoded = decodeEventLog({ abi: [erc20TransferEvent], data: log.data, topics: log.topics });
+      let decoded;
+      try {
+        decoded = decodeEventLog({ abi: [erc20TransferEvent], data: log.data, topics: log.topics });
+      } catch {
+        continue;
+      }
       const from = (decoded.args.from as string).toLowerCase();
       const to = (decoded.args.to as string).toLowerCase();
       const value = decoded.args.value as bigint;
@@ -170,7 +197,13 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
       let meta = tokenMetas.get(tokenAddress);
       if (!meta) {
         const fetched = await getTokenMeta(client, tokenAddress);
-        meta = { symbol: fetched.symbol, decimals: fetched.decimals, name: fetched.name };
+        meta = {
+          symbol: fetched.symbol,
+          decimals: fetched.decimals,
+          name: fetched.name,
+          firstSeenBlock: current,
+          firstSeenAt: blockSeenAt,
+        };
         tokenMetas.set(tokenAddress, meta);
       }
 
@@ -197,10 +230,17 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
       amountOutRaw: bigint;
       amountInDec: string;
       amountOutDec: string;
+      usdValue: number | null;
+      priced: boolean;
     }> = [];
 
     for (const log of v2Logs) {
-      const decoded = decodeEventLog({ abi: [uniV2SwapEvent], data: log.data, topics: log.topics });
+      let decoded;
+      try {
+        decoded = decodeEventLog({ abi: [uniV2SwapEvent], data: log.data, topics: log.topics });
+      } catch {
+        continue;
+      }
       const pairTokens = await getPairTokens(client, log.address);
       const tx = txMap.get(log.transactionHash.toLowerCase());
 
@@ -231,15 +271,40 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
       let metaIn = tokenMetas.get(tokenIn);
       if (!metaIn) {
         const fetched = await getTokenMeta(client, tokenIn);
-        metaIn = { symbol: fetched.symbol, decimals: fetched.decimals, name: fetched.name };
+        metaIn = {
+          symbol: fetched.symbol,
+          decimals: fetched.decimals,
+          name: fetched.name,
+          firstSeenBlock: current,
+          firstSeenAt: blockSeenAt,
+        };
         tokenMetas.set(tokenIn, metaIn);
       }
 
       let metaOut = tokenMetas.get(tokenOut);
       if (!metaOut) {
         const fetched = await getTokenMeta(client, tokenOut);
-        metaOut = { symbol: fetched.symbol, decimals: fetched.decimals, name: fetched.name };
+        metaOut = {
+          symbol: fetched.symbol,
+          decimals: fetched.decimals,
+          name: fetched.name,
+          firstSeenBlock: current,
+          firstSeenAt: blockSeenAt,
+        };
         tokenMetas.set(tokenOut, metaOut);
+      }
+
+      const tokenInStable = stablecoins.has(tokenIn);
+      const tokenOutStable = stablecoins.has(tokenOut);
+      let usdValue: number | null = null;
+      let priced = false;
+
+      if (tokenInStable) {
+        usdValue = Number.parseFloat(formatUnits(amountIn, metaIn.decimals));
+        priced = Number.isFinite(usdValue) && usdValue > 0;
+      } else if (tokenOutStable) {
+        usdValue = Number.parseFloat(formatUnits(amountOut, metaOut.decimals));
+        priced = Number.isFinite(usdValue) && usdValue > 0;
       }
 
       swapRows.push({
@@ -254,11 +319,18 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
         amountOutRaw: amountOut,
         amountInDec: formatUnits(amountIn, metaIn.decimals),
         amountOutDec: formatUnits(amountOut, metaOut.decimals),
+        usdValue: priced ? usdValue : null,
+        priced,
       });
     }
 
     for (const log of v3Logs) {
-      const decoded = decodeEventLog({ abi: [uniV3SwapEvent], data: log.data, topics: log.topics });
+      let decoded;
+      try {
+        decoded = decodeEventLog({ abi: [uniV3SwapEvent], data: log.data, topics: log.topics });
+      } catch {
+        continue;
+      }
       const poolTokens = await getPoolTokens(client, log.address);
       const tx = txMap.get(log.transactionHash.toLowerCase());
 
@@ -287,15 +359,40 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
       let metaIn = tokenMetas.get(tokenIn);
       if (!metaIn) {
         const fetched = await getTokenMeta(client, tokenIn);
-        metaIn = { symbol: fetched.symbol, decimals: fetched.decimals, name: fetched.name };
+        metaIn = {
+          symbol: fetched.symbol,
+          decimals: fetched.decimals,
+          name: fetched.name,
+          firstSeenBlock: current,
+          firstSeenAt: blockSeenAt,
+        };
         tokenMetas.set(tokenIn, metaIn);
       }
 
       let metaOut = tokenMetas.get(tokenOut);
       if (!metaOut) {
         const fetched = await getTokenMeta(client, tokenOut);
-        metaOut = { symbol: fetched.symbol, decimals: fetched.decimals, name: fetched.name };
+        metaOut = {
+          symbol: fetched.symbol,
+          decimals: fetched.decimals,
+          name: fetched.name,
+          firstSeenBlock: current,
+          firstSeenAt: blockSeenAt,
+        };
         tokenMetas.set(tokenOut, metaOut);
+      }
+
+      const tokenInStable = stablecoins.has(tokenIn);
+      const tokenOutStable = stablecoins.has(tokenOut);
+      let usdValue: number | null = null;
+      let priced = false;
+
+      if (tokenInStable) {
+        usdValue = Number.parseFloat(formatUnits(amountIn, metaIn.decimals));
+        priced = Number.isFinite(usdValue) && usdValue > 0;
+      } else if (tokenOutStable) {
+        usdValue = Number.parseFloat(formatUnits(amountOut, metaOut.decimals));
+        priced = Number.isFinite(usdValue) && usdValue > 0;
       }
 
       swapRows.push({
@@ -310,23 +407,45 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
         amountOutRaw: amountOut,
         amountInDec: formatUnits(amountIn, metaIn.decimals),
         amountOutDec: formatUnits(amountOut, metaOut.decimals),
+        usdValue: priced ? usdValue : null,
+        priced,
       });
     }
 
     if (tokenMetas.size > 0) {
       const tokenValues = Array.from(tokenMetas.entries()).map(([address, meta]) =>
-        Prisma.sql`(${chainId}, ${address}, ${meta.symbol}, ${meta.decimals}, ${meta.name})`
+        Prisma.sql`(
+          ${chainId},
+          ${address},
+          ${meta.symbol},
+          ${meta.decimals},
+          ${meta.name},
+          ${sqlBigInt(meta.firstSeenBlock)},
+          ${meta.firstSeenAt},
+          ${false}
+        )`
       );
 
       await prisma.$executeRaw(
         Prisma.sql`
-          INSERT INTO tokens (chain_id, address, symbol, decimals, name)
+          INSERT INTO tokens (
+            chain_id,
+            address,
+            symbol,
+            decimals,
+            name,
+            first_seen_block,
+            first_seen_at,
+            verified
+          )
           VALUES ${Prisma.join(tokenValues)}
           ON CONFLICT (chain_id, address)
           DO UPDATE SET
             symbol = EXCLUDED.symbol,
             decimals = EXCLUDED.decimals,
-            name = EXCLUDED.name
+            name = EXCLUDED.name,
+            first_seen_block = COALESCE(tokens.first_seen_block, EXCLUDED.first_seen_block),
+            first_seen_at = COALESCE(tokens.first_seen_at, EXCLUDED.first_seen_at)
         `
       );
     }
@@ -337,11 +456,11 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
           ${chainId},
           ${transfer.txHash},
           ${transfer.logIndex},
-          ${current},
+          ${sqlBigInt(current)},
           ${transfer.token},
           ${transfer.from},
           ${transfer.to},
-          ${transfer.amountRaw},
+          ${sqlNumeric(transfer.amountRaw)},
           ${transfer.amountDec},
           ${Number(block.timestamp ?? 0n)}
         )`
@@ -380,16 +499,18 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
           ${chainId},
           ${swap.txHash},
           ${swap.logIndex},
-          ${current},
+          ${sqlBigInt(current)},
           ${swap.dex},
           ${swap.pool},
           ${swap.trader},
           ${swap.tokenIn},
           ${swap.tokenOut},
-          ${swap.amountInRaw},
-          ${swap.amountOutRaw},
+          ${sqlNumeric(swap.amountInRaw)},
+          ${sqlNumeric(swap.amountOutRaw)},
           ${swap.amountInDec},
           ${swap.amountOutDec},
+          ${swap.usdValue ?? null},
+          ${swap.priced},
           ${Number(block.timestamp ?? 0n)}
         )`
       );
@@ -410,6 +531,8 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
             amount_out_raw,
             amount_in_dec,
             amount_out_dec,
+            usd_value,
+            priced,
             timestamp
           )
           VALUES ${Prisma.join(swapValues)}
@@ -424,6 +547,8 @@ export async function ingestRange({ chainId, fromBlock, toBlock }: RangeInput) {
             amount_out_raw = EXCLUDED.amount_out_raw,
             amount_in_dec = EXCLUDED.amount_in_dec,
             amount_out_dec = EXCLUDED.amount_out_dec,
+            usd_value = EXCLUDED.usd_value,
+            priced = EXCLUDED.priced,
             timestamp = EXCLUDED.timestamp
         `
       );
