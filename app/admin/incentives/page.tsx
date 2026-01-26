@@ -27,6 +27,7 @@ type Incentive = {
   rewardAssetSymbol?: string | null;
   rewardAssetAddress?: string | null;
   rewardAssetChain?: string | null;
+  apy?: string | null;
   capitalRequired: string;
   timeIntensity: string;
   riskFlags: string[];
@@ -104,6 +105,7 @@ const emptyIncentiveForm = {
   rewardAssetSymbol: "",
   rewardAssetAddress: "",
   rewardAssetChain: "",
+  apy: "",
   capitalRequired: "LOW",
   timeIntensity: "PASSIVE",
   riskFlagsText: "",
@@ -178,6 +180,7 @@ export default function IncentivesAdminPage() {
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState("");
   const [customChain, setCustomChain] = useState("");
+  const apyPattern = /^\s*\d+(?:\.\d+)?\s*%?\s*(?:APY)?\s*$/i;
 
   const chainOptions = [
     "Ethereum",
@@ -327,6 +330,10 @@ export default function IncentivesAdminPage() {
   };
 
   const handleIncentiveSubmit = async () => {
+    if (incentiveForm.apy && !apyPattern.test(incentiveForm.apy)) {
+      setStatus("Invalid APY format. Use values like 12%, 12.5% APY, or 12.");
+      return;
+    }
     const payload = {
       id: incentiveForm.id,
       projectId: Number(incentiveForm.projectId),
@@ -339,6 +346,7 @@ export default function IncentivesAdminPage() {
       rewardAssetSymbol: incentiveForm.rewardAssetSymbol,
       rewardAssetAddress: incentiveForm.rewardAssetAddress,
       rewardAssetChain: incentiveForm.rewardAssetChain,
+      apy: incentiveForm.apy,
       capitalRequired: incentiveForm.capitalRequired,
       timeIntensity: incentiveForm.timeIntensity,
       riskFlags: fromCsv(incentiveForm.riskFlagsText),
@@ -714,265 +722,280 @@ export default function IncentivesAdminPage() {
                     </option>
                   ))}
                 </select>
-                <label className="form-label">Title</label>
-                <input
-                  placeholder="Title (card headline)"
-                  value={incentiveForm.title}
-                  onChange={(event) =>
-                    setIncentiveForm({ ...incentiveForm, title: event.target.value })
-                  }
-                />
-                <label className="form-label">Description</label>
-                <textarea
-                  placeholder="Description (card summary)"
-                  value={incentiveForm.description}
-                  onChange={(event) =>
-                    setIncentiveForm({ ...incentiveForm, description: event.target.value })
-                  }
-                />
-                <label className="form-label">Status</label>
-                <select
-                  value={incentiveForm.status}
-                  onChange={(event) =>
-                    setIncentiveForm({ ...incentiveForm, status: event.target.value })
-                  }
-                >
-                  <option value="EARLY">Early</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="SATURATED">Saturated</option>
-                  <option value="ENDING">Ending</option>
-                </select>
-                <label className="form-label">Incentive types</label>
-                <input
-                  placeholder="Incentive types (comma separated)"
-                  value={incentiveForm.typesText}
-                  onChange={(event) =>
-                    setIncentiveForm({ ...incentiveForm, typesText: event.target.value })
-                  }
-                />
-                <label className="form-label">DefiLlama slug</label>
-                <input
-                  placeholder="DefiLlama slug (protocol or chain)"
-                  value={incentiveForm.defillamaSlug}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      defillamaSlug: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">Reward asset type</label>
-                <select
-                  value={incentiveForm.rewardAssetType}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      rewardAssetType: event.target.value,
-                    })
-                  }
-                >
-                  <option value="TOKEN">Token</option>
-                  <option value="POINTS">Points</option>
-                  <option value="FEES">Fees</option>
-                </select>
-                <label className="form-label">Reward symbol</label>
-                <input
-                  placeholder="Reward symbol (e.g. ARB)"
-                  value={incentiveForm.rewardAssetSymbol}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      rewardAssetSymbol: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">Reward asset address</label>
-                <input
-                  placeholder="Reward asset address (0x...)"
-                  value={incentiveForm.rewardAssetAddress}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      rewardAssetAddress: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">Reward asset chain</label>
-                <input
-                  placeholder="Reward asset chain (e.g. Arbitrum)"
-                  value={incentiveForm.rewardAssetChain}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      rewardAssetChain: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">Capital required</label>
-                <select
-                  value={incentiveForm.capitalRequired}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      capitalRequired: event.target.value,
-                    })
-                  }
-                >
-                  <option value="NONE">None</option>
-                  <option value="LOW">Low</option>
-                  <option value="MED">Med</option>
-                  <option value="HIGH">High</option>
-                </select>
-                <label className="form-label">Time intensity</label>
-                <select
-                  value={incentiveForm.timeIntensity}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      timeIntensity: event.target.value,
-                    })
-                  }
-                >
-                  <option value="PASSIVE">Passive</option>
-                  <option value="SEMI">Semi</option>
-                  <option value="ACTIVE">Active</option>
-                </select>
-                <label className="form-label">Risk flags</label>
-                <input
-                  placeholder="Risk flags (comma separated, e.g. Lockup, KYC)"
-                  value={incentiveForm.riskFlagsText}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      riskFlagsText: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">Risk score</label>
-                <input
-                  placeholder="Risk score (0-10)"
-                  value={incentiveForm.riskScore}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      riskScore: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">Saturation score</label>
-                <input
-                  placeholder="Saturation score (0-100)"
-                  value={incentiveForm.saturationScore}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      saturationScore: event.target.value,
-                    })
-                  }
-                />
-                <label className="check">
+                <div className="form-section">
+                  <div className="form-section-title">Card fields</div>
+                  <label className="form-label">Title</label>
                   <input
-                    type="checkbox"
-                    checked={incentiveForm.verified}
+                    placeholder="Card headline"
+                    value={incentiveForm.title}
+                    onChange={(event) =>
+                      setIncentiveForm({ ...incentiveForm, title: event.target.value })
+                    }
+                  />
+                  <label className="form-label">Description</label>
+                  <textarea
+                    placeholder="Card summary (1-2 lines)"
+                    value={incentiveForm.description}
+                    onChange={(event) =>
+                      setIncentiveForm({ ...incentiveForm, description: event.target.value })
+                    }
+                  />
+                  <label className="form-label">Status</label>
+                  <select
+                    value={incentiveForm.status}
+                    onChange={(event) =>
+                      setIncentiveForm({ ...incentiveForm, status: event.target.value })
+                    }
+                  >
+                    <option value="EARLY">Early</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="SATURATED">Saturated</option>
+                    <option value="ENDING">Ending</option>
+                  </select>
+                  <label className="form-label">Incentive types</label>
+                  <input
+                    placeholder="Types (comma separated)"
+                    value={incentiveForm.typesText}
+                    onChange={(event) =>
+                      setIncentiveForm({ ...incentiveForm, typesText: event.target.value })
+                    }
+                  />
+                  <label className="form-label">Reward asset type</label>
+                  <select
+                    value={incentiveForm.rewardAssetType}
                     onChange={(event) =>
                       setIncentiveForm({
                         ...incentiveForm,
-                        verified: event.target.checked,
+                        rewardAssetType: event.target.value,
+                      })
+                    }
+                  >
+                    <option value="TOKEN">Token</option>
+                    <option value="POINTS">Points</option>
+                    <option value="FEES">Fees</option>
+                  </select>
+                  <label className="form-label">Reward symbol</label>
+                  <input
+                    placeholder="Reward symbol (e.g. ARB)"
+                    value={incentiveForm.rewardAssetSymbol}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        rewardAssetSymbol: event.target.value,
                       })
                     }
                   />
-                  Verified
-                </label>
-                <label className="form-label">Start date</label>
-                <input
-                  type="date"
-                  placeholder="Start date"
-                  value={incentiveForm.startAt}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      startAt: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">End date</label>
-                <input
-                  type="date"
-                  placeholder="End date"
-                  value={incentiveForm.endAt}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      endAt: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">Flow summary</label>
-                <textarea
-                  placeholder="Flow summary (card + drawer)"
-                  value={incentiveForm.flowSummary}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      flowSummary: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">Snapshot window</label>
-                <input
-                  placeholder="Snapshot window (e.g. weekly / Jan 15)"
-                  value={incentiveForm.snapshotWindow}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      snapshotWindow: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">How to participate</label>
-                <textarea
-                  placeholder="How to participate (plain language)"
-                  value={incentiveForm.howToExtract}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      howToExtract: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">X handle link</label>
-                <input
-                  placeholder="X handle link (https://x.com/...)"
-                  value={incentiveForm.xHandleUrl}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      xHandleUrl: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">Participation link</label>
-                <input
-                  placeholder="Participation link (app/bridge/DEX)"
-                  value={incentiveForm.participationUrl}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      participationUrl: event.target.value,
-                    })
-                  }
-                />
-                <label className="form-label">Status rationale</label>
-                <textarea
-                  placeholder="Status rationale (why Early/Active/etc)"
-                  value={incentiveForm.statusRationale}
-                  onChange={(event) =>
-                    setIncentiveForm({
-                      ...incentiveForm,
-                      statusRationale: event.target.value,
-                    })
-                  }
-                />
+                  <label className="form-label">Reward asset address</label>
+                  <input
+                    placeholder="Reward asset address (0x...)"
+                    value={incentiveForm.rewardAssetAddress}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        rewardAssetAddress: event.target.value,
+                      })
+                    }
+                  />
+                  <label className="form-label">Reward asset chain</label>
+                  <input
+                    placeholder="Reward asset chain"
+                    value={incentiveForm.rewardAssetChain}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        rewardAssetChain: event.target.value,
+                      })
+                    }
+                  />
+                  <label className="form-label">APY</label>
+                  <input
+                    placeholder="APY (e.g. 12%, 12.5% APY)"
+                    value={incentiveForm.apy}
+                    onChange={(event) =>
+                      setIncentiveForm({ ...incentiveForm, apy: event.target.value })
+                    }
+                  />
+                  <label className="form-label">Capital required</label>
+                  <select
+                    value={incentiveForm.capitalRequired}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        capitalRequired: event.target.value,
+                      })
+                    }
+                  >
+                    <option value="NONE">None</option>
+                    <option value="LOW">Low</option>
+                    <option value="MED">Med</option>
+                    <option value="HIGH">High</option>
+                  </select>
+                  <label className="form-label">Time intensity</label>
+                  <select
+                    value={incentiveForm.timeIntensity}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        timeIntensity: event.target.value,
+                      })
+                    }
+                  >
+                    <option value="PASSIVE">Passive</option>
+                    <option value="SEMI">Semi</option>
+                    <option value="ACTIVE">Active</option>
+                  </select>
+                  <label className="form-label">Risk flags</label>
+                  <input
+                    placeholder="Risk flags (comma separated)"
+                    value={incentiveForm.riskFlagsText}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        riskFlagsText: event.target.value,
+                      })
+                    }
+                  />
+                  <label className="form-label">Risk score</label>
+                  <input
+                    placeholder="Risk score (0-10)"
+                    value={incentiveForm.riskScore}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        riskScore: event.target.value,
+                      })
+                    }
+                  />
+                  <label className="form-label">Saturation score</label>
+                  <input
+                    placeholder="Saturation score (0-100)"
+                    value={incentiveForm.saturationScore}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        saturationScore: event.target.value,
+                      })
+                    }
+                  />
+                  <label className="form-label">Verified</label>
+                  <label className="toggle-pill">
+                    <input
+                      type="checkbox"
+                      checked={incentiveForm.verified}
+                      onChange={(event) =>
+                        setIncentiveForm({
+                          ...incentiveForm,
+                          verified: event.target.checked,
+                        })
+                      }
+                    />
+                    Verified
+                  </label>
+                  <label className="form-label">Start date</label>
+                  <input
+                    type="date"
+                    placeholder="Start date"
+                    value={incentiveForm.startAt}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        startAt: event.target.value,
+                      })
+                    }
+                  />
+                  <label className="form-label">End date</label>
+                  <input
+                    type="date"
+                    placeholder="End date"
+                    value={incentiveForm.endAt}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        endAt: event.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="form-section">
+                  <div className="form-section-title">Drawer fields</div>
+                  <label className="form-label">Flow summary</label>
+                  <textarea
+                    placeholder="Flow summary shown in drawer"
+                    value={incentiveForm.flowSummary}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        flowSummary: event.target.value,
+                      })
+                    }
+                  />
+                  <label className="form-label">Snapshot window</label>
+                  <input
+                    placeholder="Snapshot window (e.g. weekly / Jan 15)"
+                    value={incentiveForm.snapshotWindow}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        snapshotWindow: event.target.value,
+                      })
+                    }
+                  />
+                  <label className="form-label">How to participate</label>
+                  <textarea
+                    placeholder="How to participate (plain language)"
+                    value={incentiveForm.howToExtract}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        howToExtract: event.target.value,
+                      })
+                    }
+                  />
+                  <label className="form-label">Status rationale</label>
+                  <textarea
+                    placeholder="Status rationale (why Early/Active/etc)"
+                    value={incentiveForm.statusRationale}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        statusRationale: event.target.value,
+                      })
+                    }
+                  />
+                  <label className="form-label">X handle link</label>
+                  <input
+                    placeholder="X handle link (https://x.com/...)"
+                    value={incentiveForm.xHandleUrl}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        xHandleUrl: event.target.value,
+                      })
+                    }
+                  />
+                  <label className="form-label">Participation link</label>
+                  <input
+                    placeholder="Participation link (app/bridge/DEX)"
+                    value={incentiveForm.participationUrl}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        participationUrl: event.target.value,
+                      })
+                    }
+                  />
+                  <label className="form-label">DefiLlama slug</label>
+                  <input
+                    placeholder="DefiLlama slug (protocol or chain)"
+                    value={incentiveForm.defillamaSlug}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        defillamaSlug: event.target.value,
+                      })
+                    }
+                  />
+                </div>
                 <div className="admin-actions">
                   <button className="btn" onClick={handleIncentiveSubmit}>
                     {incentiveForm.id ? "Save edits" : "Add incentive"}
@@ -1013,6 +1036,7 @@ export default function IncentivesAdminPage() {
                             rewardAssetSymbol: incentive.rewardAssetSymbol ?? "",
                             rewardAssetAddress: incentive.rewardAssetAddress ?? "",
                             rewardAssetChain: incentive.rewardAssetChain ?? "",
+                            apy: incentive.apy ?? "",
                             capitalRequired: incentive.capitalRequired,
                             timeIntensity: incentive.timeIntensity,
                             riskFlagsText: toCsv(incentive.riskFlags),

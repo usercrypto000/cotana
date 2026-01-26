@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { formatRewardLabel, isExternalUrl } from "./utils";
 
 type IncentiveRecord = {
   id: number;
@@ -10,9 +11,11 @@ type IncentiveRecord = {
   rewardAssetSymbol?: string | null;
   rewardAssetChain?: string | null;
   rewardAssets?: string | null;
+  apy?: string | null;
   capitalRequired: string;
   timeIntensity: string;
   riskFlags: string[];
+  riskScore?: number | null;
   saturationScore?: number | null;
   title?: string | null;
   description?: string | null;
@@ -129,6 +132,7 @@ export default function IncentivesRadarPage() {
   const [availableChains, setAvailableChains] = useState<string[]>([]);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [error, setError] = useState<string | null>(null);
+  const [headerSolid, setHeaderSolid] = useState(false);
 
   const drawerIncentive = selectedDetail ?? selected;
   const otherChainCount = useMemo(() => {
@@ -147,6 +151,9 @@ export default function IncentivesRadarPage() {
         ? "Points"
         : drawerIncentive.rewardAssetSymbol ?? "Reward")
     : "";
+  const drawerSummary = drawerIncentive?.description?.trim() || "N/A";
+  const linkProps = (url: string) =>
+    isExternalUrl(url) ? { target: "_blank", rel: "noopener noreferrer" } : {};
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(search), 300);
@@ -161,6 +168,13 @@ export default function IncentivesRadarPage() {
     const nextTheme = stored ?? "light";
     setTheme(nextTheme);
     document.documentElement.dataset.theme = nextTheme;
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => setHeaderSolid(window.scrollY > 10);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
@@ -274,7 +288,7 @@ export default function IncentivesRadarPage() {
 
   return (
     <div className="app-shell">
-      <header className="topbar topbar-logo-left">
+      <header className={`topbar topbar-logo-left ${headerSolid ? "topbar-solid" : "topbar-transparent"}`}>
         <div className="topbar-logo">
           <span className="logo-text">Cotana</span>
         </div>
@@ -296,13 +310,16 @@ export default function IncentivesRadarPage() {
 
       <div className="shell-body no-sidebar">
         <main className="content incentives-page">
-          <div className="tracker-header incentives-header">
-            <h1 className="tracker-title">Incentives Radar</h1>
-            <div className="tracker-status">
-              High-signal view of incentive flows across DeFi. Filters default to
-              cut noise and surface active programs.
+          <section className="hero">
+            <div className="hero-inner">
+              <div className="hero-brand">Cotana</div>
+              <h1 className="hero-title">Incentives Radar</h1>
+              <p className="hero-subtitle">
+                High-signal view of incentive flows across DeFi. Filters default to
+                cut noise and surface active programs.
+              </p>
             </div>
-          </div>
+          </section>
 
           <section className="filters-card">
             <div className="filters-row">
@@ -440,37 +457,45 @@ export default function IncentivesRadarPage() {
                 const otherCount = incentive.project.chains.length - tier1.length;
                 const statusLabel = formatEnum(incentive.status);
                 const statusClass = incentive.status.toLowerCase();
-                const rewardAsset =
-                  incentive.rewardAssetSymbol && incentive.rewardAssetType !== "POINTS"
-                    ? incentive.rewardAssetSymbol
-                    : incentive.rewardAssetType === "POINTS"
-                    ? "Points"
-                    : incentive.rewardAssetSymbol ?? "Reward";
+                const rewardLabel = formatRewardLabel(
+                  incentive.rewardAssetType,
+                  incentive.rewardAssetSymbol
+                );
                 const saturation = incentive.saturationScore ?? 0;
                 return (
                   <article className="incentive-card" key={incentive.id}>
                     <div className="incentive-head">
-                      <div>
-                        {incentive.project.logoUrl ? (
-                          <img
-                            className="project-logo"
-                            src={incentive.project.logoUrl}
-                            alt={`${incentive.project.name} logo`}
-                          />
-                        ) : null}
-                        <div className="incentive-title">
-                          {incentive.title ?? incentive.project.name}
+                      <div className="incentive-head-left">
+                        <div className="title-row">
+                          {incentive.project.logoUrl ? (
+                            <img
+                              className="project-logo card-logo"
+                              src={incentive.project.logoUrl}
+                              alt={`${incentive.project.name} logo`}
+                            />
+                          ) : (
+                            <div className="project-logo card-logo placeholder" aria-hidden="true" />
+                          )}
+                          <div className="incentive-title">
+                            {incentive.project.name}
+                          </div>
                         </div>
                         {incentive.title ? (
-                          <div className="small-note">{incentive.project.name}</div>
+                          <div className="incentive-subtitle">{incentive.title}</div>
                         ) : null}
-                        <div className="incentive-desc">
-                          {incentive.description ??
-                            incentive.project.description ??
-                            "No description provided."}
-                        </div>
                       </div>
-                      <span className={`status-chip ${statusClass}`}>{statusLabel}</span>
+                      <div className="status-stack">
+                        {["early", "active"].includes(statusClass) ? (
+                          <span className={`status-ribbon ${statusClass}`}>
+                            {statusLabel}
+                          </span>
+                        ) : (
+                          <span className={`status-chip ${statusClass}`}>{statusLabel}</span>
+                        )}
+                        {incentive.apy ? (
+                          <span className="apy-pill">{incentive.apy}</span>
+                        ) : null}
+                      </div>
                     </div>
                     <div className="chain-row">
                       {tier1.map((chain) => (
@@ -491,10 +516,8 @@ export default function IncentivesRadarPage() {
                     </div>
                     <div className="incentive-meta">
                       <div>
-                        <div className="meta-label">Reward assets</div>
-                        <div className="meta-value">
-                          {incentive.rewardAssets ?? rewardAsset}
-                        </div>
+                        <div className="meta-label">Reward</div>
+                        <div className="meta-value">{rewardLabel}</div>
                       </div>
                       <div>
                         <div className="meta-label">Capital required</div>
@@ -503,17 +526,21 @@ export default function IncentivesRadarPage() {
                         </div>
                       </div>
                       <div>
-                        <div className="meta-label">Raise</div>
+                        <div className="meta-label">Time intensity</div>
                         <div className="meta-value">
-                          {incentive.project.raise ?? "N/A"}
+                          {formatEnum(incentive.timeIntensity)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="meta-label">Risk score</div>
+                        <div className="meta-value">
+                          {typeof incentive.riskScore === "number"
+                            ? `${incentive.riskScore}/10`
+                            : "N/A"}
                         </div>
                       </div>
                     </div>
                     <div className="incentive-badges">
-                      <span className="badge">
-                        {formatEnum(incentive.capitalRequired)} capital
-                      </span>
-                      <span className="badge">{formatEnum(incentive.timeIntensity)}</span>
                       {incentive.riskFlags.map((flag) => (
                         <span className="badge danger" key={flag}>
                           {flag}
@@ -548,7 +575,7 @@ export default function IncentivesRadarPage() {
           </section>
 
           <footer className="page-footer">
-            <span>© Cotana 2026</span>
+            <span>Copyright Cotana 2026 · Built by @tiCkr0x</span>
           </footer>
         </main>
 
@@ -556,18 +583,26 @@ export default function IncentivesRadarPage() {
           <div className="modal-backdrop" onClick={() => setDrawerOpen(false)}>
             <aside className="drawer modal" onClick={(event) => event.stopPropagation()}>
               <div className="drawer-head">
-                <div>
-                  {drawerIncentive.project.logoUrl ? (
-                    <img
-                      className="project-logo"
-                      src={drawerIncentive.project.logoUrl}
-                      alt={`${drawerIncentive.project.name} logo`}
-                    />
-                  ) : null}
-                  <div className="drawer-title">{drawerIncentive.project.name}</div>
-                  <div className="drawer-sub">
-                    {drawerIncentive.flowSummary ?? "N/A"}
+                <div className="drawer-head-left">
+                  <div className="title-row">
+                    {drawerIncentive.project.logoUrl ? (
+                      <img
+                        className="project-logo drawer-logo"
+                        src={drawerIncentive.project.logoUrl}
+                        alt={`${drawerIncentive.project.name} logo`}
+                      />
+                    ) : (
+                      <div
+                        className="project-logo drawer-logo placeholder"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <div className="drawer-title">
+                      {drawerIncentive.title ?? drawerIncentive.project.name}
+                    </div>
                   </div>
+                  <div className="drawer-meta">{drawerIncentive.project.name}</div>
+                  <div className="drawer-sub">{drawerSummary}</div>
                 </div>
                 <button className="drawer-close" onClick={() => setDrawerOpen(false)}>
                   Close
@@ -627,7 +662,11 @@ export default function IncentivesRadarPage() {
                   <div className="data-age-item">
                     <span>X handle</span>
                     {drawerIncentive.xHandleUrl ? (
-                      <a className="link-card secondary" href={drawerIncentive.xHandleUrl}>
+                      <a
+                        className="link-card secondary"
+                        href={drawerIncentive.xHandleUrl}
+                        {...linkProps(drawerIncentive.xHandleUrl)}
+                      >
                         View
                       </a>
                     ) : (
@@ -663,17 +702,37 @@ export default function IncentivesRadarPage() {
                 </div>
               </div>
               <div className="drawer-section">
-                <div className="drawer-label">Participation links</div>
+                <div className="drawer-label">Status rationale</div>
+                <div className="drawer-text">
+                  {drawerIncentive.statusRationale ?? "N/A"}
+                </div>
+              </div>
+              <div className="drawer-section">
+                <div className="drawer-label">Links</div>
                 <div className="link-grid">
                   {(drawerIncentive.links ?? []).length === 0 ? (
                     <div className="small-note">N/A</div>
                   ) : (
                     drawerIncentive.links?.map((link) => (
-                      <a className="link-card" key={link.url} href={link.url}>
+                      <a
+                        className="link-card"
+                        key={link.url}
+                        href={link.url}
+                        {...linkProps(link.url)}
+                      >
                         {link.label}
                       </a>
                     ))
                   )}
+                  {drawerIncentive.participationUrl ? (
+                    <a
+                      className="link-card"
+                      href={drawerIncentive.participationUrl}
+                      {...linkProps(drawerIncentive.participationUrl)}
+                    >
+                      Participation link
+                    </a>
+                  ) : null}
                 </div>
               </div>
               <div className="drawer-section">
@@ -683,7 +742,12 @@ export default function IncentivesRadarPage() {
                     <div className="small-note">N/A</div>
                   ) : (
                     drawerIncentive.proofs?.map((link) => (
-                      <a className="link-card secondary" key={link.url} href={link.url}>
+                      <a
+                        className="link-card secondary"
+                        key={link.url}
+                        href={link.url}
+                        {...linkProps(link.url)}
+                      >
                         {link.label}
                       </a>
                     ))

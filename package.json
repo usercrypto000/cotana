@@ -14,7 +14,8 @@
     "alerts:x": "tsx scripts/x-keyword-alerts.ts",
     "alerts:onchain": "tsx scripts/onchain-alerts.ts",
     "alerts:github": "tsx scripts/github-alerts.ts",
-    "metrics:defillama": "tsx scripts/defillama-metrics.ts"
+    "metrics:defillama": "tsx scripts/defillama-metrics.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

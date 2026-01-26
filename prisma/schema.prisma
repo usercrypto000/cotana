@@ -279,6 +279,7 @@ model Incentive {
   rewardAssets     String?          @map("reward_assets")
   rewardAssetAddress String?        @map("reward_asset_address")
   rewardAssetChain  String?         @map("reward_asset_chain")
+  apy              String?          @map("apy")
   capitalRequired  CapitalRequirement @map("capital_required")
   timeIntensity    TimeIntensity    @map("time_intensity")
   riskFlags        String[]

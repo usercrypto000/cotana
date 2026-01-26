@@ -53,6 +53,7 @@ export async function POST(req: Request) {
           typeof body?.rewardAssetAddress === "string" ? body.rewardAssetAddress.trim() : null,
         rewardAssetChain:
           typeof body?.rewardAssetChain === "string" ? body.rewardAssetChain.trim() : null,
+        apy: typeof body?.apy === "string" ? body.apy.trim() : null,
         rewardAssets:
           typeof body?.rewardAssets === "string" ? body.rewardAssets.trim() : null,
         capitalRequired: capitalRequired as any,
@@ -134,6 +135,7 @@ export async function PUT(req: Request) {
           typeof body?.rewardAssetAddress === "string" ? body.rewardAssetAddress.trim() : null,
         rewardAssetChain:
           typeof body?.rewardAssetChain === "string" ? body.rewardAssetChain.trim() : null,
+        apy: typeof body?.apy === "string" ? body.apy.trim() : null,
         rewardAssets:
           typeof body?.rewardAssets === "string" ? body.rewardAssets.trim() : null,
         capitalRequired: capitalRequired as any,
