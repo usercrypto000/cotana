@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
 import { formatRewardLabel, isExternalUrl } from "./utils";
 
 type IncentiveRecord = {
@@ -12,6 +13,8 @@ type IncentiveRecord = {
   rewardAssetChain?: string | null;
   rewardAssets?: string | null;
   apy?: string | null;
+  verified?: boolean;
+  perpsSlug?: string | null;
   capitalRequired: string;
   timeIntensity: string;
   riskFlags: string[];
@@ -38,7 +41,7 @@ type IncentiveRecord = {
   events?: { title: string; detail?: string | null; effectiveAt: string }[] | null;
   links?: { label: string; url: string }[] | null;
   proofs?: { label: string; url: string }[] | null;
-  metrics?: { tvlUsd?: string | null } | null;
+  metrics?: { tvlUsd?: string | null; volumeUsd30d?: string | null } | null;
 };
 
 const tier1Chains = ["Ethereum", "Arbitrum", "Optimism", "Base", "Solana"];
@@ -74,7 +77,6 @@ const filters = {
   ],
   capital: ["None", "Low", "Med", "High"],
   risk: ["Low", "Med", "High", "Unknown"],
-  saturation: ["Early", "Active", "Saturated", "Ending"],
 };
 
 const formatEnum = (value: string) =>
@@ -111,19 +113,19 @@ const formatUsd = (value?: string | null) => {
   });
   return `$${compact}`;
 };
+const apiUrl = (path: string) => new URL(path, window.location.origin).toString();
+const apiFetch = (path: string, init?: RequestInit) => fetch(apiUrl(path), init);
 
 export default function IncentivesRadarPage() {
   const [incentives, setIncentives] = useState<IncentiveRecord[]>([]);
   const [selected, setSelected] = useState<IncentiveRecord | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<IncentiveRecord | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const [typeFilter, setTypeFilter] = useState("");
   const [chainFilter, setChainFilter] = useState("");
   const [capitalFilter, setCapitalFilter] = useState("");
   const [riskFilter, setRiskFilter] = useState("");
-  const [saturationFilter, setSaturationFilter] = useState("");
   const [earlyOnly, setEarlyOnly] = useState(false);
   const [sort, setSort] = useState("fresh");
   const [search, setSearch] = useState("");
@@ -133,8 +135,15 @@ export default function IncentivesRadarPage() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [error, setError] = useState<string | null>(null);
   const [headerSolid, setHeaderSolid] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const showMindshare =
+    process.env.NEXT_PUBLIC_ENABLE_MINDSHARE_ARENA === "true" ||
+    process.env.NODE_ENV !== "production";
+  const [page, setPage] = useState(1);
+  const pageSize = 12;
 
   const drawerIncentive = selectedDetail ?? selected;
+  const drawerIsPerps = Boolean(drawerIncentive?.perpsSlug?.trim());
   const otherChainCount = useMemo(() => {
     if (!drawerIncentive) {
       return 0;
@@ -183,7 +192,6 @@ export default function IncentivesRadarPage() {
     setChainFilter(params.get("chain") ?? "");
     setCapitalFilter(params.get("capital") ?? "");
     setRiskFilter(params.get("risk") ?? "");
-    setSaturationFilter(params.get("saturation") ?? "");
     setEarlyOnly(params.get("earlyOnly") === "true");
     setSort(params.get("sort") ?? "fresh");
     setSearch(params.get("q") ?? "");
@@ -196,7 +204,6 @@ export default function IncentivesRadarPage() {
     if (chainFilter) params.set("chain", chainFilter);
     if (capitalFilter) params.set("capital", capitalFilter);
     if (riskFilter) params.set("risk", riskFilter);
-    if (saturationFilter) params.set("saturation", saturationFilter);
     if (earlyOnly) params.set("earlyOnly", "true");
     if (sort) params.set("sort", sort);
     if (debouncedSearch) params.set("q", debouncedSearch);
@@ -206,11 +213,14 @@ export default function IncentivesRadarPage() {
     chainFilter,
     capitalFilter,
     riskFilter,
-    saturationFilter,
     earlyOnly,
     sort,
     debouncedSearch,
   ]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [queryString]);
 
   useEffect(() => {
     if (!initialized) {
@@ -220,40 +230,73 @@ export default function IncentivesRadarPage() {
     window.history.replaceState(null, "", nextUrl);
   }, [queryString, initialized]);
 
+  const cacheKey = useMemo(
+    () => `incentives-cache:${queryString || "all"}`,
+    [queryString]
+  );
+  const cachedData = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem(cacheKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }, [cacheKey]);
+
+  const fetcher = async (url: string) => {
+    const res = await apiFetch(url);
+    if (!res.ok) {
+      throw new Error("Failed to load incentives");
+    }
+    return res.json();
+  };
+
+  const { data, error: swrError, isLoading } = useSWR(
+    initialized ? `/api/incentives?${queryString}` : null,
+    fetcher,
+    {
+      fallbackData: cachedData ?? undefined,
+      revalidateOnFocus: true,
+    }
+  );
+
   useEffect(() => {
-    if (!initialized) {
+    const items = (data?.items ?? []) as IncentiveRecord[];
+    setIncentives(items);
+    const chainSet = new Set<string>();
+    items.forEach((item) => {
+      item.project.chains.forEach((chain) => chainSet.add(chain));
+    });
+    setAvailableChains(Array.from(chainSet).sort());
+    const nextSelected =
+      items.find((item) => item.id === selected?.id) ?? items[0] ?? null;
+    setSelected(nextSelected);
+    setSelectedDetail(null);
+
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(cacheKey, JSON.stringify({ items }));
+      } catch {
+        // ignore storage failures
+      }
+    }
+  }, [data, cacheKey]);
+
+  useEffect(() => {
+    if (!swrError) {
+      setError(null);
       return;
     }
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`/api/incentives?${queryString}`);
-        if (!res.ok) {
-          throw new Error("Failed to load incentives");
-        }
-        const data = await res.json();
-        const items = (data.items ?? []) as IncentiveRecord[];
-        setIncentives(items);
-        const chainSet = new Set<string>();
-        items.forEach((item) => {
-          item.project.chains.forEach((chain) => chainSet.add(chain));
-        });
-        setAvailableChains(Array.from(chainSet).sort());
-        const nextSelected =
-          items.find((item) => item.id === selected?.id) ?? items[0] ?? null;
-        setSelected(nextSelected);
-        setSelectedDetail(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load incentives");
-        setIncentives([]);
-        setAvailableChains([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    void load();
-  }, [queryString, initialized]);
+    setError(swrError instanceof Error ? swrError.message : "Failed to load incentives");
+  }, [swrError]);
+
+  const loading = isLoading && incentives.length === 0;
+  const totalPages = Math.max(1, Math.ceil(incentives.length / pageSize));
+  const pagedIncentives = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return incentives.slice(start, start + pageSize);
+  }, [incentives, page]);
 
   useEffect(() => {
     if (!selected) {
@@ -261,7 +304,7 @@ export default function IncentivesRadarPage() {
       return;
     }
     const loadDetail = async () => {
-      const res = await fetch(`/api/incentives/${selected.id}`);
+      const res = await apiFetch(`/api/incentives/${selected.id}`);
       const data = await res.json();
       setSelectedDetail(data.item ?? selected);
     };
@@ -273,7 +316,6 @@ export default function IncentivesRadarPage() {
     setChainFilter("");
     setCapitalFilter("");
     setRiskFilter("");
-    setSaturationFilter("");
     setEarlyOnly(false);
     setSort("fresh");
     setSearch("");
@@ -293,6 +335,11 @@ export default function IncentivesRadarPage() {
           <span className="logo-text">Cotana</span>
         </div>
         <div className="topbar-actions">
+          {showMindshare ? (
+            <a className="btn secondary" href="/mindshare-arena">
+              Mindshare Arena
+            </a>
+          ) : null}
           <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
             {theme === "light" ? (
               <svg className="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -313,15 +360,24 @@ export default function IncentivesRadarPage() {
           <section className="hero">
             <div className="hero-inner">
               <div className="hero-brand">Cotana</div>
-              <h1 className="hero-title">Incentives Radar</h1>
+              <h1 className="hero-title">Alpha Hub</h1>
               <p className="hero-subtitle">
-                High-signal view of incentive flows across DeFi. Filters default to
-                cut noise and surface active programs.
+                Aggregating high-signal campaigns and reward opportunities across DeFi into a single hub.
               </p>
             </div>
           </section>
 
-          <section className="filters-card">
+          <section className={`filters-card${filtersOpen ? "" : " collapsed"}`}>
+            <div className="filters-header">
+              <span className="filters-title">Filters</span>
+              <button
+                className="btn secondary"
+                onClick={() => setFiltersOpen((prev) => !prev)}
+              >
+                {filtersOpen ? "Hide filters" : "Show filters"}
+              </button>
+            </div>
+            <div className="filters-body">
             <div className="filters-row">
               <div className="filter-group">
                 <label>Incentive type</label>
@@ -385,21 +441,6 @@ export default function IncentivesRadarPage() {
                   ))}
                 </select>
               </div>
-              <div className="filter-group">
-                <label>Saturation</label>
-                <select
-                  className="filter-select"
-                  value={saturationFilter}
-                  onChange={(event) => setSaturationFilter(event.target.value)}
-                >
-                  <option value="">All</option>
-                  {filters.saturation.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </div>
               <label className="toggle-pill">
                 <input
                   type="checkbox"
@@ -440,17 +481,16 @@ export default function IncentivesRadarPage() {
                 <button className="btn">Save view</button>
               </div>
             </div>
+            </div>
           </section>
 
           <section className="incentive-grid">
-            {loading ? (
-              <div className="small-note">Loading incentives...</div>
-            ) : error ? (
+            {loading && incentives.length === 0 ? null : error ? (
               <div className="small-note">{error}</div>
             ) : incentives.length === 0 ? (
               <div className="small-note">No incentives match your filters.</div>
             ) : (
-              incentives.map((incentive) => {
+              pagedIncentives.map((incentive) => {
                 const tier1 = incentive.project.chains.filter((chain) =>
                   tier1Chains.includes(chain)
                 );
@@ -461,7 +501,6 @@ export default function IncentivesRadarPage() {
                   incentive.rewardAssetType,
                   incentive.rewardAssetSymbol
                 );
-                const saturation = incentive.saturationScore ?? 0;
                 return (
                   <article className="incentive-card" key={incentive.id}>
                     <div className="incentive-head">
@@ -474,14 +513,32 @@ export default function IncentivesRadarPage() {
                               alt={`${incentive.project.name} logo`}
                             />
                           ) : (
-                            <div className="project-logo card-logo placeholder" aria-hidden="true" />
+                            <div className="project-logo card-logo placeholder" aria-hidden="true">
+                              <span className="logo-placeholder-text">
+                                {incentive.project.name?.slice(0, 1).toUpperCase() ?? "?"}
+                              </span>
+                            </div>
                           )}
                           <div className="incentive-title">
-                            {incentive.project.name}
+                            <span>{incentive.project.name}</span>
+                            {incentive.verified ? (
+                              <span className="verified-badge" aria-label="Verified">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                  <path d="M12 2.5c5.2 0 9.5 4.3 9.5 9.5s-4.3 9.5-9.5 9.5S2.5 17.2 2.5 12 6.8 2.5 12 2.5z" />
+                                  <path d="M8.6 12.2l2.3 2.3 4.5-4.5" />
+                                </svg>
+                                Verified
+                              </span>
+                            ) : null}
                           </div>
                         </div>
                         {incentive.title ? (
-                          <div className="incentive-subtitle">{incentive.title}</div>
+                          <div className="incentive-subtitle-row">
+                            <span className="incentive-subtitle">{incentive.title}</span>
+                            {incentive.apy ? (
+                              <span className="apy-pill inline">{incentive.apy}</span>
+                            ) : null}
+                          </div>
                         ) : null}
                       </div>
                       <div className="status-stack">
@@ -492,9 +549,6 @@ export default function IncentivesRadarPage() {
                         ) : (
                           <span className={`status-chip ${statusClass}`}>{statusLabel}</span>
                         )}
-                        {incentive.apy ? (
-                          <span className="apy-pill">{incentive.apy}</span>
-                        ) : null}
                       </div>
                     </div>
                     <div className="chain-row">
@@ -547,13 +601,6 @@ export default function IncentivesRadarPage() {
                         </span>
                       ))}
                     </div>
-                    <div className="saturation-row">
-                      <div className="meta-label">Saturation</div>
-                      <div className="meter">
-                        <span style={{ width: `${saturation}%` }} />
-                      </div>
-                      <div className="meta-value">{saturation}%</div>
-                    </div>
                     <div className="incentive-footer">
                       <span className="small-note">
                         Updated {formatTimeAgo(incentive.lastUpdatedAt)}
@@ -574,8 +621,30 @@ export default function IncentivesRadarPage() {
             )}
           </section>
 
+          {incentives.length > pageSize ? (
+            <div className="pagination incentive-pagination">
+              <button
+                className="btn secondary"
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={page === 1}
+              >
+                Prev
+              </button>
+              <span className="pagination-info">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                className="btn secondary"
+                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={page === totalPages}
+              >
+                Next
+              </button>
+            </div>
+          ) : null}
+
           <footer className="page-footer">
-            <span>Copyright Cotana 2026 · Built by @tiCkr0x</span>
+            <span>Copyright Cotana 2026 - Built by @tiCkr0x</span>
           </footer>
         </main>
 
@@ -595,7 +664,11 @@ export default function IncentivesRadarPage() {
                       <div
                         className="project-logo drawer-logo placeholder"
                         aria-hidden="true"
-                      />
+                      >
+                        <span className="logo-placeholder-text">
+                          {drawerIncentive.project.name?.slice(0, 1).toUpperCase() ?? "?"}
+                        </span>
+                      </div>
                     )}
                     <div className="drawer-title">
                       {drawerIncentive.title ?? drawerIncentive.project.name}
@@ -656,8 +729,12 @@ export default function IncentivesRadarPage() {
                     <strong>{drawerRewardAssets || "N/A"}</strong>
                   </div>
                   <div className="data-age-item">
-                    <span>TVL</span>
-                    <strong>{formatUsd(drawerIncentive.metrics?.tvlUsd)}</strong>
+                    <span>{drawerIsPerps ? "Perps volume (30d)" : "TVL"}</span>
+                    <strong>
+                      {drawerIsPerps
+                        ? formatUsd(drawerIncentive.metrics?.volumeUsd30d)
+                        : formatUsd(drawerIncentive.metrics?.tvlUsd)}
+                    </strong>
                   </div>
                   <div className="data-age-item">
                     <span>X handle</span>
@@ -766,3 +843,4 @@ export default function IncentivesRadarPage() {
     </div>
   );
 }
+

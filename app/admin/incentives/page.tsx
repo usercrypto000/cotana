@@ -9,6 +9,7 @@ type Project = {
   description?: string | null;
   raise?: string | null;
   archived?: boolean | null;
+  archivedAt?: string | null;
   website?: string | null;
   logoUrl?: string | null;
   chains: string[];
@@ -23,6 +24,7 @@ type Incentive = {
   status: string;
   types: string[];
   defillamaSlug?: string | null;
+  perpsSlug?: string | null;
   rewardAssetType: string;
   rewardAssetSymbol?: string | null;
   rewardAssetAddress?: string | null;
@@ -78,6 +80,9 @@ type IncentiveMetric = {
   id: number;
   incentiveId: number;
   tvlUsd?: string | null;
+  volumeUsd30d?: string | null;
+  uaw7d?: number | null;
+  txCount7d?: number | null;
 };
 
 const emptyProjectForm = {
@@ -101,6 +106,7 @@ const emptyIncentiveForm = {
   status: "EARLY",
   typesText: "",
   defillamaSlug: "",
+  perpsSlug: "",
   rewardAssetType: "POINTS",
   rewardAssetSymbol: "",
   rewardAssetAddress: "",
@@ -154,6 +160,9 @@ const emptyMetricForm = {
   id: null as number | null,
   incentiveId: "",
   tvlUsd: "",
+  volumeUsd30d: "",
+  uaw7d: "",
+  txCount7d: "",
 };
 
 const toCsv = (items: string[]) => items.join(", ");
@@ -162,6 +171,26 @@ const fromCsv = (value: string) =>
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+const apiUrl = (path: string) => new URL(path, window.location.origin).toString();
+const apiFetch = (path: string, init?: RequestInit, timeoutMs = 15000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(apiUrl(path), {
+    credentials: "include",
+    cache: "no-store",
+    ...init,
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timer));
+};
+const parseError = async (res: Response) => {
+  const text = await res.text();
+  try {
+    const data = text ? JSON.parse(text) : null;
+    return data?.error ?? data?.detail ?? text ?? `Request failed: ${res.status}`;
+  } catch {
+    return text || `Request failed: ${res.status}`;
+  }
+};
 
 export default function IncentivesAdminPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -179,7 +208,23 @@ export default function IncentivesAdminPage() {
   const [status, setStatus] = useState("Idle");
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState("");
+  const [syncingSaturation, setSyncingSaturation] = useState(false);
   const [customChain, setCustomChain] = useState("");
+  const [projectPage, setProjectPage] = useState(1);
+  const [incentivePage, setIncentivePage] = useState(1);
+  const adminPageSize = 8;
+  const incentiveTypeOptions = [
+    "Points",
+    "Airdrop",
+    "Yield",
+    "Volume",
+    "Governance",
+    "Referral",
+    "NFT Rewards",
+    "Testnet Incentives",
+    "Staking",
+    "Validator delegation",
+  ];
   const apyPattern = /^\s*\d+(?:\.\d+)?\s*%?\s*(?:APY)?\s*$/i;
 
   const chainOptions = [
@@ -231,7 +276,7 @@ export default function IncentivesAdminPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/uploads", {
+      const res = await apiFetch("/api/uploads", {
         method: "POST",
         body: formData,
       });
@@ -254,52 +299,98 @@ export default function IncentivesAdminPage() {
     () => projects.map((project) => ({ id: project.id, label: project.name })),
     [projects]
   );
+  const archivedProjects = useMemo(
+    () => projects.filter((project) => project.archived),
+    [projects]
+  );
+
+  const totalProjectPages = Math.max(1, Math.ceil(projects.length / adminPageSize));
+  const totalIncentivePages = Math.max(1, Math.ceil(incentives.length / adminPageSize));
+  const pagedProjects = useMemo(() => {
+    const start = (projectPage - 1) * adminPageSize;
+    return projects.slice(start, start + adminPageSize);
+  }, [projects, projectPage]);
+  const pagedIncentives = useMemo(() => {
+    const start = (incentivePage - 1) * adminPageSize;
+    return incentives.slice(start, start + adminPageSize);
+  }, [incentives, incentivePage]);
 
   const refreshAll = async () => {
     setStatus("Loading...");
-    const [
-      projectRes,
-      incentiveRes,
-      incentiveLinkRes,
-      projectLinkRes,
-      eventRes,
-      proofRes,
-      metricRes,
-    ] =
-      await Promise.all([
-        fetch("/api/admin/projects"),
-        fetch("/api/admin/incentives"),
-        fetch("/api/admin/incentive-links"),
-        fetch("/api/admin/project-links"),
-        fetch("/api/admin/incentive-events"),
-        fetch("/api/admin/incentive-proofs"),
-        fetch("/api/admin/incentive-metrics"),
+    const fetchJson = async (url: string) => {
+      const res = await apiFetch(url, undefined, 15000);
+      const text = await res.text();
+      let data: any = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = null;
+      }
+      if (!res.ok) {
+        const message = data?.error ?? data?.detail ?? text ?? `Request failed: ${res.status}`;
+        throw new Error(message);
+      }
+      return data ?? {};
+    };
+
+    try {
+      const [
+        projectData,
+        incentiveData,
+        incentiveLinkData,
+        projectLinkData,
+        eventData,
+        proofData,
+        metricData,
+      ] = await Promise.all([
+        fetchJson("/api/admin/projects"),
+        fetchJson("/api/admin/incentives"),
+        fetchJson("/api/admin/incentive-links"),
+        fetchJson("/api/admin/project-links"),
+        fetchJson("/api/admin/incentive-events"),
+        fetchJson("/api/admin/incentive-proofs"),
+        fetchJson("/api/admin/incentive-metrics"),
       ]);
-    const [
-      projectData,
-      incentiveData,
-      incentiveLinkData,
-      projectLinkData,
-      eventData,
-      proofData,
-      metricData,
-    ] =
-      await Promise.all([
-        projectRes.json(),
-        incentiveRes.json(),
-        incentiveLinkRes.json(),
-        projectLinkRes.json(),
-        eventRes.json(),
-        proofRes.json(),
-        metricRes.json(),
-      ]);
-    setProjects(projectData.items ?? []);
-    setIncentives(incentiveData.items ?? []);
-    setLinks([...(projectLinkData.items ?? []), ...(incentiveLinkData.items ?? [])]);
-    setEvents(eventData.items ?? []);
-    setProofs(proofData.items ?? []);
-    setMetrics(metricData.items ?? []);
-    setStatus("Ready");
+
+      setProjects(projectData.items ?? []);
+      setIncentives(incentiveData.items ?? []);
+      setLinks([...(projectLinkData.items ?? []), ...(incentiveLinkData.items ?? [])]);
+      setEvents(eventData.items ?? []);
+      setProofs(proofData.items ?? []);
+      setMetrics(metricData.items ?? []);
+      setProjectPage(1);
+      setIncentivePage(1);
+      setStatus("Ready");
+    } catch (err) {
+      setStatus(err instanceof Error ? `Load failed: ${err.message}` : "Load failed");
+    }
+  };
+
+  const restoreProject = async (project: Project) => {
+    await apiFetch("/api/admin/projects", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: project.id,
+        name: project.name,
+        slug: project.slug,
+        description: project.description ?? "",
+        raise: project.raise ?? "",
+        website: project.website ?? "",
+        logoUrl: project.logoUrl ?? "",
+        chains: project.chains ?? [],
+        tags: project.tags ?? [],
+        archived: false,
+      }),
+    });
+  };
+
+  const deleteProject = async (project: Project) => {
+    await apiFetch("/api/admin/projects", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: project.id }),
+    });
   };
 
   useEffect(() => {
@@ -307,6 +398,7 @@ export default function IncentivesAdminPage() {
   }, []);
 
   const handleProjectSubmit = async () => {
+    setStatus(projectForm.id ? "Updating project..." : "Saving project...");
     const payload = {
       id: projectForm.id,
       name: projectForm.name,
@@ -320,13 +412,25 @@ export default function IncentivesAdminPage() {
       tags: fromCsv(projectForm.tagsText),
     };
     const method = projectForm.id ? "PUT" : "POST";
-    await fetch("/api/admin/projects", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    setProjectForm(emptyProjectForm);
-    await refreshAll();
+    try {
+      const res = await apiFetch("/api/admin/projects", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Auth required. Refresh the page and re-enter credentials.");
+        }
+        throw new Error(await parseError(res));
+      }
+      setProjectForm(emptyProjectForm);
+      await refreshAll();
+    } catch (err) {
+      setStatus(
+        err instanceof Error ? `Project save failed: ${err.message}` : "Project save failed"
+      );
+    }
   };
 
   const handleIncentiveSubmit = async () => {
@@ -334,6 +438,7 @@ export default function IncentivesAdminPage() {
       setStatus("Invalid APY format. Use values like 12%, 12.5% APY, or 12.");
       return;
     }
+    setStatus(incentiveForm.id ? "Updating incentive..." : "Saving incentive...");
     const payload = {
       id: incentiveForm.id,
       projectId: Number(incentiveForm.projectId),
@@ -342,6 +447,7 @@ export default function IncentivesAdminPage() {
       description: incentiveForm.description,
       types: fromCsv(incentiveForm.typesText),
       defillamaSlug: incentiveForm.defillamaSlug,
+      perpsSlug: incentiveForm.perpsSlug,
       rewardAssetType: incentiveForm.rewardAssetType,
       rewardAssetSymbol: incentiveForm.rewardAssetSymbol,
       rewardAssetAddress: incentiveForm.rewardAssetAddress,
@@ -365,25 +471,47 @@ export default function IncentivesAdminPage() {
       endAt: incentiveForm.endAt || null,
     };
     const method = incentiveForm.id ? "PUT" : "POST";
-    const res = await fetch("/api/admin/incentives", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json().catch(() => ({}));
-    const savedId = data?.item?.id ?? incentiveForm.id;
-    if (savedId && incentiveForm.defillamaSlug) {
-      await fetch("/api/admin/defillama-sync", {
-        method: "POST",
+    try {
+      const res = await apiFetch("/api/admin/incentives", {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ incentiveId: savedId }),
+        body: JSON.stringify(payload),
       });
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Auth required. Refresh the page and re-enter credentials.");
+        }
+        throw new Error(await parseError(res));
+      }
+      const data = await res.json().catch(() => ({}));
+      const savedId = data?.item?.id ?? incentiveForm.id;
+      if (savedId && (incentiveForm.defillamaSlug || incentiveForm.perpsSlug)) {
+        setStatus("Saved. Syncing DefiLlama in background...");
+        void apiFetch(
+          "/api/admin/defillama-sync",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ incentiveId: savedId }),
+          },
+          15000
+        ).catch(() => {
+          setStatus("Saved. DefiLlama sync failed.");
+        });
+      }
+      setIncentiveForm(emptyIncentiveForm);
+      await refreshAll();
+    } catch (err) {
+      setStatus(
+        err instanceof Error
+          ? `Incentive save failed: ${err.message}`
+          : "Incentive save failed"
+      );
     }
-    setIncentiveForm(emptyIncentiveForm);
-    await refreshAll();
   };
 
   const handleLinkSubmit = async () => {
+    setStatus(linkForm.id ? "Updating link..." : "Saving link...");
     const endpoint =
       linkForm.targetType === "project"
         ? "/api/admin/project-links"
@@ -397,16 +525,29 @@ export default function IncentivesAdminPage() {
       url: linkForm.url,
     };
     const method = linkForm.id ? "PUT" : "POST";
-    await fetch(endpoint, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    setLinkForm(emptyLinkForm);
-    await refreshAll();
+    try {
+      const res = await apiFetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Auth required. Refresh the page and re-enter credentials.");
+        }
+        throw new Error(await parseError(res));
+      }
+      setLinkForm(emptyLinkForm);
+      await refreshAll();
+    } catch (err) {
+      setStatus(
+        err instanceof Error ? `Link save failed: ${err.message}` : "Link save failed"
+      );
+    }
   };
 
   const handleEventSubmit = async () => {
+    setStatus(eventForm.id ? "Updating event..." : "Saving event...");
     const payload = {
       id: eventForm.id,
       incentiveId: Number(eventForm.incentiveId),
@@ -416,16 +557,29 @@ export default function IncentivesAdminPage() {
       effectiveAt: eventForm.effectiveAt,
     };
     const method = eventForm.id ? "PUT" : "POST";
-    await fetch("/api/admin/incentive-events", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    setEventForm(emptyEventForm);
-    await refreshAll();
+    try {
+      const res = await apiFetch("/api/admin/incentive-events", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Auth required. Refresh the page and re-enter credentials.");
+        }
+        throw new Error(await parseError(res));
+      }
+      setEventForm(emptyEventForm);
+      await refreshAll();
+    } catch (err) {
+      setStatus(
+        err instanceof Error ? `Event save failed: ${err.message}` : "Event save failed"
+      );
+    }
   };
 
   const handleProofSubmit = async () => {
+    setStatus(proofForm.id ? "Updating proof..." : "Saving proof...");
     const payload = {
       id: proofForm.id,
       incentiveId: Number(proofForm.incentiveId),
@@ -435,31 +589,74 @@ export default function IncentivesAdminPage() {
       chain: proofForm.chain,
     };
     const method = proofForm.id ? "PUT" : "POST";
-    await fetch("/api/admin/incentive-proofs", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    setProofForm(emptyProofForm);
-    await refreshAll();
+    try {
+      const res = await apiFetch("/api/admin/incentive-proofs", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Auth required. Refresh the page and re-enter credentials.");
+        }
+        throw new Error(await parseError(res));
+      }
+      setProofForm(emptyProofForm);
+      await refreshAll();
+    } catch (err) {
+      setStatus(
+        err instanceof Error ? `Proof save failed: ${err.message}` : "Proof save failed"
+      );
+    }
   };
 
   const handleMetricSubmit = async () => {
+    setStatus(metricForm.id ? "Updating metrics..." : "Saving metrics...");
     const payload = {
       id: metricForm.id,
       incentiveId: Number(metricForm.incentiveId),
       tvlUsd: metricForm.tvlUsd,
+      volumeUsd30d: metricForm.volumeUsd30d,
+      uaw7d: metricForm.uaw7d,
+      txCount7d: metricForm.txCount7d,
     };
     const method = metricForm.id ? "PUT" : "POST";
-    await fetch("/api/admin/incentive-metrics", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    setMetricForm(emptyMetricForm);
-    await refreshAll();
+    try {
+      const res = await apiFetch("/api/admin/incentive-metrics", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Auth required. Refresh the page and re-enter credentials.");
+        }
+        throw new Error(await parseError(res));
+      }
+      setMetricForm(emptyMetricForm);
+      await refreshAll();
+    } catch (err) {
+      setStatus(
+        err instanceof Error
+          ? `Metrics save failed: ${err.message}`
+          : "Metrics save failed"
+      );
+    }
   };
 
+  const handleSaturationSync = async () => {
+    setSyncingSaturation(true);
+    setStatus("Syncing saturation...");
+    try {
+      await apiFetch("/api/admin/saturation-sync", { method: "POST" });
+      await refreshAll();
+      setStatus("Saturation synced");
+    } catch {
+      setStatus("Saturation sync failed");
+    } finally {
+      setSyncingSaturation(false);
+    }
+  };
 
   return (
     <div className="app-shell">
@@ -485,7 +682,7 @@ export default function IncentivesAdminPage() {
             </div>
           </div>
 
-          <section className="admin-grid">
+          <section className="admin-grid admin-grid-top">
             <div className="admin-card">
               <h3>Project editor</h3>
               {projectForm.id ? (
@@ -657,7 +854,7 @@ export default function IncentivesAdminPage() {
                 </div>
               </div>
               <div className="admin-list">
-                {projects.map((project) => (
+                {pagedProjects.map((project) => (
                   <div className="admin-row" key={project.id}>
                     <div>
                       <strong>
@@ -689,7 +886,7 @@ export default function IncentivesAdminPage() {
                       <button
                         className="btn secondary"
                         onClick={async () => {
-                          await fetch("/api/admin/projects", {
+                          await apiFetch("/api/admin/projects", {
                             method: "DELETE",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ id: project.id }),
@@ -702,6 +899,27 @@ export default function IncentivesAdminPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="pagination">
+                <button
+                  className="btn secondary"
+                  onClick={() => setProjectPage((prev) => Math.max(1, prev - 1))}
+                  disabled={projectPage === 1}
+                >
+                  Prev
+                </button>
+                <span className="pagination-info">
+                  Page {projectPage} of {totalProjectPages}
+                </span>
+                <button
+                  className="btn secondary"
+                  onClick={() =>
+                    setProjectPage((prev) => Math.min(totalProjectPages, prev + 1))
+                  }
+                  disabled={projectPage === totalProjectPages}
+                >
+                  Next
+                </button>
               </div>
             </div>
 
@@ -753,6 +971,32 @@ export default function IncentivesAdminPage() {
                     <option value="ENDING">Ending</option>
                   </select>
                   <label className="form-label">Incentive types</label>
+                  <div className="type-picker">
+                    {incentiveTypeOptions.map((type) => {
+                      const selected = fromCsv(incentiveForm.typesText).includes(type);
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          className={`chain-option${selected ? " active" : ""}`}
+                          onClick={() => {
+                            const current = new Set(fromCsv(incentiveForm.typesText));
+                            if (current.has(type)) {
+                              current.delete(type);
+                            } else {
+                              current.add(type);
+                            }
+                            setIncentiveForm({
+                              ...incentiveForm,
+                              typesText: Array.from(current).join(", "),
+                            });
+                          }}
+                        >
+                          {type}
+                        </button>
+                      );
+                    })}
+                  </div>
                   <input
                     placeholder="Types (comma separated)"
                     value={incentiveForm.typesText}
@@ -995,6 +1239,17 @@ export default function IncentivesAdminPage() {
                       })
                     }
                   />
+                  <label className="form-label">Perps slug</label>
+                  <input
+                    placeholder="Perps slug (DefiLlama derivatives)"
+                    value={incentiveForm.perpsSlug}
+                    onChange={(event) =>
+                      setIncentiveForm({
+                        ...incentiveForm,
+                        perpsSlug: event.target.value,
+                      })
+                    }
+                  />
                 </div>
                 <div className="admin-actions">
                   <button className="btn" onClick={handleIncentiveSubmit}>
@@ -1011,7 +1266,7 @@ export default function IncentivesAdminPage() {
                 </div>
               </div>
               <div className="admin-list">
-                {incentives.map((incentive) => (
+                {pagedIncentives.map((incentive) => (
                   <div className="admin-row" key={incentive.id}>
                     <div>
                       <strong>
@@ -1032,6 +1287,7 @@ export default function IncentivesAdminPage() {
                             status: incentive.status,
                             typesText: toCsv(incentive.types),
                             defillamaSlug: incentive.defillamaSlug ?? "",
+                            perpsSlug: incentive.perpsSlug ?? "",
                             rewardAssetType: incentive.rewardAssetType,
                             rewardAssetSymbol: incentive.rewardAssetSymbol ?? "",
                             rewardAssetAddress: incentive.rewardAssetAddress ?? "",
@@ -1063,7 +1319,7 @@ export default function IncentivesAdminPage() {
                       <button
                         className="btn secondary"
                         onClick={async () => {
-                          await fetch("/api/admin/incentives", {
+                          await apiFetch("/api/admin/incentives", {
                             method: "DELETE",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ id: incentive.id }),
@@ -1077,7 +1333,66 @@ export default function IncentivesAdminPage() {
                   </div>
                 ))}
               </div>
+              <div className="pagination">
+                <button
+                  className="btn secondary"
+                  onClick={() => setIncentivePage((prev) => Math.max(1, prev - 1))}
+                  disabled={incentivePage === 1}
+                >
+                  Prev
+                </button>
+                <span className="pagination-info">
+                  Page {incentivePage} of {totalIncentivePages}
+                </span>
+                <button
+                  className="btn secondary"
+                  onClick={() =>
+                    setIncentivePage((prev) => Math.min(totalIncentivePages, prev + 1))
+                  }
+                  disabled={incentivePage === totalIncentivePages}
+                >
+                  Next
+                </button>
+              </div>
             </div>
+          </section>
+
+          <section className="admin-card">
+            <h3>Archived projects</h3>
+            {archivedProjects.length === 0 ? (
+              <div className="small-note">No archived projects.</div>
+            ) : (
+              <div className="admin-list">
+                {archivedProjects.map((project) => (
+                  <div className="admin-row" key={project.id}>
+                    <div>
+                      <strong>{project.name}</strong>
+                      <div className="small-note">{project.slug}</div>
+                    </div>
+                    <div className="admin-actions">
+                      <button
+                        className="btn secondary"
+                        onClick={async () => {
+                          await restoreProject(project);
+                          await refreshAll();
+                        }}
+                      >
+                        Restore
+                      </button>
+                      <button
+                        className="btn secondary"
+                        onClick={async () => {
+                          await deleteProject(project);
+                          await refreshAll();
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           <section className="admin-card">
@@ -1172,7 +1487,7 @@ export default function IncentivesAdminPage() {
                         const endpoint = link.projectId
                           ? "/api/admin/project-links"
                           : "/api/admin/incentive-links";
-                        await fetch(endpoint, {
+                        await apiFetch(endpoint, {
                           method: "DELETE",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ id: link.id }),
@@ -1271,7 +1586,7 @@ export default function IncentivesAdminPage() {
                       <button
                         className="btn secondary"
                         onClick={async () => {
-                          await fetch("/api/admin/incentive-events", {
+                          await apiFetch("/api/admin/incentive-events", {
                             method: "DELETE",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ id: event.id }),
@@ -1366,7 +1681,7 @@ export default function IncentivesAdminPage() {
                       <button
                         className="btn secondary"
                         onClick={async () => {
-                          await fetch("/api/admin/incentive-proofs", {
+                          await apiFetch("/api/admin/incentive-proofs", {
                             method: "DELETE",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ id: proof.id }),
@@ -1383,7 +1698,16 @@ export default function IncentivesAdminPage() {
             </div>
 
             <div className="admin-card">
-              <h3>Metrics</h3>
+              <div className="admin-row">
+                <h3>Metrics</h3>
+                <button
+                  className="btn secondary"
+                  onClick={handleSaturationSync}
+                  disabled={syncingSaturation}
+                >
+                  {syncingSaturation ? "Syncing..." : "Sync UAW/Tx"}
+                </button>
+              </div>
               <div className="admin-form">
                 <label className="form-label">Incentive</label>
                 <select
@@ -1407,6 +1731,30 @@ export default function IncentivesAdminPage() {
                     setMetricForm({ ...metricForm, tvlUsd: event.target.value })
                   }
                 />
+                <label className="form-label">Perps volume (30d)</label>
+                <input
+                  placeholder="Perps volume 30d USD"
+                  value={metricForm.volumeUsd30d}
+                  onChange={(event) =>
+                    setMetricForm({ ...metricForm, volumeUsd30d: event.target.value })
+                  }
+                />
+                <label className="form-label">UAW (7d)</label>
+                <input
+                  placeholder="Unique active wallets (7d)"
+                  value={metricForm.uaw7d}
+                  onChange={(event) =>
+                    setMetricForm({ ...metricForm, uaw7d: event.target.value })
+                  }
+                />
+                <label className="form-label">Tx count (7d)</label>
+                <input
+                  placeholder="Transaction count (7d)"
+                  value={metricForm.txCount7d}
+                  onChange={(event) =>
+                    setMetricForm({ ...metricForm, txCount7d: event.target.value })
+                  }
+                />
                 <button className="btn" onClick={handleMetricSubmit}>
                   {metricForm.id ? "Update metrics" : "Upsert metrics"}
                 </button>
@@ -1421,6 +1769,12 @@ export default function IncentivesAdminPage() {
                       <div className="small-note">
                         TVL: {metric.tvlUsd ?? "-"}
                       </div>
+                      <div className="small-note">
+                        Perps 30d: {metric.volumeUsd30d ?? "-"}
+                      </div>
+                      <div className="small-note">
+                        UAW 7d: {metric.uaw7d ?? "-"} · Tx 7d: {metric.txCount7d ?? "-"}
+                      </div>
                     </div>
                     <div className="admin-actions">
                       <button
@@ -1430,6 +1784,9 @@ export default function IncentivesAdminPage() {
                             id: metric.id,
                             incentiveId: String(metric.incentiveId),
                             tvlUsd: metric.tvlUsd ?? "",
+                            volumeUsd30d: metric.volumeUsd30d ?? "",
+                            uaw7d: metric.uaw7d?.toString() ?? "",
+                            txCount7d: metric.txCount7d?.toString() ?? "",
                           })
                         }
                       >
@@ -1438,7 +1795,7 @@ export default function IncentivesAdminPage() {
                       <button
                         className="btn secondary"
                         onClick={async () => {
-                          await fetch("/api/admin/incentive-metrics", {
+                          await apiFetch("/api/admin/incentive-metrics", {
                             method: "DELETE",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ id: metric.id }),
@@ -1459,3 +1816,4 @@ export default function IncentivesAdminPage() {
     </div>
   );
 }
+

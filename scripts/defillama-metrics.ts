@@ -3,6 +3,7 @@ import { prisma } from "../services/prisma";
 
 const LLAMA_PROTOCOL_URL = "https://api.llama.fi/protocol/";
 const LLAMA_CHAINS_URL = "https://api.llama.fi/v2/chains";
+const LLAMA_DERIVATIVES_URL = "https://api.llama.fi/summary/derivatives/";
 
 const toNumber = (value: unknown) => {
   if (value === null || value === undefined || value === "") {
@@ -68,11 +69,23 @@ const fetchTvl = async (slug: string, chains: any[]) => {
   }
 };
 
+const fetchPerpsVolume30d = async (slug: string) => {
+  try {
+    const data = await fetchJson(`${LLAMA_DERIVATIVES_URL}${slug}`);
+    return toNumber(data?.total30d ?? null);
+  } catch (err) {
+    console.warn(`[defillama] perps fetch failed for ${slug}:`, err);
+    return null;
+  }
+};
+
 
 const run = async () => {
   const incentives = await prisma.incentive.findMany({
-    where: { defillamaSlug: { not: null } },
-    select: { id: true, defillamaSlug: true },
+    where: {
+      OR: [{ defillamaSlug: { not: null } }, { perpsSlug: { not: null } }],
+    },
+    select: { id: true, defillamaSlug: true, perpsSlug: true },
   });
 
   if (incentives.length === 0) {
@@ -83,21 +96,35 @@ const run = async () => {
   const chains = await fetchChains();
 
   for (const incentive of incentives) {
+    const perpsSlug = incentive.perpsSlug?.trim();
     const slug = incentive.defillamaSlug?.trim();
-    if (!slug) {
+    if (!perpsSlug && !slug) {
       continue;
     }
 
-    const tvlUsd = await fetchTvl(slug, chains);
+    let tvlUsd: number | null = null;
+    let volumeUsd30d: number | null = null;
+    if (perpsSlug) {
+      volumeUsd30d = await fetchPerpsVolume30d(perpsSlug);
+    } else if (slug) {
+      tvlUsd = await fetchTvl(slug, chains);
+    }
 
     await prisma.incentiveMetric.upsert({
       where: { incentiveId: incentive.id },
-      update: { tvlUsd },
-      create: { incentiveId: incentive.id, tvlUsd },
+      update: {
+        tvlUsd: perpsSlug ? null : tvlUsd,
+        volumeUsd30d: perpsSlug ? volumeUsd30d : null,
+      },
+      create: {
+        incentiveId: incentive.id,
+        tvlUsd: perpsSlug ? null : tvlUsd,
+        volumeUsd30d: perpsSlug ? volumeUsd30d : null,
+      },
     });
 
     console.log(
-      `[defillama] ${slug} -> tvlUsd=${tvlUsd ?? "n/a"}`
+      `[defillama] ${perpsSlug ?? slug} -> ${perpsSlug ? "perps30d" : "tvlUsd"}=${perpsSlug ? (volumeUsd30d ?? "n/a") : (tvlUsd ?? "n/a")}`
     );
   }
 };

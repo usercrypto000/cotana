@@ -5,6 +5,7 @@ import { prisma } from "@/services/prisma";
 
 const LLAMA_PROTOCOL_URL = "https://api.llama.fi/protocol/";
 const LLAMA_CHAINS_URL = "https://api.llama.fi/v2/chains";
+const LLAMA_DERIVATIVES_URL = "https://api.llama.fi/summary/derivatives/";
 
 const toNumber = (value: unknown) => {
   if (value === null || value === undefined || value === "") {
@@ -68,6 +69,15 @@ const fetchTvl = async (slug: string, chains: any[]) => {
   }
 };
 
+const fetchPerpsVolume30d = async (slug: string) => {
+  try {
+    const data = await fetchJson(`${LLAMA_DERIVATIVES_URL}${slug}`);
+    return toNumber(data?.total30d ?? null);
+  } catch {
+    return null;
+  }
+};
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -79,25 +89,43 @@ export async function POST(req: Request) {
 
     const incentive = await prisma.incentive.findUnique({
       where: { id: incentiveId },
-      select: { id: true, defillamaSlug: true },
+      select: { id: true, defillamaSlug: true, perpsSlug: true },
     });
 
     if (!incentive) {
       return NextResponse.json({ error: "incentive not found" }, { status: 404 });
     }
 
+    const perpsSlug = incentive?.perpsSlug?.trim();
     const slug = incentive?.defillamaSlug?.trim();
-    if (!slug) {
-      return NextResponse.json({ error: "defillamaSlug missing" }, { status: 400 });
+
+    if (!perpsSlug && !slug) {
+      return NextResponse.json(
+        { error: "defillamaSlug or perpsSlug required" },
+        { status: 400 }
+      );
     }
 
-    const chains = await fetchChains();
-    const tvlUsd = await fetchTvl(slug, chains);
+    let tvlUsd: number | null = null;
+    let volumeUsd30d: number | null = null;
+    if (perpsSlug) {
+      volumeUsd30d = await fetchPerpsVolume30d(perpsSlug);
+    } else if (slug) {
+      const chains = await fetchChains();
+      tvlUsd = await fetchTvl(slug, chains);
+    }
 
     const metric = await prisma.incentiveMetric.upsert({
       where: { incentiveId: incentive.id },
-      update: { tvlUsd },
-      create: { incentiveId: incentive.id, tvlUsd },
+      update: {
+        tvlUsd: perpsSlug ? null : tvlUsd,
+        volumeUsd30d: perpsSlug ? volumeUsd30d : null,
+      },
+      create: {
+        incentiveId: incentive.id,
+        tvlUsd: perpsSlug ? null : tvlUsd,
+        volumeUsd30d: perpsSlug ? volumeUsd30d : null,
+      },
     });
 
     return NextResponse.json({ item: metric });

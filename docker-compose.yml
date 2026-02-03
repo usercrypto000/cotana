@@ -1,5 +1,21 @@
 version: "3.9"
 services:
+  web:
+    build: .
+    command: ["npm","run","start"]
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://cotana:cotana@postgres:5432/cotana?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+
   postgres:
     image: postgres:16
     restart: unless-stopped
@@ -16,6 +32,39 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+
+  mindshare_ingest:
+    build: .
+    command: ["npx","tsx","worker/mindshare_polling.ts"]
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://cotana:cotana@postgres:5432/cotana?schema=public
+      - ALCHEMY_ETH_RPC_URL=${ALCHEMY_ETH_RPC_URL}
+    depends_on:
+      - postgres
+      - redis
+
+  mindshare_metrics:
+    build: .
+    command: ["npx","tsx","worker/mindshare_metrics.ts"]
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://cotana:cotana@postgres:5432/cotana?schema=public
+      - MINDSHARE_SCORE_W1=${MINDSHARE_SCORE_W1}
+      - MINDSHARE_SCORE_W2=${MINDSHARE_SCORE_W2}
+      - MINDSHARE_SCORE_W3=${MINDSHARE_SCORE_W3}
+      - MINDSHARE_SCORE_W4=${MINDSHARE_SCORE_W4}
+    depends_on:
+      - postgres
+      - redis
 
 volumes:
   postgres_data:

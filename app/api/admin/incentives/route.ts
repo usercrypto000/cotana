@@ -46,6 +46,8 @@ export async function POST(req: Request) {
         types: normalizeList(body?.types),
         defillamaSlug:
           typeof body?.defillamaSlug === "string" ? body.defillamaSlug.trim() : null,
+        perpsSlug:
+          typeof body?.perpsSlug === "string" ? body.perpsSlug.trim() : null,
         rewardAssetType: rewardAssetType as any,
         rewardAssetSymbol:
           typeof body?.rewardAssetSymbol === "string" ? body.rewardAssetSymbol.trim() : null,
@@ -128,6 +130,8 @@ export async function PUT(req: Request) {
         types: normalizeList(body?.types),
         defillamaSlug:
           typeof body?.defillamaSlug === "string" ? body.defillamaSlug.trim() : null,
+        perpsSlug:
+          typeof body?.perpsSlug === "string" ? body.perpsSlug.trim() : null,
         rewardAssetType: rewardAssetType as any,
         rewardAssetSymbol:
           typeof body?.rewardAssetSymbol === "string" ? body.rewardAssetSymbol.trim() : null,

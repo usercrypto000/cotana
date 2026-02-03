@@ -185,6 +185,38 @@ model AddressLabel {
   @@map("address_labels")
 }
 
+model MindshareProtocol {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  category    String?
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  contracts MindshareProtocolContract[]
+
+  @@map("mindshare_protocols")
+}
+
+model MindshareProtocolContract {
+  id         Int      @id @default(autoincrement())
+  protocolId Int      @map("protocol_id")
+  chainId    Int      @map("chain_id")
+  address    String
+  type       String
+  activeFrom DateTime? @map("active_from")
+  activeTo   DateTime? @map("active_to")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  protocol MindshareProtocol @relation(fields: [protocolId], references: [id])
+
+  @@unique([protocolId, chainId, address])
+  @@index([chainId, address])
+  @@map("mindshare_protocol_contracts")
+}
+
 enum IncentiveStatus {
   EARLY
   ACTIVE
@@ -243,6 +275,7 @@ model Project {
   chains      String[]
   tags        String[]
   archived    Boolean   @default(false)
+  archivedAt  DateTime? @map("archived_at")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
@@ -274,6 +307,7 @@ model Incentive {
   status           IncentiveStatus
   types            String[]
   defillamaSlug    String?          @map("defillama_slug")
+  perpsSlug        String?          @map("perps_slug")
   rewardAssetType  RewardAssetType  @map("reward_asset_type")
   rewardAssetSymbol String?         @map("reward_asset_symbol")
   rewardAssets     String?          @map("reward_assets")
@@ -356,11 +390,112 @@ model IncentiveMetric {
   incentiveId      Int      @unique @map("incentive_id")
   tvlUsd           Decimal? @map("tvl_usd")
   volumeUsd24h     Decimal? @map("volume_usd_24h")
+  volumeUsd30d     Decimal? @map("volume_usd_30d")
+  uaw7d            Int?     @map("uaw_7d")
+  txCount7d        Int?     @map("tx_count_7d")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   incentive Incentive @relation(fields: [incentiveId], references: [id])
 
   @@map("incentive_metrics")
+}
+
+model Protocol {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  chainId   Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  contracts ProtocolContract[]
+  eventMaps ProtocolEventMap[]
+  metrics   ProtocolMetric[]
+
+  @@map("protocols")
+}
+
+model ProtocolContract {
+  id         Int      @id @default(autoincrement())
+  protocolId Int      @map("protocol_id")
+  chainId    Int      @map("chain_id")
+  address    String
+  role       String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  protocol Protocol @relation(fields: [protocolId], references: [id])
+
+  @@unique([protocolId, chainId, address])
+  @@index([chainId, address])
+  @@map("protocol_contracts")
+}
+
+model ProtocolEventMap {
+  id                 Int     @id @default(autoincrement())
+  protocolId         Int     @map("protocol_id")
+  chainId            Int     @map("chain_id")
+  contractAddress    String  @map("contract_address")
+  eventSig           String  @map("event_sig")
+  userFieldPathsJson Json    @map("user_field_paths_json")
+  isMeaningful       Boolean @default(true) @map("is_meaningful")
+
+  protocol Protocol @relation(fields: [protocolId], references: [id])
+
+  @@index([chainId, contractAddress])
+  @@map("protocol_event_maps")
+}
+
+model RawInteraction {
+  id         Int      @id @default(autoincrement())
+  chainId    Int      @map("chain_id")
+  protocolId Int      @map("protocol_id")
+  wallet     String
+  txHash     String   @map("tx_hash")
+  blockTime  DateTime @map("block_time")
+  day        DateTime
+  source     String
+  actionCount Int     @default(1) @map("action_count")
+  walletType String
+  rawJson    Json?
+
+  @@unique([chainId, protocolId, wallet, txHash])
+  @@index([protocolId, day])
+  @@map("raw_interactions")
+}
+
+model ProtocolMetric {
+  id               Int      @id @default(autoincrement())
+  protocolId       Int      @map("protocol_id")
+  chainId          Int      @map("chain_id")
+  window           String
+  asOf             DateTime @map("as_of")
+  uawDirect        Int      @map("uaw_direct")
+  uawEvent         Int      @map("uaw_event")
+  uawAttributed    Int      @map("uaw_attributed")
+  eoaUaw           Int      @map("eoa_uaw")
+  swUaw            Int      @map("sw_uaw")
+  repeatRate       Decimal  @map("repeat_rate")
+  medianActionsPerWallet Decimal @map("median_actions_per_wallet")
+  valueMovedUsd    Decimal? @map("value_moved_usd")
+  score            Decimal?
+
+  protocol Protocol @relation(fields: [protocolId], references: [id])
+
+  @@index([protocolId, asOf])
+  @@map("protocol_metrics")
+}
+
+model AdminOtp {
+  id        Int      @id @default(autoincrement())
+  email     String
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email, tokenHash])
+  @@map("admin_otps")
 }
 
 model DataSource {
@@ -374,3 +509,95 @@ model DataSource {
 
   @@map("data_sources")
 }
+
+model MindshareCursor {
+  id                Int     @id @default(autoincrement())
+  chainId           Int     @map("chain_id")
+  lastProcessedBlock BigInt @map("last_processed_block")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@unique([chainId])
+  @@map("mindshare_cursors")
+}
+
+model AddressContractCache {
+  id        Int      @id @default(autoincrement())
+  chainId   Int      @map("chain_id")
+  address   String
+  isContract Boolean @map("is_contract")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([chainId, address])
+  @@map("address_contract_cache")
+}
+
+model AddressInteraction {
+  id         Int     @id @default(autoincrement())
+  chainId    Int     @map("chain_id")
+  address    String
+  wallet     String
+  txHash     String  @map("tx_hash")
+  blockNumber BigInt @map("block_number")
+  blockTime  DateTime @map("block_time")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([address, blockTime])
+  @@map("address_interactions")
+}
+
+model MindshareAddressStats {
+  id        Int      @id @default(autoincrement())
+  window    String
+  chainId   Int      @map("chain_id")
+  address   String
+  uaw_est   Int      @map("uaw_est")
+  tx_count  Int      @map("tx_count")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([window, chainId, address])
+  @@map("mindshare_address_stats")
+}
+
+model MindshareAddressChanges {
+  id        Int      @id @default(autoincrement())
+  window    String
+  chainId   Int      @map("chain_id")
+  address   String
+  uaw_est   Int      @map("uaw_est")
+  tx_count  Int      @map("tx_count")
+  delta_uaw Int      @map("delta_uaw")
+  delta_tx  Int      @map("delta_tx")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([window, chainId])
+  @@map("mindshare_address_changes")
+}
+
+model AddressMetadata {
+  id        Int      @id @default(autoincrement())
+  chainId   Int      @map("chain_id")
+  address   String
+  label     String?
+  labelSource String? @map("label_source")
+  confidence Int?    
+  isVerified Boolean? @map("is_verified")
+  isProxy   Boolean?  @map("is_proxy")
+  implementationAddress String? @map("implementation_address")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([chainId, address])
+  @@map("address_metadata")
+}
+
+model WalletBotScore {
+  id        Int      @id @default(autoincrement())
+  chainId   Int      @map("chain_id")
+  wallet    String
+  window    String
+  score     Int
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([chainId, wallet, window])
+  @@map("wallet_bot_scores")
+}
+

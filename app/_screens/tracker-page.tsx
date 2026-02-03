@@ -367,6 +367,10 @@ export default function TrackerPage() {
               <span className="nav-dot" />
               Incentives Radar
             </a>
+            <a className="nav-item" href="/mindshare-arena">
+              <span className="nav-dot" />
+              Mindshare Arena
+            </a>
           </div>
         </aside>
 

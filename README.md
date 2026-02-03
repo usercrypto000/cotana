@@ -34,3 +34,19 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+**Mindshare Arena V1 (Polling)**
+
+- **Purpose:** Switched Mindshare ingestion from webhook-based (Alchemy/ngrok) to polling via Alchemy ETH RPC.
+- **Run the polling worker:** ensure `ALCHEMY_ETH_RPC_URL` is set, then run:
+
+```bash
+npx tsx worker/mindshare_polling.ts
+```
+
+- **Env vars:** add `ALCHEMY_ETH_RPC_URL`, optional `ETHERSCAN_API_KEY`, and `BOT_FILTER_THRESHOLD`.
+- **API:**
+	- `GET /api/mindshare?window=24h|7d&mode=raw|filtered&limit=100` — returns ranked addresses with metadata.
+	- `GET /api/address/:address` — returns metadata + last 24h/7d stats.
+
+Webhooks and ngrok-based callbacks have been removed/disabled. Use polling worker for local and production setups.

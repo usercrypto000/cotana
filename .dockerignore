@@ -1,0 +1,12 @@
+.git
+.github
+.next
+.vercel
+node_modules
+npm-debug.log*
+Dockerfile.dev
+dev.db
+.env*
+.vscode
+.DS_Store
+tmp_db.txt

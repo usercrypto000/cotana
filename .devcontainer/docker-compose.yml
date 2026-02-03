@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: ../Dockerfile
+      target: deps
+    command: sleep infinity
+    volumes:
+      - ..:/workspace:delegated
+      - node_modules:/workspace/node_modules
+    environment:
+      DATABASE_URL: postgresql://cotana:cotana@postgres:5432/cotana?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cotana
+      POSTGRES_PASSWORD: cotana
+      POSTGRES_DB: cotana
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+  node_modules:

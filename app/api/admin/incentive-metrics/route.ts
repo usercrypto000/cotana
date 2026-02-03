@@ -33,10 +33,20 @@ export async function POST(req: Request) {
       where: { incentiveId },
       update: {
         tvlUsd: toDecimal(body?.tvlUsd),
+        volumeUsd30d: toDecimal(body?.volumeUsd30d),
+        uaw7d: Number.isFinite(Number(body?.uaw7d)) ? Number(body.uaw7d) : null,
+        txCount7d: Number.isFinite(Number(body?.txCount7d))
+          ? Number(body.txCount7d)
+          : null,
       },
       create: {
         incentiveId,
         tvlUsd: toDecimal(body?.tvlUsd),
+        volumeUsd30d: toDecimal(body?.volumeUsd30d),
+        uaw7d: Number.isFinite(Number(body?.uaw7d)) ? Number(body.uaw7d) : null,
+        txCount7d: Number.isFinite(Number(body?.txCount7d))
+          ? Number(body.txCount7d)
+          : null,
       },
     });
     return NextResponse.json({ item: created });
@@ -58,6 +68,11 @@ export async function PUT(req: Request) {
       where: { id },
       data: {
         tvlUsd: toDecimal(body?.tvlUsd),
+        volumeUsd30d: toDecimal(body?.volumeUsd30d),
+        uaw7d: Number.isFinite(Number(body?.uaw7d)) ? Number(body.uaw7d) : null,
+        txCount7d: Number.isFinite(Number(body?.txCount7d))
+          ? Number(body.txCount7d)
+          : null,
       },
     });
     return NextResponse.json({ item: updated });

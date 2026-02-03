@@ -6,7 +6,13 @@ import { normalizeList } from "@/services/incentive-utils";
 
 export async function GET() {
   try {
-    const items = await prisma.project.findMany({ orderBy: { name: "asc" } });
+    const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    await prisma.project.deleteMany({
+      where: { archived: true, archivedAt: { lt: cutoff } },
+    });
+    const items = await prisma.project.findMany({
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    });
     return NextResponse.json({ items });
   } catch (err) {
     return NextResponse.json({ error: "internal error", detail: String(err) }, { status: 500 });
@@ -36,6 +42,7 @@ export async function POST(req: Request) {
         chains,
         tags,
         archived: Boolean(body?.archived),
+        archivedAt: body?.archived ? new Date() : null,
       },
     });
     return NextResponse.json({ item: created });
@@ -69,6 +76,7 @@ export async function PUT(req: Request) {
         chains,
         tags,
         archived: Boolean(body?.archived),
+        archivedAt: body?.archived ? new Date() : null,
       },
     });
     return NextResponse.json({ item: updated });

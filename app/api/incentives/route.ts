@@ -50,7 +50,11 @@ export async function GET(req: Request) {
           { incentives: { none: { endAt: null } } },
         ],
       },
-      data: { archived: true },
+      data: { archived: true, archivedAt: now },
+    });
+    const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    await prisma.project.deleteMany({
+      where: { archived: true, archivedAt: { lt: cutoff } },
     });
 
     const { searchParams } = new URL(req.url);

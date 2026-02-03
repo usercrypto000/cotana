@@ -1,0 +1,14 @@
+{"lvl":"info","msg":"no configuration paths supplied","t":"2026-02-02T14:02:59.9635222+01:00"}
+{"lvl":"info","msg":"using configuration at default config path","path":"C:\\Users\\HP\\AppData\\Local/ngrok/ngrok.yml","t":"2026-02-02T14:02:59.9679115+01:00"}
+{"err":"\u003cnil\u003e","lvl":"info","msg":"open config file","path":"C:\\Users\\HP\\AppData\\Local\\ngrok\\ngrok.yml","t":"2026-02-02T14:02:59.9685891+01:00"}
+{"addr":"127.0.0.1:4040","allow_hosts":null,"lvl":"info","msg":"starting web service","obj":"web","t":"2026-02-02T14:03:00.0245436+01:00"}
+{"err":"Post \"https://update.equinox.io/check\": context deadline exceeded","lvl":"warn","msg":"failed to check for update","obj":"updater","t":"2026-02-02T14:03:05.028074+01:00"}
+{"err":"failed to send authentication request: EOF","lvl":"eror","msg":"failed to reconnect session","obj":"tunnels.session","t":"2026-02-02T14:03:11.0027048+01:00"}
+{"id":"90f236f3946bff5c","lvl":"info","msg":"start","pg":"/api/tunnels","t":"2026-02-02T14:03:19.5022529+01:00"}
+{"dur":"1.1364ms","id":"90f236f3946bff5c","lvl":"info","msg":"end","pg":"/api/tunnels","status":200,"t":"2026-02-02T14:03:19.5033893+01:00"}
+{"err":"failed to send authentication request: EOF","lvl":"eror","msg":"failed to reconnect session","obj":"tunnels.session","t":"2026-02-02T14:03:22.1563708+01:00"}
+{"lvl":"info","msg":"client session established","obj":"tunnels.session","t":"2026-02-02T14:03:24.0709922+01:00"}
+{"lvl":"info","msg":"tunnel session started","obj":"tunnels.session","t":"2026-02-02T14:03:24.0730148+01:00"}
+{"addr":"http://localhost:3000","lvl":"info","msg":"started tunnel","name":"command_line","obj":"tunnels","t":"2026-02-02T14:03:24.6878147+01:00","url":"https://unsympathizingly-unstriving-lecia.ngrok-free.dev"}
+{"id":"c1455c278ea1fd79","lvl":"info","msg":"start","pg":"/api/tunnels","t":"2026-02-02T14:23:50.3114442+01:00"}
+{"dur":"8.0702ms","id":"c1455c278ea1fd79","lvl":"info","msg":"end","pg":"/api/tunnels","status":200,"t":"2026-02-02T14:23:50.3195144+01:00"}

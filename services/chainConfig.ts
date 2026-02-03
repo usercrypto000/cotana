@@ -1,4 +1,4 @@
-export type DexConfig = {
+﻿export type DexConfig = {
   name: string;
   type: "uniswap-v2" | "uniswap-v3";
   factory: string;
@@ -134,6 +134,27 @@ const chains: ChainConfig[] = [
       },
     ],
   },
+  {
+    id: 137,
+    name: "Polygon",
+    shortName: "poly",
+    rpcUrlEnv: "RPC_URL_POLY",
+    confirmations: Number.parseInt(process.env.CONFIRMATIONS_POLY ?? "5", 10),
+    wrappedNative: "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+    stablecoins: [
+      "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+      "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+      "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
+    ],
+    dexes: [
+      {
+        name: "quickswap-v2",
+        type: "uniswap-v2",
+        factory: "0x5757371414417b8c6caad45baef941abc7d3ab32",
+        router: "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+      },
+    ],
+  },
 ];
 
 export function listChains(): ChainConfig[] {
@@ -153,5 +174,7 @@ export function resolveRpcUrl(chain: ChainConfig): string {
   if (chain.id === 42161) return `https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`;
   if (chain.id === 8453) return `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`;
   if (chain.id === 56) return `https://bnb-mainnet.g.alchemy.com/v2/${alchemyKey}`;
+  if (chain.id === 137) return `https://polygon-mainnet.g.alchemy.com/v2/${alchemyKey}`;
   return "";
 }
+

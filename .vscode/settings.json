@@ -1,0 +1,8 @@
+{
+    "github.copilot.enable": {
+        "plaintext": true,
+        "scminput": true,
+        "markdown": true
+    },
+    "editor.aiStats.enabled": true
+}
