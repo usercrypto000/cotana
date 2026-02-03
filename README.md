@@ -50,3 +50,10 @@ npx tsx worker/mindshare_polling.ts
 	- `GET /api/address/:address` — returns metadata + last 24h/7d stats.
 
 Webhooks and ngrok-based callbacks have been removed/disabled. Use polling worker for local and production setups.
+
+## Linting
+
+- Local: `npm run lint` (uses Next's lint runner)
+- Fallback / CI: `npm run lint:ci` (runs ESLint CLI directly)
+
+If `next lint` fails in certain environments, use the `lint:ci` fallback which runs the ESLint CLI across the repository.
