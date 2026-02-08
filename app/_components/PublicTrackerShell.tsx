@@ -44,6 +44,23 @@ export function PublicTrackerShell(props: {
       </nav>
 
       <section className="ht-content">{children}</section>
+
+      <footer className="ht-footer" aria-label="Footer">
+        <div className="ht-footer-inner">
+          <div className="ht-footer-links">
+            <Link href="/methodology" className="ht-footer-link">
+              Methodology
+            </Link>
+            <Link href="/status" className="ht-footer-link">
+              Status
+            </Link>
+            <a href="/api/public/status" className="ht-footer-link">
+              API
+            </a>
+          </div>
+          <div className="ht-footer-meta">Cotana Hack Tracker</div>
+        </div>
+      </footer>
     </main>
   );
 }
