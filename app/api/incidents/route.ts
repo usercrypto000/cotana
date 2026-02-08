@@ -13,7 +13,6 @@ function parseIncidentType(value: string | null) {
   if (normalized === "WALLET_DRAIN") return IncidentType.WALLET_DRAIN;
   if (normalized === "PROTOCOL_EXPLOIT") return IncidentType.PROTOCOL_EXPLOIT;
   if (normalized === "BRIDGE_EXPLOIT") return IncidentType.BRIDGE_EXPLOIT;
-  if (normalized === "ORACLE_ATTACK") return IncidentType.ORACLE_ATTACK;
   return undefined;
 }
 
@@ -109,6 +108,9 @@ export async function GET(request: Request) {
       where: {
         tenantId: tenant.id,
         chainId: { in: allowedChains },
+        incidentType: {
+          in: [IncidentType.WALLET_DRAIN, IncidentType.PROTOCOL_EXPLOIT, IncidentType.BRIDGE_EXPLOIT],
+        },
         ...(Number.isFinite(minScore) && minScore > 0 ? { score: { gte: minScore } } : {}),
         ...(type ? { incidentType: type } : {}),
         ...(status ? { status } : {}),

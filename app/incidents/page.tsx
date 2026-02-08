@@ -58,6 +58,11 @@ export default async function IncidentsPage({ searchParams }: PageProps) {
   const archiveMonth = parseArchiveMonthFilter(pick("archive"));
 
   const where: Prisma.IncidentWhereInput = {
+    publicVisible: true,
+    tenant: { publicFeedEnabled: true },
+    incidentType: {
+      in: ["WALLET_DRAIN", "PROTOCOL_EXPLOIT", "BRIDGE_EXPLOIT"],
+    },
     ...(liveOnly
       ? {
           lifecycleState: {
@@ -154,7 +159,6 @@ export default async function IncidentsPage({ searchParams }: PageProps) {
                 <option value="WALLET_DRAIN">Wallet Drainer</option>
                 <option value="PROTOCOL_EXPLOIT">Protocol Exploit</option>
                 <option value="BRIDGE_EXPLOIT">Bridge Exploit</option>
-                <option value="ORACLE_ATTACK">Oracle Manipulation</option>
               </select>
             </div>
 
@@ -213,7 +217,7 @@ export default async function IncidentsPage({ searchParams }: PageProps) {
               <th>Lifecycle</th>
               <th>Score</th>
               <th>Confidence</th>
-              <th>Loss (USD)</th>
+              <th>Verified Loss (USD)</th>
               <th>Historical</th>
               <th>Archive</th>
               <th>Trend</th>
@@ -227,7 +231,13 @@ export default async function IncidentsPage({ searchParams }: PageProps) {
                 incidentType: incident.incidentType,
                 ruleHits: incident.ruleHits,
                 ruleSummary: incident.ruleSummary,
-              });
+              }) ?? "-";
+
+              const verifiedLoss = Number(incident.peakLossUsd ?? 0);
+              const verifiedLossCell =
+                Number.isFinite(verifiedLoss) && verifiedLoss > 0
+                  ? `$${Math.round(verifiedLoss).toLocaleString()}`
+                  : "Pending verification";
 
               return (
                 <tr key={incident.id.toString()}>
@@ -239,7 +249,7 @@ export default async function IncidentsPage({ searchParams }: PageProps) {
                   <td>{incident.lifecycleState}</td>
                   <td>{incident.score}</td>
                   <td>{(Number(incident.exploitConfidence ?? 0) * 100).toFixed(1)}%</td>
-                  <td>${Number(incident.estimatedTotalLossUsd ?? 0).toLocaleString()}</td>
+                  <td>{verifiedLossCell}</td>
                   <td>{incident.historical ? `yes (${incident.detectedVia})` : "no"}</td>
                   <td>{incident.startedAt.toISOString().slice(0, 7)}</td>
                   <td>

@@ -15,7 +15,6 @@ export default function MethodologyPage() {
           <li>Wallet drainer behavior and abnormal outflow patterns.</li>
           <li>Protocol exploit signatures from contract balance deltas and method anomalies.</li>
           <li>Bridge exploit markers including unbacked mint and liquidity cliff behavior.</li>
-          <li>Oracle attack heuristics using reserve distortion and extraction correlation.</li>
         </ul>
       </section>
 

@@ -17,7 +17,14 @@ function siteUrl() {
 }
 
 function usd(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return "Pending verification";
   return `$${Math.round(value).toLocaleString()}`;
+}
+
+function shortAddr(value: string) {
+  const v = value.trim();
+  if (!/^0x[a-fA-F0-9]{40}$/.test(v)) return v;
+  return `${v.slice(0, 6)}…${v.slice(-4)}`;
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
@@ -32,7 +39,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const item = await getPublicIncidentById(incidentId);
   if (!item) return { title: "Incident Not Found" };
 
-  const title = `${item.taxonomyLabel} | ${usd(item.estimatedLossUsd)} | ${item.chain}`;
+  const title = `${item.taxonomyLabel} | Loss: ${usd(item.peakLossUsd)} | ${item.chain}`;
   const description = item.summary.split("\n")[0] ?? item.summary;
   const url = `${siteUrl()}/incidents/${item.id}`;
 
@@ -68,6 +75,15 @@ export default async function IncidentDetailPage({ params }: Params) {
   const incident = await getPublicIncidentById(incidentId);
   if (!incident) notFound();
 
+  const protocolLine = (() => {
+    const hint = (incident.protocolHint ?? "").trim();
+    if (!hint) return { label: "Unknown Protocol", detail: "" };
+    if (/^0x[a-fA-F0-9]{40}$/.test(hint)) {
+      return { label: "Unknown Protocol", detail: `(${shortAddr(hint)})` };
+    }
+    return { label: hint, detail: "" };
+  })();
+
   return (
     <PublicTrackerShell
       activeNav="incidents"
@@ -83,14 +99,19 @@ export default async function IncidentDetailPage({ params }: Params) {
 
       <section className="ht-panel">
         <div className="ht-row four">
+          <div>
+            <span className="ht-label">Protocol</span>
+            <div>
+              {protocolLine.label} {protocolLine.detail}
+            </div>
+          </div>
           <div><span className="ht-label">Chain</span><div>{incident.chain}</div></div>
           <div><span className="ht-label">Lifecycle</span><div>{incident.lifecycleState}</div></div>
           <div><span className="ht-label">Status</span><div>{incident.status}</div></div>
           <div><span className="ht-label">Detected Via</span><div>{incident.detectedVia}</div></div>
           <div><span className="ht-label">Score</span><div>{incident.score}</div></div>
           <div><span className="ht-label">Confidence</span><div>{(incident.confidence * 100).toFixed(1)}%</div></div>
-          <div><span className="ht-label">Estimated Loss</span><div>{usd(incident.estimatedLossUsd)}</div></div>
-          <div><span className="ht-label">Peak Loss</span><div>{usd(incident.peakLossUsd)}</div></div>
+          <div><span className="ht-label">Verified Loss</span><div>{usd(incident.peakLossUsd)}</div></div>
           <div><span className="ht-label">Historical</span><div>{incident.historical ? "yes" : "no"}</div></div>
           <div><span className="ht-label">Started</span><div>{incident.startedAt}</div></div>
           <div><span className="ht-label">Last Updated</span><div>{incident.lastUpdatedAt}</div></div>

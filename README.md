@@ -112,12 +112,6 @@ Production-focused, behavior-based exploit detection for EVM chains (no static b
   - mint -> cashout
   - mint authority anomaly
   - cross-bridge hop
-- Oracle attack heuristics:
-  - single-block spike proxy
-  - spike -> exploit correlation
-  - flash liquidity distortion
-  - oracle call rarity
-  - asymmetric pool drain
 
 ### Run locally
 

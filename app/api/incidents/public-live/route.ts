@@ -14,6 +14,9 @@ export async function GET(request: Request) {
     const items = await prisma.incident.findMany({
       where: {
         publicVisible: true,
+        incidentType: {
+          in: ["WALLET_DRAIN", "PROTOCOL_EXPLOIT", "BRIDGE_EXPLOIT"],
+        },
         lifecycleState: {
           in: [
             IncidentLifecycleState.OPEN,
