@@ -54,9 +54,6 @@ export function PublicTrackerShell(props: {
             <Link href="/status" className="ht-footer-link">
               Status
             </Link>
-            <a href="/api/public/status" className="ht-footer-link">
-              API
-            </a>
           </div>
           <div className="ht-footer-meta">Cotana Hack Tracker</div>
         </div>

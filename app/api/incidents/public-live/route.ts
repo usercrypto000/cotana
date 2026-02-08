@@ -15,7 +15,7 @@ export async function GET(request: Request) {
       where: {
         publicVisible: true,
         incidentType: {
-          in: ["WALLET_DRAIN", "PROTOCOL_EXPLOIT", "BRIDGE_EXPLOIT"],
+          in: ["WALLET_DRAIN", "PROTOCOL_EXPLOIT", "BRIDGE_EXPLOIT", "LP_EXPLOIT"],
         },
         lifecycleState: {
           in: [

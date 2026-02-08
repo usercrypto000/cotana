@@ -15,6 +15,10 @@ export default function MethodologyPage() {
           <li>Wallet drainer behavior and abnormal outflow patterns.</li>
           <li>Protocol exploit signatures from contract balance deltas and method anomalies.</li>
           <li>Bridge exploit markers including unbacked mint and liquidity cliff behavior.</li>
+          <li>
+            LP exploits: exploits that drain value directly from a liquidity pool or AMM by manipulating
+            pool mechanics, balances, or withdrawal paths.
+          </li>
         </ul>
       </section>
 

@@ -14,6 +14,7 @@ const ALLOWED_TYPES: IncidentType[] = [
   IncidentType.WALLET_DRAIN,
   IncidentType.PROTOCOL_EXPLOIT,
   IncidentType.BRIDGE_EXPLOIT,
+  IncidentType.LP_EXPLOIT,
 ];
 
 function isAddress(value: string) {
@@ -23,7 +24,7 @@ function isAddress(value: string) {
 function shortAddr(value: string) {
   const v = value.trim();
   if (!isAddress(v)) return v;
-  return `${v.slice(0, 6)}…${v.slice(-4)}`;
+  return `${v.slice(0, 6)}...${v.slice(-4)}`;
 }
 
 function ago(date: Date) {
@@ -76,6 +77,7 @@ function signalBadge(params: {
 function exploitLabel(t: IncidentType) {
   if (t === IncidentType.WALLET_DRAIN) return "Wallet Drainer";
   if (t === IncidentType.BRIDGE_EXPLOIT) return "Bridge Exploit";
+  if (t === IncidentType.LP_EXPLOIT) return "LP Exploit";
   return "Protocol Exploit";
 }
 
@@ -89,12 +91,15 @@ function summarySnippet(row: {
   const victims = row.victimAddresses.length;
   const txs = row.topTxHashes.length;
   if (row.incidentType === IncidentType.WALLET_DRAIN) {
-    return `Rapid outflow cluster detected. Victims: ${victims || "?"} • Contracts: ${contracts || "?"} • Evidence txs: ${txs || "?"}`;
+    return `Rapid outflow cluster detected. Victims: ${victims || "?"} | Contracts: ${contracts || "?"} | Evidence txs: ${txs || "?"}`;
   }
   if (row.incidentType === IncidentType.BRIDGE_EXPLOIT) {
-    return `Bridge anomaly detected. Contracts: ${contracts || "?"} • Evidence txs: ${txs || "?"}`;
+    return `Bridge anomaly detected. Contracts: ${contracts || "?"} | Evidence txs: ${txs || "?"}`;
   }
-  return `Contract outflow anomaly detected. Contracts: ${contracts || "?"} • Evidence txs: ${txs || "?"}`;
+  if (row.incidentType === IncidentType.LP_EXPLOIT) {
+    return `Liquidity pool drain pattern detected. Pools: ${contracts || "?"} | Evidence txs: ${txs || "?"}`;
+  }
+  return `Contract outflow anomaly detected. Contracts: ${contracts || "?"} | Evidence txs: ${txs || "?"}`;
 }
 
 function parseMulti(params: SearchParams, key: string) {
@@ -173,8 +178,8 @@ export default async function HomePage({ searchParams }: PageProps) {
   const typeFilters = parseMulti(params, "type")
     .map((v) => v.trim().toUpperCase())
     .filter(Boolean)
-    .map((v) => (v === "WALLET_DRAINER" ? "WALLET_DRAIN" : v))
-    .filter((v) => v === "WALLET_DRAIN" || v === "PROTOCOL_EXPLOIT" || v === "BRIDGE_EXPLOIT") as IncidentType[];
+    .map((v) => (v === "WALLET_DRAINER" ? "WALLET_DRAIN" : v === "LP" ? "LP_EXPLOIT" : v))
+    .filter((v) => v === "WALLET_DRAIN" || v === "PROTOCOL_EXPLOIT" || v === "BRIDGE_EXPLOIT" || v === "LP_EXPLOIT") as IncidentType[];
 
   const selectedTypes = typeFilters.length > 0 ? typeFilters : ALLOWED_TYPES;
 
@@ -187,6 +192,7 @@ export default async function HomePage({ searchParams }: PageProps) {
     publicVisible: true,
     tenant: { publicFeedEnabled: true },
     incidentType: { in: selectedTypes },
+    lifecycleState: { not: IncidentLifecycleState.FALSE_POSITIVE },
     ...(chainFilters.length > 0 ? { chainId: { in: chainFilters } } : {}),
   };
 
@@ -197,16 +203,26 @@ export default async function HomePage({ searchParams }: PageProps) {
         ? [{ exploitConfidence: "desc" }, { updatedAt: "desc" }]
         : [{ updatedAt: "desc" }, { id: "desc" }];
 
-  const [snapshot, activeCount, new24hCount, underInvestigationCount, verified7dSum, largest7d, feedSeed, chartSeed] =
-    await Promise.all([
+  const [
+    snapshot,
+    windowSignalCount,
+    activeCount,
+    new24hCount,
+    underInvestigationCount,
+    verified7dSum,
+    largest7d,
+    feedSeed,
+    chartSeed,
+  ] = await Promise.all([
     getPublicStatusSnapshot(),
+    prisma.incident.count({ where: { ...baseWhere, startedAt: { gte: sinceRange } } }),
     prisma.incident.count({
       where: {
         ...baseWhere,
         lifecycleState: { in: [IncidentLifecycleState.OPEN, IncidentLifecycleState.EXPANDING] },
       },
     }),
-    prisma.incident.count({ where: { ...baseWhere, createdAt: { gte: since24h } } }),
+    prisma.incident.count({ where: { ...baseWhere, startedAt: { gte: since24h } } }),
     prisma.incident.count({
       where: {
         ...baseWhere,
@@ -227,11 +243,14 @@ export default async function HomePage({ searchParams }: PageProps) {
       where: {
         ...baseWhere,
         ...(viewKey === "live"
-          ? { lifecycleState: { in: [IncidentLifecycleState.OPEN, IncidentLifecycleState.EXPANDING] } }
+          ? {
+              lifecycleState: { in: [IncidentLifecycleState.OPEN, IncidentLifecycleState.EXPANDING] },
+              peakLossUsd: { lte: 0 },
+            }
           : {}),
         ...(viewKey === "confirmed" ? { peakLossUsd: { gt: 0 } } : {}),
         ...(viewKey === "largest" ? { peakLossUsd: { gt: 0 } } : {}),
-        updatedAt: { gte: sinceRange },
+        startedAt: { gte: sinceRange },
       },
       orderBy:
         viewKey === "largest"
@@ -242,7 +261,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       take: 300,
     }),
     prisma.incident.findMany({
-      where: { ...baseWhere, updatedAt: { gte: sinceRange } },
+      where: { ...baseWhere, startedAt: { gte: sinceRange } },
       select: { chainId: true, incidentType: true, rootKey: true, peakLossUsd: true },
       orderBy: [{ updatedAt: "desc" }],
       take: 2000,
@@ -390,8 +409,8 @@ export default async function HomePage({ searchParams }: PageProps) {
         <div style={{ fontSize: 12, lineHeight: 1.5 }}>
           <span className="ht-label">Coverage Snapshot</span>{" "}
           <span className="ht-text-muted">
-            Chains: {snapshot.chains.length} • Last ingest:{" "}
-            {lastIngestAt ? lastIngestAt.slice(11, 16) + " UTC" : "unknown"} • Lag:{" "}
+            Chains: {snapshot.chains.length} | Last ingest:{" "}
+            {lastIngestAt ? lastIngestAt.slice(11, 16) + " UTC" : "unknown"} | Lag:{" "}
             {approxLagBlocks === null ? "unknown" : `~${approxLagBlocks} blocks`}
           </span>
         </div>
@@ -471,7 +490,7 @@ export default async function HomePage({ searchParams }: PageProps) {
         <div className="ht-feed-head">
           <div>
             <h2 style={{ margin: 0, fontSize: 20 }}>Live Signals</h2>
-            <div className="ht-text-muted">Window: {rangeKey.toUpperCase()} • Showing public signals only</div>
+            <div className="ht-text-muted">Window: {rangeKey.toUpperCase()} | Showing public signals only</div>
           </div>
           <div className="ht-tabs" aria-label="Feed views">
             <Link href={hrefWith(params, { view: "live" })} className={viewKey === "live" ? "ht-tab-link active" : "ht-tab-link"}>
@@ -542,8 +561,23 @@ export default async function HomePage({ searchParams }: PageProps) {
 
           {feedRows.length === 0 && (
             <div className="ht-empty">
-              <div>No incidents in the last {rangeKey.toUpperCase()}.</div>
-              <div className="ht-text-muted">Loss verification in progress or no public incidents match this filter set.</div>
+              {windowSignalCount === 0 ? (
+                <>
+                  <div>No signals detected in the last {rangeKey.toUpperCase()}.</div>
+                  <div className="ht-text-muted">Tracking is live. Signals will appear here as they are detected.</div>
+                </>
+              ) : (
+                <>
+                  <div>No signals match this tab in the last {rangeKey.toUpperCase()}.</div>
+                  <div className="ht-text-muted">
+                    {viewKey === "live"
+                      ? "No live signals in this window. Try Confirmed or Largest."
+                      : viewKey === "confirmed"
+                        ? "No confirmed (verified-loss) signals in this window. Try Live."
+                        : "No verified-loss signals in this window. Try Live."}
+                  </div>
+                </>
+              )}
               <div style={{ marginTop: 8 }}>
                 <Link href="/methodology" className="ht-link-button">
                   View methodology
@@ -569,7 +603,7 @@ export default async function HomePage({ searchParams }: PageProps) {
                 >
                   <span>{exploitLabel(row.type)}</span>
                   <span className="ht-text-muted">
-                    {row.count} • {pct}%
+                    {row.count} | {pct}%
                   </span>
                 </Link>
               );
@@ -606,7 +640,7 @@ export default async function HomePage({ searchParams }: PageProps) {
                 >
                   <span>{chainName(row.chainId)}</span>
                   <span className="ht-text-muted">
-                    {row.count} • {pct}%
+                    {row.count} | {pct}%
                   </span>
                 </Link>
               );

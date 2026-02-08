@@ -61,8 +61,9 @@ export default async function IncidentsPage({ searchParams }: PageProps) {
     publicVisible: true,
     tenant: { publicFeedEnabled: true },
     incidentType: {
-      in: ["WALLET_DRAIN", "PROTOCOL_EXPLOIT", "BRIDGE_EXPLOIT"],
+      in: ["WALLET_DRAIN", "PROTOCOL_EXPLOIT", "BRIDGE_EXPLOIT", "LP_EXPLOIT"],
     },
+    lifecycleState: { not: IncidentLifecycleState.FALSE_POSITIVE },
     ...(liveOnly
       ? {
           lifecycleState: {
@@ -107,6 +108,12 @@ export default async function IncidentsPage({ searchParams }: PageProps) {
   const [chainRows, archiveRows] = await Promise.all([
     prisma.incident.groupBy({
       by: ["chainId"],
+      where: {
+        publicVisible: true,
+        tenant: { publicFeedEnabled: true },
+        incidentType: { in: ["WALLET_DRAIN", "PROTOCOL_EXPLOIT", "BRIDGE_EXPLOIT", "LP_EXPLOIT"] },
+        lifecycleState: { not: IncidentLifecycleState.FALSE_POSITIVE },
+      },
       orderBy: { chainId: "asc" },
     }),
     prisma.$queryRaw<ArchiveRow[]>`
@@ -114,6 +121,13 @@ export default async function IncidentsPage({ searchParams }: PageProps) {
         TO_CHAR(DATE_TRUNC('month', started_at), 'YYYY-MM') AS month_key,
         COUNT(*)::bigint AS item_count
       FROM incidents
+      WHERE
+        public_visible = true
+        AND incident_type IN ('WALLET_DRAIN','PROTOCOL_EXPLOIT','BRIDGE_EXPLOIT','LP_EXPLOIT')
+        AND lifecycle_state <> 'FALSE_POSITIVE'
+        AND EXISTS (
+          SELECT 1 FROM tenants t WHERE t.id = incidents.tenant_id AND t.public_feed_enabled = true
+        )
       GROUP BY DATE_TRUNC('month', started_at)
       ORDER BY DATE_TRUNC('month', started_at) DESC
       LIMIT 36
@@ -159,6 +173,7 @@ export default async function IncidentsPage({ searchParams }: PageProps) {
                 <option value="WALLET_DRAIN">Wallet Drainer</option>
                 <option value="PROTOCOL_EXPLOIT">Protocol Exploit</option>
                 <option value="BRIDGE_EXPLOIT">Bridge Exploit</option>
+                <option value="LP_EXPLOIT">LP Exploit</option>
               </select>
             </div>
 

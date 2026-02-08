@@ -26,7 +26,7 @@ function usd(value: number) {
 function shortAddr(value: string) {
   const v = value.trim();
   if (!/^0x[a-fA-F0-9]{40}$/.test(v)) return v;
-  return `${v.slice(0, 6)}…${v.slice(-4)}`;
+  return `${v.slice(0, 6)}...${v.slice(-4)}`;
 }
 
 function confidenceLabel(value: number) {
@@ -40,6 +40,7 @@ function exploitLabel(value: string) {
   const v = value.toUpperCase();
   if (v === "WALLET_DRAIN") return "Wallet Drainer";
   if (v === "BRIDGE_EXPLOIT") return "Bridge Exploit";
+  if (v === "LP_EXPLOIT") return "LP Exploit";
   return "Protocol Exploit";
 }
 
@@ -151,6 +152,21 @@ export default async function IncidentDetailPage({ params }: Params) {
       : "Pending verification";
 
   const confidenceText = confidenceLabel(Number(incident.confidence ?? 0));
+
+  const contractRole = (() => {
+    const t = String(incident.incidentType).toUpperCase();
+    if (t === "LP_EXPLOIT") return "Liquidity Pool";
+    if (t === "BRIDGE_EXPLOIT") return "Bridge Contract";
+    return "Protocol Contract";
+  })();
+
+  const primaryVictim = (() => {
+    const t = String(incident.incidentType).toUpperCase();
+    if (t === "LP_EXPLOIT") return "Liquidity Pool";
+    if (t === "BRIDGE_EXPLOIT") return "Bridge Contract";
+    if (t === "WALLET_DRAIN") return "Victim Wallet(s)";
+    return "Protocol";
+  })();
 
   const summaryText = (() => {
     const contracts = incident.affectedContracts.length;
@@ -265,6 +281,10 @@ export default async function IncidentDetailPage({ params }: Params) {
             <div>{verifiedLossText}</div>
           </div>
           <div>
+            <div className="ht-label">Victim</div>
+            <div>{primaryVictim}</div>
+          </div>
+          <div>
             <div className="ht-label">Confidence</div>
             <div title="Confidence is based on multi-signal alignment and evolves as evidence accumulates.">
               {confidenceText}
@@ -281,12 +301,12 @@ export default async function IncidentDetailPage({ params }: Params) {
         <h2 style={{ marginTop: 0 }}>Actors & Addresses</h2>
         <div className="ht-row two">
           <article className="ht-panel alt">
-            <h3 style={{ marginTop: 0 }}>Protocol Contract</h3>
+            <h3 style={{ marginTop: 0 }}>{contractRole}</h3>
             {incident.affectedContracts.length > 0 ? (
               <div className="ht-list">
                 {incident.affectedContracts.slice(0, 1).map((addr) => (
                   <a key={addr} href={addressUrl(incident.chainId, addr)} target="_blank" rel="noreferrer" className="ht-list-row">
-                    <span>Protocol Contract:</span>
+                    <span>{contractRole}:</span>
                     <span title={addr}>{shortAddr(addr)}</span>
                   </a>
                 ))}
@@ -296,7 +316,7 @@ export default async function IncidentDetailPage({ params }: Params) {
                     <div className="ht-list" style={{ marginTop: 8 }}>
                       {incident.affectedContracts.slice(1, 20).map((addr) => (
                         <a key={addr} href={addressUrl(incident.chainId, addr)} target="_blank" rel="noreferrer" className="ht-list-row">
-                          <span>Protocol Contract:</span>
+                          <span>{contractRole}:</span>
                           <span title={addr}>{shortAddr(addr)}</span>
                         </a>
                       ))}
@@ -305,7 +325,7 @@ export default async function IncidentDetailPage({ params }: Params) {
                 )}
               </div>
             ) : (
-              <div className="ht-text-muted">Protocol contract not identified yet.</div>
+              <div className="ht-text-muted">{contractRole} not identified yet.</div>
             )}
           </article>
 

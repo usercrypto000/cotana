@@ -13,6 +13,7 @@ function parseIncidentType(value: string | null) {
   if (normalized === "WALLET_DRAIN") return IncidentType.WALLET_DRAIN;
   if (normalized === "PROTOCOL_EXPLOIT") return IncidentType.PROTOCOL_EXPLOIT;
   if (normalized === "BRIDGE_EXPLOIT") return IncidentType.BRIDGE_EXPLOIT;
+  if (normalized === "LP_EXPLOIT") return IncidentType.LP_EXPLOIT;
   return undefined;
 }
 
@@ -109,7 +110,12 @@ export async function GET(request: Request) {
         tenantId: tenant.id,
         chainId: { in: allowedChains },
         incidentType: {
-          in: [IncidentType.WALLET_DRAIN, IncidentType.PROTOCOL_EXPLOIT, IncidentType.BRIDGE_EXPLOIT],
+          in: [
+            IncidentType.WALLET_DRAIN,
+            IncidentType.PROTOCOL_EXPLOIT,
+            IncidentType.BRIDGE_EXPLOIT,
+            IncidentType.LP_EXPLOIT,
+          ],
         },
         ...(Number.isFinite(minScore) && minScore > 0 ? { score: { gte: minScore } } : {}),
         ...(type ? { incidentType: type } : {}),
