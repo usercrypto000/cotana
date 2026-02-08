@@ -370,9 +370,6 @@ export default function MindshareArenaClient() {
             <p>{timeframeLabel}</p>
           </div>
           <div className="mindshare-arena-actions">
-            <button className="pill-button" type="button">
-              See Points Arena
-            </button>
             <div className="timeframe-tabs">
               {timeframes.map((item) => (
                 <button
@@ -538,7 +535,6 @@ export default function MindshareArenaClient() {
       </section>
 
       <nav className="mindshare-bottom-nav" aria-label="Primary">
-        <a href="/incentives">Incentives Radar</a>
         <a href="/mindshare-arena" className="active">
           Mindshare Arena
         </a>

@@ -1,7 +1,6 @@
 ﻿import { Prisma } from "@prisma/client";
 import { prisma } from "@/services/prisma";
 import { listChains } from "@/services/chainConfig";
-import { shortAddress } from "@/services/smartMoneyLive";
 
 export type MindshareWindow = "24h" | "7d" | "30d";
 
@@ -107,6 +106,11 @@ const EXCLUDED_LABEL_CATEGORIES = [
 const MIN_INTERACTIONS = Number(process.env.MINDSHARE_MIN_INTERACTIONS ?? "2");
 const MIN_PROTOCOLS = Number(process.env.MINDSHARE_MIN_PROTOCOLS ?? "2");
 const MAX_PER_MINUTE = Number(process.env.MINDSHARE_MAX_PER_MINUTE ?? "5");
+
+function shortAddress(address: string) {
+  if (address.length < 10) return address;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
 
 export function isMindshareEnabled() {
   return process.env.ENABLE_MINDSHARE_ARENA === "true" || process.env.NODE_ENV !== "production";
