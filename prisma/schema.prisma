@@ -42,11 +42,11 @@ model Transaction {
 }
 
 model Log {
-  id          Int    @id @default(autoincrement())
-  chainId     Int    @map("chain_id")
-  txHash      String @map("tx_hash")
-  logIndex    Int    @map("log_index")
-  blockNumber BigInt @map("block_number")
+  id          Int     @id @default(autoincrement())
+  chainId     Int     @map("chain_id")
+  txHash      String  @map("tx_hash")
+  logIndex    Int     @map("log_index")
+  blockNumber BigInt  @map("block_number")
   address     String
   topic0      String? @map("topic0")
   topics      Json
@@ -57,16 +57,16 @@ model Log {
 }
 
 model TokenTransfer {
-  id          Int    @id @default(autoincrement())
-  chainId     Int    @map("chain_id")
-  txHash      String @map("tx_hash")
-  logIndex    Int    @map("log_index")
-  blockNumber BigInt @map("block_number")
+  id          Int     @id @default(autoincrement())
+  chainId     Int     @map("chain_id")
+  txHash      String  @map("tx_hash")
+  logIndex    Int     @map("log_index")
+  blockNumber BigInt  @map("block_number")
   token       String
-  from        String @map("from")
-  to          String @map("to")
+  from        String  @map("from")
+  to          String  @map("to")
   amountRaw   Decimal @map("amount_raw")
-  amountDec   String @map("amount_dec")
+  amountDec   String  @map("amount_dec")
   timestamp   Int
 
   @@unique([chainId, txHash, logIndex])
@@ -74,22 +74,22 @@ model TokenTransfer {
 }
 
 model Swap {
-  id           Int    @id @default(autoincrement())
-  chainId      Int    @map("chain_id")
-  txHash       String @map("tx_hash")
-  logIndex     Int    @map("log_index")
-  blockNumber  BigInt @map("block_number")
+  id           Int      @id @default(autoincrement())
+  chainId      Int      @map("chain_id")
+  txHash       String   @map("tx_hash")
+  logIndex     Int      @map("log_index")
+  blockNumber  BigInt   @map("block_number")
   dex          String
   pool         String
   trader       String?
-  tokenIn      String @map("token_in")
-  tokenOut     String @map("token_out")
-  amountInRaw  Decimal @map("amount_in_raw")
-  amountOutRaw Decimal @map("amount_out_raw")
-  amountInDec  String @map("amount_in_dec")
-  amountOutDec String @map("amount_out_dec")
+  tokenIn      String   @map("token_in")
+  tokenOut     String   @map("token_out")
+  amountInRaw  Decimal  @map("amount_in_raw")
+  amountOutRaw Decimal  @map("amount_out_raw")
+  amountInDec  String   @map("amount_in_dec")
+  amountOutDec String   @map("amount_out_dec")
   usdValue     Decimal? @map("usd_value")
-  priced       Boolean @default(false)
+  priced       Boolean  @default(false)
   timestamp    Int
 
   @@unique([chainId, txHash, logIndex])
@@ -97,15 +97,15 @@ model Swap {
 }
 
 model Token {
-  id       Int    @id @default(autoincrement())
-  chainId  Int    @map("chain_id")
-  address  String
-  symbol   String
-  decimals Int
-  name     String
-  firstSeenBlock BigInt? @map("first_seen_block")
+  id             Int       @id @default(autoincrement())
+  chainId        Int       @map("chain_id")
+  address        String
+  symbol         String
+  decimals       Int
+  name           String
+  firstSeenBlock BigInt?   @map("first_seen_block")
   firstSeenAt    DateTime? @map("first_seen_at")
-  verified Boolean @default(false)
+  verified       Boolean   @default(false)
 
   @@unique([chainId, address])
   @@map("tokens")
@@ -136,29 +136,29 @@ model WalletPosition {
 }
 
 model WalletTokenPnl {
-  id                 Int      @id @default(autoincrement())
-  chainId            Int      @map("chain_id")
-  wallet             String
-  token              String
-  realizedPnlUsd30d  Decimal  @map("realized_pnl_usd_30d")
-  realizedPnlUsdAll  Decimal  @map("realized_pnl_usd_all")
-  winTrades30d       Int      @map("win_trades_30d")
-  lossTrades30d      Int      @map("loss_trades_30d")
-  avgHoldSeconds30d  Int      @map("avg_hold_seconds_30d")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  id                Int      @id @default(autoincrement())
+  chainId           Int      @map("chain_id")
+  wallet            String
+  token             String
+  realizedPnlUsd30d Decimal  @map("realized_pnl_usd_30d")
+  realizedPnlUsdAll Decimal  @map("realized_pnl_usd_all")
+  winTrades30d      Int      @map("win_trades_30d")
+  lossTrades30d     Int      @map("loss_trades_30d")
+  avgHoldSeconds30d Int      @map("avg_hold_seconds_30d")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@unique([chainId, wallet, token])
   @@map("wallet_token_pnl")
 }
 
 model WalletScore {
-  id          Int      @id @default(autoincrement())
-  chainId     Int      @map("chain_id")
-  wallet      String
-  window      String
-  score       Int
-  featuresJson Json    @map("features_json")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           Int      @id @default(autoincrement())
+  chainId      Int      @map("chain_id")
+  wallet       String
+  window       String
+  score        Int
+  featuresJson Json     @map("features_json")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@unique([chainId, wallet, window])
   @@map("wallet_scores")
@@ -200,15 +200,15 @@ model MindshareProtocol {
 }
 
 model MindshareProtocolContract {
-  id         Int      @id @default(autoincrement())
-  protocolId Int      @map("protocol_id")
-  chainId    Int      @map("chain_id")
+  id         Int       @id @default(autoincrement())
+  protocolId Int       @map("protocol_id")
+  chainId    Int       @map("chain_id")
   address    String
   type       String
   activeFrom DateTime? @map("active_from")
   activeTo   DateTime? @map("active_to")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
   protocol MindshareProtocol @relation(fields: [protocolId], references: [id])
 
@@ -279,8 +279,8 @@ model Project {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  incentives  Incentive[]
-  links       ProjectLink[]
+  incentives Incentive[]
+  links      ProjectLink[]
 
   @@map("projects")
 }
@@ -300,45 +300,45 @@ model ProjectLink {
 }
 
 model Incentive {
-  id               Int              @id @default(autoincrement())
-  projectId        Int              @map("project_id")
-  title            String?
-  description      String?
-  status           IncentiveStatus
-  types            String[]
-  defillamaSlug    String?          @map("defillama_slug")
-  perpsSlug        String?          @map("perps_slug")
-  rewardAssetType  RewardAssetType  @map("reward_asset_type")
-  rewardAssetSymbol String?         @map("reward_asset_symbol")
-  rewardAssets     String?          @map("reward_assets")
-  rewardAssetAddress String?        @map("reward_asset_address")
-  rewardAssetChain  String?         @map("reward_asset_chain")
-  apy              String?          @map("apy")
-  capitalRequired  CapitalRequirement @map("capital_required")
-  timeIntensity    TimeIntensity    @map("time_intensity")
-  riskFlags        String[]
-  riskScore        Int?             @map("risk_score")
-  saturationScore  Int?             @map("saturation_score")
-  roiLabel         String?          @map("roi_label")
-  effortLabel      String?          @map("effort_label")
-  flowSummary      String?          @map("flow_summary")
-  statusRationale  String?          @map("status_rationale")
-  howToExtract     String?          @map("how_to_extract")
-  xHandleUrl       String?          @map("x_handle_url")
-  participationUrl String?          @map("participation_url")
-  snapshotWindow   String?          @map("snapshot_window")
-  verified         Boolean          @default(false)
-  startAt          DateTime?        @map("start_at")
-  endAt            DateTime?        @map("end_at")
-  lastUpdatedAt    DateTime         @map("last_updated_at")
-  createdAt        DateTime         @default(now()) @map("created_at")
-  updatedAt        DateTime         @updatedAt @map("updated_at")
+  id                 Int                @id @default(autoincrement())
+  projectId          Int                @map("project_id")
+  title              String?
+  description        String?
+  status             IncentiveStatus
+  types              String[]
+  defillamaSlug      String?            @map("defillama_slug")
+  perpsSlug          String?            @map("perps_slug")
+  rewardAssetType    RewardAssetType    @map("reward_asset_type")
+  rewardAssetSymbol  String?            @map("reward_asset_symbol")
+  rewardAssets       String?            @map("reward_assets")
+  rewardAssetAddress String?            @map("reward_asset_address")
+  rewardAssetChain   String?            @map("reward_asset_chain")
+  apy                String?            @map("apy")
+  capitalRequired    CapitalRequirement @map("capital_required")
+  timeIntensity      TimeIntensity      @map("time_intensity")
+  riskFlags          String[]
+  riskScore          Int?               @map("risk_score")
+  saturationScore    Int?               @map("saturation_score")
+  roiLabel           String?            @map("roi_label")
+  effortLabel        String?            @map("effort_label")
+  flowSummary        String?            @map("flow_summary")
+  statusRationale    String?            @map("status_rationale")
+  howToExtract       String?            @map("how_to_extract")
+  xHandleUrl         String?            @map("x_handle_url")
+  participationUrl   String?            @map("participation_url")
+  snapshotWindow     String?            @map("snapshot_window")
+  verified           Boolean            @default(false)
+  startAt            DateTime?          @map("start_at")
+  endAt              DateTime?          @map("end_at")
+  lastUpdatedAt      DateTime           @map("last_updated_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
 
-  project          Project          @relation(fields: [projectId], references: [id])
-  events           IncentiveEvent[]
-  links            IncentiveLink[]
-  proofs           IncentiveProof[]
-  metrics          IncentiveMetric?
+  project Project          @relation(fields: [projectId], references: [id])
+  events  IncentiveEvent[]
+  links   IncentiveLink[]
+  proofs  IncentiveProof[]
+  metrics IncentiveMetric?
 
   @@map("incentives")
 }
@@ -358,13 +358,13 @@ model IncentiveEvent {
 }
 
 model IncentiveLink {
-  id          Int      @id @default(autoincrement())
-  incentiveId Int      @map("incentive_id")
+  id          Int       @id @default(autoincrement())
+  incentiveId Int       @map("incentive_id")
   type        LinkType
   label       String
   url         String
   tier        LinkTier?
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
 
   incentive Incentive @relation(fields: [incentiveId], references: [id])
 
@@ -386,14 +386,14 @@ model IncentiveProof {
 }
 
 model IncentiveMetric {
-  id               Int      @id @default(autoincrement())
-  incentiveId      Int      @unique @map("incentive_id")
-  tvlUsd           Decimal? @map("tvl_usd")
-  volumeUsd24h     Decimal? @map("volume_usd_24h")
-  volumeUsd30d     Decimal? @map("volume_usd_30d")
-  uaw7d            Int?     @map("uaw_7d")
-  txCount7d        Int?     @map("tx_count_7d")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id           Int      @id @default(autoincrement())
+  incentiveId  Int      @unique @map("incentive_id")
+  tvlUsd       Decimal? @map("tvl_usd")
+  volumeUsd24h Decimal? @map("volume_usd_24h")
+  volumeUsd30d Decimal? @map("volume_usd_30d")
+  uaw7d        Int?     @map("uaw_7d")
+  txCount7d    Int?     @map("tx_count_7d")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   incentive Incentive @relation(fields: [incentiveId], references: [id])
 
@@ -447,17 +447,17 @@ model ProtocolEventMap {
 }
 
 model RawInteraction {
-  id         Int      @id @default(autoincrement())
-  chainId    Int      @map("chain_id")
-  protocolId Int      @map("protocol_id")
-  wallet     String
-  txHash     String   @map("tx_hash")
-  blockTime  DateTime @map("block_time")
-  day        DateTime
-  source     String
-  actionCount Int     @default(1) @map("action_count")
-  walletType String
-  rawJson    Json?
+  id          Int      @id @default(autoincrement())
+  chainId     Int      @map("chain_id")
+  protocolId  Int      @map("protocol_id")
+  wallet      String
+  txHash      String   @map("tx_hash")
+  blockTime   DateTime @map("block_time")
+  day         DateTime
+  source      String
+  actionCount Int      @default(1) @map("action_count")
+  walletType  String
+  rawJson     Json?
 
   @@unique([chainId, protocolId, wallet, txHash])
   @@index([protocolId, day])
@@ -465,20 +465,20 @@ model RawInteraction {
 }
 
 model ProtocolMetric {
-  id               Int      @id @default(autoincrement())
-  protocolId       Int      @map("protocol_id")
-  chainId          Int      @map("chain_id")
-  window           String
-  asOf             DateTime @map("as_of")
-  uawDirect        Int      @map("uaw_direct")
-  uawEvent         Int      @map("uaw_event")
-  uawAttributed    Int      @map("uaw_attributed")
-  eoaUaw           Int      @map("eoa_uaw")
-  swUaw            Int      @map("sw_uaw")
-  repeatRate       Decimal  @map("repeat_rate")
-  medianActionsPerWallet Decimal @map("median_actions_per_wallet")
-  valueMovedUsd    Decimal? @map("value_moved_usd")
-  score            Decimal?
+  id                     Int      @id @default(autoincrement())
+  protocolId             Int      @map("protocol_id")
+  chainId                Int      @map("chain_id")
+  window                 String
+  asOf                   DateTime @map("as_of")
+  uawDirect              Int      @map("uaw_direct")
+  uawEvent               Int      @map("uaw_event")
+  uawAttributed          Int      @map("uaw_attributed")
+  eoaUaw                 Int      @map("eoa_uaw")
+  swUaw                  Int      @map("sw_uaw")
+  repeatRate             Decimal  @map("repeat_rate")
+  medianActionsPerWallet Decimal  @map("median_actions_per_wallet")
+  valueMovedUsd          Decimal? @map("value_moved_usd")
+  score                  Decimal?
 
   protocol Protocol @relation(fields: [protocolId], references: [id])
 
@@ -487,59 +487,59 @@ model ProtocolMetric {
 }
 
 model AdminOtp {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   email     String
-  tokenHash String   @map("token_hash")
-  expiresAt DateTime @map("expires_at")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   @@index([email, tokenHash])
   @@map("admin_otps")
 }
 
 model DataSource {
-  id           Int      @id @default(autoincrement())
-  name         String
-  tier         LinkTier
-  url          String?
-  ingestionType String  @map("ingestion_type")
-  lastSeenAt   DateTime? @map("last_seen_at")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id            Int       @id @default(autoincrement())
+  name          String
+  tier          LinkTier
+  url           String?
+  ingestionType String    @map("ingestion_type")
+  lastSeenAt    DateTime? @map("last_seen_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
 
   @@map("data_sources")
 }
 
 model MindshareCursor {
-  id                Int     @id @default(autoincrement())
-  chainId           Int     @map("chain_id")
-  lastProcessedBlock BigInt @map("last_processed_block")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id                 Int      @id @default(autoincrement())
+  chainId            Int      @map("chain_id")
+  lastProcessedBlock BigInt   @map("last_processed_block")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   @@unique([chainId])
   @@map("mindshare_cursors")
 }
 
 model AddressContractCache {
-  id        Int      @id @default(autoincrement())
-  chainId   Int      @map("chain_id")
-  address   String
-  isContract Boolean @map("is_contract")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id         Int      @id @default(autoincrement())
+  chainId    Int      @map("chain_id")
+  address    String
+  isContract Boolean  @map("is_contract")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@unique([chainId, address])
   @@map("address_contract_cache")
 }
 
 model AddressInteraction {
-  id         Int     @id @default(autoincrement())
-  chainId    Int     @map("chain_id")
-  address    String
-  wallet     String
-  txHash     String  @map("tx_hash")
-  blockNumber BigInt @map("block_number")
-  blockTime  DateTime @map("block_time")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id          Int      @id @default(autoincrement())
+  chainId     Int      @map("chain_id")
+  address     String
+  wallet      String
+  txHash      String   @map("tx_hash")
+  blockNumber BigInt   @map("block_number")
+  blockTime   DateTime @map("block_time")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([address, blockTime])
   @@map("address_interactions")
@@ -574,19 +574,30 @@ model MindshareAddressChanges {
 }
 
 model AddressMetadata {
-  id        Int      @id @default(autoincrement())
-  chainId   Int      @map("chain_id")
-  address   String
-  label     String?
-  labelSource String? @map("label_source")
-  confidence Int?    
-  isVerified Boolean? @map("is_verified")
-  isProxy   Boolean?  @map("is_proxy")
-  implementationAddress String? @map("implementation_address")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                    Int      @id @default(autoincrement())
+  chainId               Int      @map("chain_id")
+  address               String
+  label                 String?
+  labelSource           String?  @map("label_source")
+  confidence            Int?
+  isVerified            Boolean? @map("is_verified")
+  isProxy               Boolean? @map("is_proxy")
+  implementationAddress String?  @map("implementation_address")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   @@unique([chainId, address])
   @@map("address_metadata")
+}
+
+model AddressSuppression {
+  id           Int      @id @default(autoincrement())
+  chainId      Int      @map("chain_id")
+  address      String
+  reason       String?
+  suppressedAt DateTime @default(now()) @map("suppressed_at")
+
+  @@unique([chainId, address])
+  @@map("address_suppressions")
 }
 
 model WalletBotScore {
@@ -601,3 +612,624 @@ model WalletBotScore {
   @@map("wallet_bot_scores")
 }
 
+enum TransferAssetType {
+  NATIVE
+  ERC20
+  NFT
+}
+
+enum TransferEventSubtype {
+  TRANSFER
+  APPROVAL
+}
+
+enum IncidentType {
+  WALLET_DRAIN
+  PROTOCOL_EXPLOIT
+  BRIDGE_EXPLOIT
+  ORACLE_ATTACK
+}
+
+enum IncidentStatus {
+  OPEN
+  MONITORING
+  RESOLVED
+}
+
+enum IncidentLifecycleState {
+  OPEN
+  EXPANDING
+  CONTAINED
+  RESOLVED
+  FALSE_POSITIVE
+}
+
+enum IncidentRelationType {
+  MERGED
+  SPLIT
+}
+
+enum ActorAddressType {
+  EOA
+  CONTRACT
+  UNKNOWN
+}
+
+enum CashoutPathType {
+  DEX_SWAP
+  BRIDGE_EXIT
+  CEX_DEPOSIT
+}
+
+enum TenantBillingModel {
+  INCIDENT_VOLUME
+  MONITORED_TVL
+}
+
+enum GraphEdgeType {
+  TRANSFER
+  APPROVAL
+  SHARED_FUNDER
+  SAME_TX
+}
+
+model ExploitTrackerCursor {
+  id                 Int      @id @default(autoincrement())
+  chainId            Int      @unique @map("chain_id")
+  lastProcessedBlock BigInt   @map("last_processed_block")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("exploit_tracker_cursors")
+}
+
+model RawChainEvent {
+  id             BigInt   @id @default(autoincrement())
+  eventId        String   @unique @map("event_id")
+  chainId        Int      @map("chain_id")
+  blockNumber    BigInt   @map("block_number")
+  blockTimestamp DateTime @map("block_timestamp")
+  txHash         String   @map("tx_hash")
+  logIndex       Int?     @map("log_index")
+  eventType      String   @map("event_type")
+  address        String?
+  topic0         String?  @map("topic0")
+  topics         Json?
+  data           String?
+  payload        Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([chainId, blockNumber])
+  @@index([chainId, txHash])
+  @@map("raw_chain_events")
+}
+
+model TransferEvent {
+  id                BigInt               @id @default(autoincrement())
+  eventId           String               @unique @map("event_id")
+  chainId           Int                  @map("chain_id")
+  blockNumber       BigInt               @map("block_number")
+  blockTimestamp    DateTime             @map("block_timestamp")
+  txHash            String               @map("tx_hash")
+  logIndex          Int?                 @map("log_index")
+  fromAddress       String               @map("from_address")
+  toAddress         String               @map("to_address")
+  assetType         TransferAssetType    @map("asset_type")
+  assetAddress      String?              @map("asset_address")
+  tokenId           String?              @map("token_id")
+  amountRaw         String               @map("amount_raw")
+  decimals          Int?
+  amountUsd         Decimal?             @map("amount_usd")
+  methodId          String?              @map("method_id")
+  contractCalled    String?              @map("contract_called")
+  firstSeenFrom     Boolean              @default(false) @map("first_seen_from")
+  firstSeenTo       Boolean              @default(false) @map("first_seen_to")
+  eventSubtype      TransferEventSubtype @default(TRANSFER) @map("event_subtype")
+  approvalAmountRaw String?              @map("approval_amount_raw")
+  approvalSpender   String?              @map("approval_spender")
+  txFromAddress     String?              @map("tx_from_address")
+  txToAddress       String?              @map("tx_to_address")
+  createdAt         DateTime             @default(now()) @map("created_at")
+
+  @@index([chainId, blockNumber])
+  @@index([chainId, blockTimestamp])
+  @@index([chainId, fromAddress, blockTimestamp])
+  @@index([chainId, toAddress, blockTimestamp])
+  @@index([chainId, contractCalled, blockTimestamp])
+  @@index([chainId, assetAddress, blockTimestamp])
+  @@index([chainId, txHash])
+  @@map("transfer_events")
+}
+
+model AddressProfile {
+  id              BigInt   @id @default(autoincrement())
+  chainId         Int      @map("chain_id")
+  address         String
+  firstSeenTime   DateTime @map("first_seen_time")
+  firstSeenBlock  BigInt?  @map("first_seen_block")
+  firstSeenTxHash String?  @map("first_seen_tx_hash")
+  lastSeenTime    DateTime @map("last_seen_time")
+  isContract      Boolean? @map("is_contract")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([chainId, address])
+  @@index([chainId, lastSeenTime])
+  @@map("address_profiles")
+}
+
+model AddressBaseline {
+  id                    BigInt   @id @default(autoincrement())
+  chainId               Int      @map("chain_id")
+  address               String
+  avgTransfersPerHour   Decimal  @default(0) @map("avg_transfers_per_hour")
+  avgTransfersPerDay    Decimal  @default(0) @map("avg_transfers_per_day")
+  avgOutflowUsd         Decimal  @default(0) @map("avg_outflow_usd")
+  typicalCounterparties Int      @default(0) @map("typical_counterparties")
+  walletAgeHours        Int      @default(0) @map("wallet_age_hours")
+  asOf                  DateTime @map("as_of")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@unique([chainId, address])
+  @@index([chainId, asOf])
+  @@map("address_baselines")
+}
+
+model ContractMethodStat {
+  id              BigInt   @id @default(autoincrement())
+  chainId         Int      @map("chain_id")
+  contractAddress String   @map("contract_address")
+  methodId        String   @map("method_id")
+  seenCount       Int      @default(0) @map("seen_count")
+  firstSeenAt     DateTime @map("first_seen_at")
+  lastSeenAt      DateTime @map("last_seen_at")
+  totalValueUsd   Decimal? @map("total_value_usd")
+  avgValueUsd     Decimal? @map("avg_value_usd")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([chainId, contractAddress, methodId])
+  @@index([chainId, contractAddress, lastSeenAt])
+  @@map("contract_method_stats")
+}
+
+model ContractBalanceDelta {
+  id                  BigInt   @id @default(autoincrement())
+  chainId             Int      @map("chain_id")
+  contractAddress     String   @map("contract_address")
+  blockNumber         BigInt   @map("block_number")
+  blockTimestamp      DateTime @map("block_timestamp")
+  inflowUsd           Decimal? @map("inflow_usd")
+  outflowUsd          Decimal? @map("outflow_usd")
+  netDeltaUsd         Decimal? @map("net_delta_usd")
+  estimatedBalanceUsd Decimal? @map("estimated_balance_usd")
+  txCount             Int      @default(0) @map("tx_count")
+  eventCount          Int      @default(0) @map("event_count")
+  mintUsd             Decimal? @map("mint_usd")
+  burnUsd             Decimal? @map("burn_usd")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  @@unique([chainId, contractAddress, blockNumber])
+  @@index([chainId, blockNumber])
+  @@index([chainId, contractAddress, blockTimestamp])
+  @@map("contract_balance_deltas")
+}
+
+model ContractBaseline {
+  id                              BigInt   @id @default(autoincrement())
+  chainId                         Int      @map("chain_id")
+  contractAddress                 String   @map("contract_address")
+  typicalTvlMinUsd                Decimal? @map("typical_tvl_min_usd")
+  typicalTvlMaxUsd                Decimal? @map("typical_tvl_max_usd")
+  avgNetOutflowUsdPerHour         Decimal? @map("avg_net_outflow_usd_per_hour")
+  typicalCallerCount              Int      @default(0) @map("typical_caller_count")
+  commonMethodSelectors           String[] @default([]) @map("common_method_selectors")
+  historicalMaxSingleTxLossUsd    Decimal? @map("historical_max_single_tx_loss_usd")
+  avgMintBurnRatio                Decimal? @map("avg_mint_burn_ratio")
+  avgMintSizeUsd                  Decimal? @map("avg_mint_size_usd")
+  avgMintFrequencyPerHour         Decimal? @map("avg_mint_frequency_per_hour")
+  avgBridgeReleaseDelaySeconds    Int?     @map("avg_bridge_release_delay_seconds")
+  normalTvlVariance               Decimal? @map("normal_tvl_variance")
+  avgOracleUpdateFrequencyPerHour Decimal? @map("avg_oracle_update_frequency_per_hour")
+  priceVolatilityPerBlock         Decimal? @map("price_volatility_per_block")
+  asOf                            DateTime @map("as_of")
+  updatedAt                       DateTime @updatedAt @map("updated_at")
+
+  @@unique([chainId, contractAddress])
+  @@index([chainId, asOf])
+  @@map("contract_baselines")
+}
+
+model BridgeProfile {
+  id             BigInt    @id @default(autoincrement())
+  chainId        Int       @map("chain_id")
+  bridgeContract String    @map("bridge_contract")
+  mintCount      Int       @default(0) @map("mint_count")
+  burnCount      Int       @default(0) @map("burn_count")
+  mintedUsd      Decimal?  @map("minted_usd")
+  burnedUsd      Decimal?  @map("burned_usd")
+  firstSeenAt    DateTime  @map("first_seen_at")
+  lastSeenAt     DateTime  @map("last_seen_at")
+  lastMintAt     DateTime? @map("last_mint_at")
+  lastBurnAt     DateTime? @map("last_burn_at")
+  recentRelayers String[]  @default([]) @map("recent_relayers")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@unique([chainId, bridgeContract])
+  @@index([chainId, lastSeenAt])
+  @@map("bridge_profiles")
+}
+
+model EntityGraphEdge {
+  id              BigInt        @id @default(autoincrement())
+  chainId         Int           @map("chain_id")
+  fromAddress     String        @map("from_address")
+  toAddress       String        @map("to_address")
+  edgeType        GraphEdgeType @map("edge_type")
+  sampleTxHash    String?       @map("sample_tx_hash")
+  lastBlockNumber BigInt?       @map("last_block_number")
+  observations    Int           @default(1)
+  weight          Decimal?      @map("weight")
+  suspicionScore  Decimal       @default(0) @map("suspicion_score")
+  firstSeenAt     DateTime      @map("first_seen_at")
+  lastSeenAt      DateTime      @map("last_seen_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@unique([chainId, fromAddress, toAddress, edgeType])
+  @@index([chainId, toAddress, edgeType])
+  @@index([chainId, fromAddress, edgeType])
+  @@map("entity_graph_edges")
+}
+
+model Tenant {
+  id                 Int                @id @default(autoincrement())
+  slug               String             @unique
+  name               String
+  isActive           Boolean            @default(true) @map("is_active")
+  allowedChains      Int[]              @default([]) @map("allowed_chains")
+  projectScopes      String[]           @default([]) @map("project_scopes")
+  incidentThreshold  Int                @default(70) @map("incident_threshold")
+  alertThreshold     Int                @default(75) @map("alert_threshold")
+  sseRateLimitPerMin Int                @default(120) @map("sse_rate_limit_per_min")
+  wsRateLimitPerMin  Int                @default(300) @map("ws_rate_limit_per_min")
+  trialMode          Boolean            @default(false) @map("trial_mode")
+  trialAlertDelaySec Int                @default(0) @map("trial_alert_delay_sec")
+  billingModel       TenantBillingModel @default(INCIDENT_VOLUME) @map("billing_model")
+  monitoredTvlUsd    Decimal?           @map("monitored_tvl_usd")
+  incidentVolumeCap  Int?               @map("incident_volume_cap")
+  publicFeedEnabled  Boolean            @default(false) @map("public_feed_enabled")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  apiKeys           TenantApiKey[]
+  incidents         Incident[]
+  clusters          ActorCluster[]
+  replayJobs        ReplayJob[]
+  ruleConfigs       TenantRuleConfig[]
+  webhookEndpoints  TenantWebhookEndpoint[]
+  webhookDeliveries WebhookDelivery[]
+  auditLogs         IncidentAuditLog[]
+
+  @@map("tenants")
+}
+
+model TenantRuleConfig {
+  id         BigInt   @id @default(autoincrement())
+  tenantId   Int      @map("tenant_id")
+  ruleId     String   @map("rule_id")
+  minScore   Int?     @map("min_score")
+  weight     Decimal  @default(1)
+  suppressed Boolean  @default(false)
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, ruleId])
+  @@index([tenantId, suppressed])
+  @@map("tenant_rule_configs")
+}
+
+model TenantApiKey {
+  id         BigInt    @id @default(autoincrement())
+  tenantId   Int       @map("tenant_id")
+  keyHash    String    @unique @map("key_hash")
+  label      String
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastUsedAt DateTime? @map("last_used_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, active])
+  @@map("tenant_api_keys")
+}
+
+model Incident {
+  id                    BigInt                 @id @default(autoincrement())
+  tenantId              Int                    @map("tenant_id")
+  incidentType          IncidentType           @map("incident_type")
+  status                IncidentStatus         @default(OPEN)
+  lifecycleState        IncidentLifecycleState @default(OPEN) @map("lifecycle_state")
+  chainId               Int                    @map("chain_id")
+  rootKey               String                 @map("root_key")
+  dedupeKey             String                 @unique @map("dedupe_key")
+  ruleVersion           String                 @default("v1") @map("rule_version")
+  projectKey            String?                @map("project_key")
+  score                 Int
+  exploitConfidence     Decimal                @default(0) @map("exploit_confidence")
+  confidenceOverTime    Json?                  @map("confidence_over_time")
+  estimatedTotalLossUsd Decimal?               @map("estimated_total_loss_usd")
+  peakLossUsd           Decimal                @default(0) @map("peak_loss_usd")
+  affectedContracts     String[]               @default([]) @map("affected_contracts")
+  attackerAddresses     String[]               @default([]) @map("attacker_addresses")
+  victimAddresses       String[]               @default([]) @map("victim_addresses")
+  lossAssets            Json?                  @map("loss_assets")
+  topTxHashes           String[]               @default([]) @map("top_tx_hashes")
+  exploitVectors        IncidentType[]         @default([]) @map("exploit_vectors")
+  ruleSummary           String?                @map("rule_summary")
+  iocBundle             Json?                  @map("ioc_bundle")
+  lastAlertScore        Int                    @default(0) @map("last_alert_score")
+  confidenceDecayRate   Decimal                @default(0.08) @map("confidence_decay_rate")
+  historical            Boolean                @default(false)
+  detectedVia           String                 @default("realtime") @map("detected_via")
+  lockedAt              DateTime?              @map("locked_at")
+  lockedBy              String?                @map("locked_by")
+  lockReason            String?                @map("lock_reason")
+  autoResolvedAt        DateTime?              @map("auto_resolved_at")
+  publicVisible         Boolean                @default(false) @map("public_visible")
+  startedAt             DateTime               @map("started_at")
+  lastActivityAt        DateTime               @map("last_activity_at")
+  resolvedAt            DateTime?              @map("resolved_at")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+
+  tenant             Tenant                      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ruleHits           IncidentRuleHit[]
+  cashoutPaths       IncidentCashoutPath[]
+  fundFlowPaths      IncidentFundFlowPath[]
+  lifecycleSnapshots IncidentLifecycleSnapshot[]
+  auditLogs          IncidentAuditLog[]
+  actorClusters      IncidentActorCluster[]
+  outgoingRelations  IncidentRelation[]          @relation("IncidentRelationFrom")
+  incomingRelations  IncidentRelation[]          @relation("IncidentRelationTo")
+  webhookDeliveries  WebhookDelivery[]
+
+  @@index([tenantId, chainId, status, updatedAt])
+  @@index([tenantId, lifecycleState, updatedAt])
+  @@index([chainId, status, updatedAt])
+  @@index([chainId, rootKey])
+  @@index([tenantId, chainId, rootKey])
+  @@index([incidentType, updatedAt])
+  @@map("incidents")
+}
+
+model IncidentRuleHit {
+  id               BigInt   @id @default(autoincrement())
+  incidentId       BigInt   @map("incident_id")
+  ruleVersion      String   @default("v1") @map("rule_version")
+  ruleId           String   @map("rule_id")
+  severity         String
+  score            Int
+  explanation      String
+  affectedContract String?  @map("affected_contract")
+  txHashes         String[] @default([]) @map("tx_hashes")
+  valueDeltaUsd    Decimal? @map("value_delta_usd")
+  metadata         Json?
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId, createdAt])
+  @@index([ruleId, createdAt])
+  @@map("incident_rule_hits")
+}
+
+model IncidentRelation {
+  id             BigInt               @id @default(autoincrement())
+  fromIncidentId BigInt               @map("from_incident_id")
+  toIncidentId   BigInt               @map("to_incident_id")
+  relationType   IncidentRelationType @map("relation_type")
+  createdAt      DateTime             @default(now()) @map("created_at")
+
+  fromIncident Incident @relation("IncidentRelationFrom", fields: [fromIncidentId], references: [id], onDelete: Cascade)
+  toIncident   Incident @relation("IncidentRelationTo", fields: [toIncidentId], references: [id], onDelete: Cascade)
+
+  @@unique([fromIncidentId, toIncidentId, relationType])
+  @@index([toIncidentId, relationType])
+  @@map("incident_relations")
+}
+
+model ActorCluster {
+  id          BigInt   @id @default(autoincrement())
+  tenantId    Int      @map("tenant_id")
+  stableId    String   @unique @map("stable_id")
+  clusterKey  String   @map("cluster_key")
+  confidence  Decimal  @default(0)
+  firstSeenAt DateTime @map("first_seen_at")
+  lastSeenAt  DateTime @map("last_seen_at")
+  memberCount Int      @default(0) @map("member_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant    Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  members   ActorClusterMember[]
+  incidents IncidentActorCluster[]
+
+  @@unique([tenantId, clusterKey])
+  @@index([tenantId, lastSeenAt])
+  @@map("actor_clusters")
+}
+
+model ActorClusterMember {
+  id          BigInt           @id @default(autoincrement())
+  clusterId   BigInt           @map("cluster_id")
+  chainId     Int              @map("chain_id")
+  address     String
+  addressType ActorAddressType @default(UNKNOWN) @map("address_type")
+  confidence  Decimal          @default(0)
+  firstSeenAt DateTime         @map("first_seen_at")
+  lastSeenAt  DateTime         @map("last_seen_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  cluster ActorCluster @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+
+  @@unique([clusterId, chainId, address])
+  @@index([chainId, address])
+  @@map("actor_cluster_members")
+}
+
+model IncidentActorCluster {
+  id         BigInt   @id @default(autoincrement())
+  incidentId BigInt   @map("incident_id")
+  clusterId  BigInt   @map("cluster_id")
+  confidence Decimal  @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  incident Incident     @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  cluster  ActorCluster @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+
+  @@unique([incidentId, clusterId])
+  @@index([clusterId, createdAt])
+  @@map("incident_actor_clusters")
+}
+
+model IncidentCashoutPath {
+  id         BigInt          @id @default(autoincrement())
+  incidentId BigInt          @map("incident_id")
+  pathType   CashoutPathType @map("path_type")
+  chainId    Int             @map("chain_id")
+  totalUsd   Decimal?        @map("total_usd")
+  confidence Decimal         @default(0)
+  path       Json            @map("path")
+  summary    String
+  createdAt  DateTime        @default(now()) @map("created_at")
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId, createdAt])
+  @@index([chainId, pathType, createdAt])
+  @@map("incident_cashout_paths")
+}
+
+model IncidentFundFlowPath {
+  id                BigInt   @id @default(autoincrement())
+  incidentId        BigInt   @map("incident_id")
+  chainId           Int      @map("chain_id")
+  pathHash          String   @map("path_hash")
+  sourceAddress     String   @map("source_address")
+  sinkAddress       String   @map("sink_address")
+  hopCount          Int      @map("hop_count")
+  totalInputUsd     Decimal? @map("total_input_usd")
+  totalOutputUsd    Decimal? @map("total_output_usd")
+  conservationRatio Decimal? @map("conservation_ratio")
+  hops              Json
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@unique([incidentId, pathHash])
+  @@index([incidentId, createdAt])
+  @@index([chainId, createdAt])
+  @@map("incident_fund_flow_paths")
+}
+
+model IncidentLifecycleSnapshot {
+  id               BigInt                  @id @default(autoincrement())
+  incidentId       BigInt                  @map("incident_id")
+  fromState        IncidentLifecycleState? @map("from_state")
+  toState          IncidentLifecycleState  @map("to_state")
+  score            Int
+  confidence       Decimal                 @default(0)
+  estimatedLossUsd Decimal?                @map("estimated_loss_usd")
+  reason           String?
+  clusterSnapshot  Json?                   @map("cluster_snapshot")
+  createdAt        DateTime                @default(now()) @map("created_at")
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId, createdAt])
+  @@map("incident_lifecycle_snapshots")
+}
+
+model IncidentAuditLog {
+  id         BigInt   @id @default(autoincrement())
+  tenantId   Int      @map("tenant_id")
+  incidentId BigInt?  @map("incident_id")
+  actor      String
+  action     String
+  detail     Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  incident Incident? @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([incidentId, createdAt])
+  @@map("incident_audit_logs")
+}
+
+model TenantWebhookEndpoint {
+  id         BigInt   @id @default(autoincrement())
+  tenantId   Int      @map("tenant_id")
+  url        String
+  secret     String?
+  active     Boolean  @default(true)
+  eventTypes String[] @default(["incident.created", "incident.updated"]) @map("event_types")
+  maxRetries Int      @default(8) @map("max_retries")
+  timeoutMs  Int      @default(8000) @map("timeout_ms")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  tenant     Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@unique([tenantId, url])
+  @@index([tenantId, active])
+  @@map("tenant_webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id            BigInt    @id @default(autoincrement())
+  tenantId      Int       @map("tenant_id")
+  incidentId    BigInt?   @map("incident_id")
+  endpointId    BigInt    @map("endpoint_id")
+  eventType     String    @map("event_type")
+  eventKey      String    @unique @map("event_key")
+  schemaVersion String    @default("2026-02-06.1") @map("schema_version")
+  payload       Json
+  status        String    @default("pending")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @map("next_attempt_at")
+  lastError     String?   @map("last_error")
+  deliveredAt   DateTime? @map("delivered_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  tenant   Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  incident Incident?             @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+  endpoint TenantWebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([tenantId, createdAt])
+  @@index([endpointId, createdAt])
+  @@map("webhook_deliveries")
+}
+
+model ReplayJob {
+  id            BigInt    @id @default(autoincrement())
+  tenantId      Int       @map("tenant_id")
+  requestedBy   String?   @map("requested_by")
+  lookbackHours Int       @map("lookback_hours")
+  ruleVersion   String    @map("rule_version")
+  status        String
+  startedAt     DateTime? @map("started_at")
+  finishedAt    DateTime? @map("finished_at")
+  details       Json?
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@map("replay_jobs")
+}
