@@ -32,9 +32,10 @@ function Wait-HttpOk([string]$url, [int]$timeoutSec = 90) {
 }
 
 Write-Step "Creating fresh clone workspace"
-$root = Join-Path $env:TEMP "cotana-fresh-boot"
-if (Test-Path $root) { Remove-Item -Recurse -Force $root }
+$rootBase = Join-Path $env:TEMP "cotana-fresh-boot"
+$root = "$rootBase-$([DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss'))"
 New-Item -ItemType Directory -Path $root | Out-Null
+Write-Output "Workspace: $root"
 
 Write-Step "Cloning repo"
 git clone "https://github.com/usercrypto000/cotana.git" $root | Out-Null
