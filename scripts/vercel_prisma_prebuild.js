@@ -22,14 +22,15 @@ function runMigrateDeployWithRetries() {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       run("npx prisma migrate deploy");
-      return;
+      return true;
     } catch (err) {
-      if (attempt >= maxAttempts) throw err;
+      if (attempt >= maxAttempts) return false;
       const backoffMs = 2500 * attempt;
       console.log(`[prebuild] prisma migrate deploy failed (attempt ${attempt}/${maxAttempts}). Retrying in ${backoffMs}ms...`);
       sleepMs(backoffMs);
     }
   }
+  return false;
 }
 
 // Keep builds deterministic on Vercel by applying migrations before generating the client.
@@ -56,7 +57,11 @@ if (hasNonEmpty(process.env.DATABASE_URL)) {
   } catch {
     // If parsing fails, fall back to the original DATABASE_URL.
   }
-  runMigrateDeployWithRetries();
+  const migrated = runMigrateDeployWithRetries();
+  if (!migrated) {
+    console.log("[prebuild] prisma migrate deploy did not succeed. Falling back to prisma db push (schema sync).");
+    run("npx prisma db push --accept-data-loss");
+  }
 } else {
   console.log("[prebuild] Skipping prisma migrate deploy (DATABASE_URL missing).");
 }
