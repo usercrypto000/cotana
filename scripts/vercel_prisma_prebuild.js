@@ -12,6 +12,26 @@ function run(cmd) {
   });
 }
 
+function sleepMs(ms) {
+  // Synchronous sleep to keep the script simple (works in Node 16+).
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function runMigrateDeployWithRetries() {
+  const maxAttempts = Number(process.env.PRISMA_MIGRATE_ATTEMPTS ?? 8);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      run("npx prisma migrate deploy");
+      return;
+    } catch (err) {
+      if (attempt >= maxAttempts) throw err;
+      const backoffMs = 2500 * attempt;
+      console.log(`[prebuild] prisma migrate deploy failed (attempt ${attempt}/${maxAttempts}). Retrying in ${backoffMs}ms...`);
+      sleepMs(backoffMs);
+    }
+  }
+}
+
 // Keep builds deterministic on Vercel by applying migrations before generating the client.
 // Locally, we avoid running migrations as part of `npm run build` because many dev setups
 // intentionally don't have a DB running during a frontend-only build.
@@ -36,7 +56,7 @@ if (hasNonEmpty(process.env.DATABASE_URL)) {
   } catch {
     // If parsing fails, fall back to the original DATABASE_URL.
   }
-  run("npx prisma migrate deploy");
+  runMigrateDeployWithRetries();
 } else {
   console.log("[prebuild] Skipping prisma migrate deploy (DATABASE_URL missing).");
 }
