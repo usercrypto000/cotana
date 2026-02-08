@@ -48,6 +48,31 @@ function confidenceLabel(value: number) {
   return "Low";
 }
 
+type SignalBadge = {
+  tone: "live" | "confirmed" | "resolved";
+  label: "LIVE \u2014 Investigating" | "CONFIRMED \u2014 Loss Verified" | "RESOLVED \u2014 No Exploit";
+};
+
+function signalBadge(params: {
+  lifecycleState: string;
+  status: string;
+  peakLossUsd: number;
+}): SignalBadge {
+  const lifecycle = params.lifecycleState.toUpperCase();
+  const status = params.status.toUpperCase();
+
+  if (lifecycle === "FALSE_POSITIVE") {
+    return { tone: "resolved", label: "RESOLVED \u2014 No Exploit" };
+  }
+  if (lifecycle === "RESOLVED" || status === "RESOLVED") {
+    return { tone: "resolved", label: "RESOLVED \u2014 No Exploit" };
+  }
+  if (Number.isFinite(params.peakLossUsd) && params.peakLossUsd > 0) {
+    return { tone: "confirmed", label: "CONFIRMED \u2014 Loss Verified" };
+  }
+  return { tone: "live", label: "LIVE \u2014 Investigating" };
+}
+
 function exploitLabel(t: IncidentType) {
   if (t === IncidentType.WALLET_DRAIN) return "Wallet Drainer";
   if (t === IncidentType.BRIDGE_EXPLOIT) return "Bridge Exploit";
@@ -137,7 +162,7 @@ export default async function HomePage({ searchParams }: PageProps) {
   const rangeKey = (pick("range") ?? "24h").toLowerCase();
   const rangeMs =
     rangeKey === "30d" ? 30 * 24 * 60 * 60 * 1000 : rangeKey === "7d" ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
-  const viewKey = (pick("view") ?? "all").toLowerCase(); // all | active | largest
+  const viewKey = (pick("view") ?? "live").toLowerCase(); // live | confirmed | largest
   const sortKey = (pick("sort") ?? "recent").toLowerCase(); // recent | loss | confidence
   const groupDuplicates = (pick("group") ?? "1") !== "0";
 
@@ -172,7 +197,8 @@ export default async function HomePage({ searchParams }: PageProps) {
         ? [{ exploitConfidence: "desc" }, { updatedAt: "desc" }]
         : [{ updatedAt: "desc" }, { id: "desc" }];
 
-  const [snapshot, activeCount, new24hCount, verified7dSum, largest7d, feedSeed, chartSeed] = await Promise.all([
+  const [snapshot, activeCount, new24hCount, underInvestigationCount, verified7dSum, largest7d, feedSeed, chartSeed] =
+    await Promise.all([
     getPublicStatusSnapshot(),
     prisma.incident.count({
       where: {
@@ -181,6 +207,13 @@ export default async function HomePage({ searchParams }: PageProps) {
       },
     }),
     prisma.incident.count({ where: { ...baseWhere, createdAt: { gte: since24h } } }),
+    prisma.incident.count({
+      where: {
+        ...baseWhere,
+        lifecycleState: { in: [IncidentLifecycleState.OPEN, IncidentLifecycleState.EXPANDING] },
+        peakLossUsd: { lte: 0 },
+      },
+    }),
     prisma.incident.aggregate({
       where: { ...baseWhere, startedAt: { gte: since7d }, peakLossUsd: { gt: 0 } },
       _sum: { peakLossUsd: true },
@@ -193,13 +226,19 @@ export default async function HomePage({ searchParams }: PageProps) {
     prisma.incident.findMany({
       where: {
         ...baseWhere,
-        ...(viewKey === "active"
+        ...(viewKey === "live"
           ? { lifecycleState: { in: [IncidentLifecycleState.OPEN, IncidentLifecycleState.EXPANDING] } }
           : {}),
+        ...(viewKey === "confirmed" ? { peakLossUsd: { gt: 0 } } : {}),
         ...(viewKey === "largest" ? { peakLossUsd: { gt: 0 } } : {}),
         updatedAt: { gte: sinceRange },
       },
-      orderBy: viewKey === "largest" ? [{ peakLossUsd: "desc" }, { updatedAt: "desc" }] : orderBy,
+      orderBy:
+        viewKey === "largest"
+          ? [{ peakLossUsd: "desc" }, { updatedAt: "desc" }]
+          : viewKey === "confirmed"
+            ? [{ peakLossUsd: "desc" }, { updatedAt: "desc" }]
+            : orderBy,
       take: 300,
     }),
     prisma.incident.findMany({
@@ -303,49 +342,59 @@ export default async function HomePage({ searchParams }: PageProps) {
   return (
     <PublicTrackerShell
       activeNav="overview"
-      title="Hack Tracker"
-      subtitle="What’s moving on-chain right now, what’s verified, and what still needs confirmation."
+      title="Live Exploit Signals"
+      subtitle="Real-time exploit signals, investigation state, and conservative verification once evidence settles."
     >
       <p className="ht-helper">
-        Incidents are behaviorally clustered on-chain events. Loss figures appear only after verification and update as funds move.
+        Cotana detects exploit activity as it happens. Loss figures appear only after verification.
       </p>
 
       <section className="ht-row four">
         <article className="ht-stat">
           <div className="ht-stat-head">
-            <span className="ht-label">Active Incidents</span>
-            <span className="ht-tip" title="Incidents currently open or expanding.">i</span>
+            <span className="ht-label">Active Signals</span>
+            <span className="ht-tip" title="Signals currently open or expanding.">i</span>
           </div>
           <span className="ht-value">{activeCount}</span>
           <div className="ht-text-muted">open or expanding</div>
         </article>
         <article className="ht-stat">
           <div className="ht-stat-head">
-            <span className="ht-label">New in 24h</span>
-            <span className="ht-tip" title="Incidents created in the last 24 hours.">i</span>
+            <span className="ht-label">New Signals (24h)</span>
+            <span className="ht-tip" title="Signals created in the last 24 hours.">i</span>
           </div>
           <span className="ht-value">{new24hCount}</span>
           <div className="ht-text-muted">created in last 24h</div>
         </article>
         <article className="ht-stat">
           <div className="ht-stat-head">
-            <span className="ht-label">7d Verified Loss</span>
-            <span className="ht-tip" title="Sum of confirmed on-chain losses. Pending incidents do not contribute.">i</span>
+            <span className="ht-label">Signals Under Investigation</span>
+            <span className="ht-tip" title="Active signals without verified loss yet.">i</span>
           </div>
-          <span className="ht-value">{verified7dLoss > 0 ? usdVerified(verified7dLoss) : "Loss verification in progress"}</span>
-          <div className="ht-text-muted">confirmed on-chain</div>
+          <span className="ht-value">{underInvestigationCount}</span>
+          <div className="ht-text-muted">loss unverified</div>
         </article>
         <article className="ht-stat">
           <div className="ht-stat-head">
-            <span className="ht-label">Coverage Snapshot</span>
-            <span className="ht-tip" title="Tracked chains and ingestion freshness computed from observed events and cursors.">i</span>
+            <span className="ht-label">Verified Loss (7d)</span>
+            <span className="ht-tip" title="Sum of verified on-chain loss. Signals without verified loss do not contribute.">i</span>
           </div>
-          <div style={{ fontSize: 12, lineHeight: 1.5 }}>
+          <span className="ht-value">
+            {verified7dLoss > 0 ? usdVerified(verified7dLoss) : "No verified loss in 7d"}
+          </span>
+          <div className="ht-text-muted">conservative</div>
+        </article>
+      </section>
+
+      <section className="ht-panel alt" style={{ padding: 12 }}>
+        <div style={{ fontSize: 12, lineHeight: 1.5 }}>
+          <span className="ht-label">Coverage Snapshot</span>{" "}
+          <span className="ht-text-muted">
             Chains: {snapshot.chains.length} • Last ingest:{" "}
             {lastIngestAt ? lastIngestAt.slice(11, 16) + " UTC" : "unknown"} • Lag:{" "}
             {approxLagBlocks === null ? "unknown" : `~${approxLagBlocks} blocks`}
-          </div>
-        </article>
+          </span>
+        </div>
       </section>
 
       <section className="ht-panel ht-controls">
@@ -421,17 +470,23 @@ export default async function HomePage({ searchParams }: PageProps) {
       <section className="ht-panel">
         <div className="ht-feed-head">
           <div>
-            <h2 style={{ margin: 0, fontSize: 20 }}>Incident Feed</h2>
-            <div className="ht-text-muted">Window: {rangeKey.toUpperCase()} • Showing public incidents only</div>
+            <h2 style={{ margin: 0, fontSize: 20 }}>Live Signals</h2>
+            <div className="ht-text-muted">Window: {rangeKey.toUpperCase()} • Showing public signals only</div>
           </div>
           <div className="ht-tabs" aria-label="Feed views">
-            <Link href={hrefWith(params, { view: "all" })} className={viewKey === "all" ? "ht-tab-link active" : "ht-tab-link"}>
-              All
+            <Link href={hrefWith(params, { view: "live" })} className={viewKey === "live" ? "ht-tab-link active" : "ht-tab-link"}>
+              Live
             </Link>
-            <Link href={hrefWith(params, { view: "active" })} className={viewKey === "active" ? "ht-tab-link active" : "ht-tab-link"}>
-              Active
+            <Link
+              href={hrefWith(params, { view: "confirmed", sort: "loss" })}
+              className={viewKey === "confirmed" ? "ht-tab-link active" : "ht-tab-link"}
+            >
+              Confirmed
             </Link>
-            <Link href={hrefWith(params, { view: "largest", sort: "loss" })} className={viewKey === "largest" ? "ht-tab-link active" : "ht-tab-link"}>
+            <Link
+              href={hrefWith(params, { view: "largest", sort: "loss" })}
+              className={viewKey === "largest" ? "ht-tab-link active" : "ht-tab-link"}
+            >
               Largest
             </Link>
           </div>
@@ -447,13 +502,19 @@ export default async function HomePage({ searchParams }: PageProps) {
 
             const protocolDetail = protocolName === "Unknown Protocol" && primaryContract ? shortAddr(primaryContract) : "";
             const verifiedLoss = Number(row.peakLossUsd ?? 0);
-            const lossText = verifiedLoss > 0 ? usdVerified(verifiedLoss) : "Loss: Pending verification";
+            const lossText = verifiedLoss > 0 ? usdVerified(verifiedLoss) : "Loss: Unverified";
             const conf = Number(row.exploitConfidence ?? 0);
             const confText = confidenceLabel(conf);
+            const badge = signalBadge({
+              lifecycleState: String(row.lifecycleState),
+              status: String(row.status),
+              peakLossUsd: verifiedLoss,
+            });
 
             return (
               <Link key={row.id.toString()} href={`/incidents/${row.id.toString()}`} className="ht-incident-card">
                 <div className="ht-incident-left">
+                  <span className={`ht-badge status ${badge.tone}`}>{badge.label}</span>
                   <span className="ht-badge">{exploitLabel(row.incidentType)}</span>
                   <span className="ht-badge soft">{chainName(row.chainId)}</span>
                 </div>

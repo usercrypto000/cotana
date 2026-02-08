@@ -4106,6 +4106,30 @@ body::after {
   border-color: var(--ht-border);
 }
 
+.ht-badge.status {
+  background: transparent;
+  color: var(--ht-text);
+  border-color: var(--ht-border);
+}
+
+.ht-badge.status.live {
+  background: var(--ht-ink);
+  border-color: var(--ht-ink);
+  color: #ffffff;
+}
+
+.ht-badge.status.confirmed {
+  background: #ffffff;
+  border-color: var(--ht-ink);
+  color: var(--ht-ink);
+}
+
+.ht-badge.status.resolved {
+  background: var(--ht-panel-alt);
+  border-color: var(--ht-border);
+  color: var(--ht-muted);
+}
+
 .ht-incident-center {
   display: grid;
   gap: 6px;
