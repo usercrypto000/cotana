@@ -83,7 +83,12 @@ $pWeb = Start-Process -PassThru -FilePath "npm" -ArgumentList @("run","dev") `
 
 Write-Step "Verifying public APIs and UI"
 $statusResp = Wait-HttpOk "http://localhost:3000/api/public/status" 120
-if (-not ($statusResp.Content -match "\"ok\"")) {
+try {
+  $statusJson = $statusResp.Content | ConvertFrom-Json
+} catch {
+  throw "status endpoint did not return valid JSON: http://localhost:3000/api/public/status"
+}
+if (-not $statusJson -or $statusJson.ok -ne $true) {
   throw "status endpoint did not look healthy: http://localhost:3000/api/public/status"
 }
 Wait-HttpOk "http://localhost:3000/api/public/incidents/live" 120 | Out-Null
@@ -99,4 +104,3 @@ foreach ($p in @($pWeb, $pWs, $pWorker)) {
 
 Write-Step "Stopping docker services"
 docker compose down | Out-Null
-
