@@ -53,6 +53,7 @@ docker compose up -d postgres redis
 
 ```bash
 npm ci
+npx prisma generate
 npx prisma migrate deploy
 ```
 
@@ -90,4 +91,3 @@ npm run dev
 ```bash
 docker compose down
 ```
-

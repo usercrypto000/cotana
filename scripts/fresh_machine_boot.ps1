@@ -2,8 +2,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 function Write-Step([string]$msg) {
-  Write-Host ""
-  Write-Host "==> $msg"
+  Write-Output ""
+  Write-Output "==> $msg"
 }
 
 function Upsert-EnvLine([string]$path, [string]$key, [string]$value) {
@@ -40,6 +40,23 @@ Write-Step "Cloning repo"
 git clone "https://github.com/usercrypto000/cotana.git" $root | Out-Null
 Set-Location $root
 
+Write-Step "Preflight: ensuring localhost:3000 is free"
+try {
+  $inUse = Test-NetConnection -ComputerName "127.0.0.1" -Port 3000 -WarningAction SilentlyContinue
+  if ($inUse.TcpTestSucceeded) {
+    throw "Port 3000 is already in use; stop the process using it, then re-run this script."
+  }
+} catch {
+  throw
+}
+
+Write-Step "Preflight: checking Docker engine"
+try {
+  docker version | Out-Null
+} catch {
+  throw "Docker is not available or not running. Start Docker Desktop (or your Docker engine) and re-run."
+}
+
 Write-Step "Preparing .env from .env.example"
 Copy-Item -Force ".env.example" ".env"
 
@@ -59,6 +76,9 @@ docker compose up -d postgres redis | Out-Null
 
 Write-Step "Installing dependencies"
 npm ci | Out-Null
+
+Write-Step "Generating Prisma client"
+npx prisma generate | Out-Null
 
 Write-Step "Running prisma migrations"
 try {
