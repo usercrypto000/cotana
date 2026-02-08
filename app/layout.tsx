@@ -5,6 +5,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Cotana Hack Tracker",
   description: "Exploit intelligence: incidents, lifecycle movement, and on-chain attribution.",
+  icons: {
+    icon: [{ url: "/icon.png", type: "image/png" }],
+    apple: [{ url: "/icon.png", type: "image/png" }],
+  },
 };
 
 const fontSans = Space_Grotesk({
