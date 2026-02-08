@@ -57,3 +57,129 @@ Webhooks and ngrok-based callbacks have been removed/disabled. Use polling worke
 - Fallback / CI: `npm run lint:ci` (runs ESLint CLI directly)
 
 If `next lint` fails in certain environments, use the `lint:ci` fallback which runs the ESLint CLI across the repository.
+
+## Exploit Tracker MVP
+
+Production-focused, behavior-based exploit detection for EVM chains (no static bad-address lists).
+
+### Scope
+
+- EVM MVP with chain adapters (`Ethereum` + one L2 by default).
+- Real-time ingestion of:
+  - native transfers
+  - ERC20/721/1155 transfers
+  - approval events
+  - contract creation events
+- Rule-based scoring only (no ML).
+- Incident generation with alerting (Telegram + generic webhook).
+- Minimal JSON API for incidents.
+
+### Data model highlights
+
+- Raw events: `raw_chain_events`
+- Normalized transfer model: `transfer_events`
+- Address/profile baseline models:
+  - `address_profiles`
+  - `address_baselines`
+- Contract/profile baseline models:
+  - `contract_method_stats`
+  - `contract_balance_deltas`
+  - `contract_baselines`
+  - `bridge_profiles`
+- Graph + incidents:
+  - `entity_graph_edges`
+  - `incidents`
+  - `incident_rule_hits`
+
+### Detection vectors
+
+- Wallet drain behavior:
+  - burst outflow
+  - victim clustering
+  - approval + sweep
+  - fresh sink
+  - rapid fan-in/fan-out
+- Protocol exploit behavior:
+  - abnormal TVL drain
+  - method anomaly
+  - repetitive call pattern
+  - single-caller dominance
+  - contract-to-contract siphon
+  - price-manipulation signature (lightweight)
+- Bridge exploit behavior:
+  - unbacked mint
+  - liquidity cliff
+  - mint -> cashout
+  - mint authority anomaly
+  - cross-bridge hop
+- Oracle attack heuristics:
+  - single-block spike proxy
+  - spike -> exploit correlation
+  - flash liquidity distortion
+  - oracle call rarity
+  - asymmetric pool drain
+
+### Run locally
+
+1. Copy the runtime contract and set values:
+
+```bash
+cp .env.example .env
+```
+
+2. Configure required values in `.env` (worker + WS + public APIs):
+
+- `DATABASE_URL`
+- `REDIS_URL` (or `REDIS_HOST` + `REDIS_PORT`, or `REDIS_FAKE=true`)
+- `EXPLOIT_TRACKER_CHAINS`
+- RPC URL per chain in `EXPLOIT_TRACKER_CHAINS`:
+  - `ALCHEMY_ETH_RPC_URL` or `RPC_URL_ETH`
+  - `ALCHEMY_BASE_RPC_URL` or `RPC_URL_BASE`
+  - `ALCHEMY_ARB_RPC_URL` or `RPC_URL_ARB`
+  - `ALCHEMY_OP_RPC_URL` or `RPC_URL_OP`
+- `EXPLOIT_DEFAULT_API_KEY`
+- `EXPLOIT_WS_PORT`
+
+3. Apply DB migration and generate Prisma client:
+
+```bash
+npx prisma migrate dev
+npx prisma generate
+```
+
+4. Start app + tracker workers:
+
+```bash
+npm run dev
+npm run tracker:worker
+npm run tracker:ws
+```
+
+Or one-click with compose:
+
+```bash
+docker compose up --build
+```
+
+### Incident API
+
+- `GET /api/incidents`
+  - query params: `chainId`, `type`, `status`, `minScore`, `limit`
+- `GET /api/incidents/:id`
+- `PATCH /api/incidents/:id` with body `{ "status": "OPEN|MONITORING|RESOLVED" }`
+- `GET /api/incidents/stream` (SSE)
+  - query params: `chainId`, `type`, `status`, `minScore`, `limit`, `pollMs`, `updatedAfter`
+
+### Worker entrypoint
+
+- `worker/exploit_tracker.ts`
+- Polls configured chains from `EXPLOIT_TRACKER_CHAINS`.
+- Maintains per-chain cursor in `exploit_tracker_cursors`.
+
+### Rule tests
+
+Run deterministic scorer tests with synthetic fixtures:
+
+```bash
+npm run test:exploit-rules
+```
