@@ -1,0 +1,7 @@
+.env
+.env.*
+!.env.example
+
+# Local Vercel pulls can contain sensitive env placeholders or values.
+.vercel/.env*
+
