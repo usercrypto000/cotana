@@ -1,0 +1,284 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  DEVELOPER_PORTAL
+}
+
+enum AppStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  REMOVED
+  FLAGGED
+}
+
+enum ReviewResolution {
+  DISMISSED
+  REMOVED
+  NO_ACTION
+}
+
+model User {
+  id            String                    @id @default(cuid())
+  privyDid      String                    @unique
+  email         String?
+  username      String?                   @unique
+  displayName   String?
+  avatarUrl     String?
+  role          UserRole                  @default(USER)
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  profile       UserProfile?
+  createdApps   App[]                     @relation("AppCreatedBy")
+  reviews       Review[]
+  reviewFlags   ReviewFlag[]              @relation("ReviewFlagReporter")
+  reviewStrikes ReviewModerationStrike[]
+  appLikes      AppLike[]
+  libraryItems  AppLibraryItem[]
+  searchEvents  SearchEvent[]
+  appViews      AppView[]
+
+  @@index([email])
+}
+
+model UserProfile {
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  bio              String?
+  profileCompleted Boolean @default(false)
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id        String @id @default(cuid())
+  slug      String @unique
+  name      String @unique
+  sortOrder Int
+  apps      App[]
+}
+
+model App {
+  id               String              @id @default(cuid())
+  slug             String              @unique
+  name             String
+  shortDescription String
+  longDescription  String
+  websiteUrl       String
+  logoUrl          String
+  verified         Boolean             @default(false)
+  categoryId       String
+  status           AppStatus           @default(DRAFT)
+  createdByUserId  String
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  publishedAt      DateTime?
+  category         Category            @relation(fields: [categoryId], references: [id])
+  createdBy        User                @relation("AppCreatedBy", fields: [createdByUserId], references: [id])
+  tags             AppTag[]
+  screenshots      AppScreenshot[]
+  embedding        AppEmbedding?
+  signals          AppSignal[]
+  signalSnapshots  AppSignalSnapshot[]
+  reviews          Review[]
+  likes            AppLike[]
+  libraryItems     AppLibraryItem[]
+  views            AppView[]
+  searchClicks     SearchClick[]
+
+  @@index([categoryId, status])
+  @@index([createdByUserId])
+  @@index([status, publishedAt])
+}
+
+model AppTag {
+  id    String @id @default(cuid())
+  appId String
+  tag   String
+  app   App    @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId])
+  @@unique([appId, tag])
+}
+
+model AppScreenshot {
+  id        String @id @default(cuid())
+  appId     String
+  imageUrl  String
+  sortOrder Int
+  app       App    @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId, sortOrder])
+  @@unique([appId, sortOrder])
+}
+
+model AppEmbedding {
+  id             String                     @id @default(cuid())
+  appId          String                     @unique
+  embedding      Unsupported("vector(1536)")
+  embeddingModel String
+  sourceText     String
+  updatedAt      DateTime                   @updatedAt
+  app            App                        @relation(fields: [appId], references: [id], onDelete: Cascade)
+}
+
+model AppSignal {
+  id           String   @id @default(cuid())
+  appId        String
+  signalType   String
+  signalKey    String
+  numericValue Float?
+  stringValue  String?
+  jsonValue    Json?
+  source       String
+  observedAt   DateTime
+  createdAt    DateTime @default(now())
+  app          App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId, signalType])
+  @@index([signalKey, observedAt])
+}
+
+model AppSignalSnapshot {
+  id           String   @id @default(cuid())
+  appId        String
+  category     String
+  metric       String
+  numericValue Float
+  observedAt   DateTime
+  app          App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId, category, metric])
+}
+
+model Review {
+  id            String       @id @default(cuid())
+  appId         String
+  userId        String
+  rating        Int
+  body          String
+  status        ReviewStatus @default(PUBLISHED)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  removedAt     DateTime?
+  removalReason String?
+  app           App          @relation(fields: [appId], references: [id], onDelete: Cascade)
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flags         ReviewFlag[]
+  strikes       ReviewModerationStrike[]
+
+  @@unique([appId, userId])
+  @@index([appId, status])
+  @@index([userId, createdAt])
+}
+
+model ReviewFlag {
+  id             String            @id @default(cuid())
+  reviewId       String
+  reporterUserId String
+  reason         String
+  createdAt      DateTime          @default(now())
+  resolvedAt     DateTime?
+  resolution     ReviewResolution?
+  review         Review            @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reporterUser   User              @relation("ReviewFlagReporter", fields: [reporterUserId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId, createdAt])
+  @@index([reporterUserId])
+  @@unique([reviewId, reporterUserId])
+}
+
+model ReviewModerationStrike {
+  id           String   @id @default(cuid())
+  userId       String
+  reviewId     String
+  strikeNumber Int
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review       Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model AppLike {
+  id        String   @id @default(cuid())
+  appId     String
+  userId    String
+  createdAt DateTime @default(now())
+  app       App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([appId, userId])
+}
+
+model AppLibraryItem {
+  id        String   @id @default(cuid())
+  appId     String
+  userId    String
+  createdAt DateTime @default(now())
+  app       App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([appId, userId])
+}
+
+model SearchEvent {
+  id              String       @id @default(cuid())
+  userId          String?
+  query           String
+  normalizedQuery String
+  categoryHint    String?
+  createdAt       DateTime     @default(now())
+  user            User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  searchClicks    SearchClick[]
+
+  @@index([userId, createdAt])
+  @@index([normalizedQuery])
+}
+
+model SearchClick {
+  id            String      @id @default(cuid())
+  searchEventId String
+  appId         String
+  position      Int
+  createdAt     DateTime    @default(now())
+  searchEvent   SearchEvent @relation(fields: [searchEventId], references: [id], onDelete: Cascade)
+  app           App         @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([searchEventId, position])
+  @@index([appId, createdAt])
+}
+
+model AppView {
+  id        String   @id @default(cuid())
+  appId     String
+  userId    String?
+  sessionId String?
+  createdAt DateTime @default(now())
+  app       App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([appId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model ConfigKV {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  valueJson Json
+  updatedAt DateTime @updatedAt
+}

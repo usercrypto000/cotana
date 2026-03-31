@@ -1,0 +1,22 @@
+{
+  "name": "@cotana/search",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./providers/defillama": "./src/providers/defillama.ts",
+    "./providers/dune": "./src/providers/dune.ts"
+  },
+  "dependencies": {
+    "@cotana/db": "workspace:*",
+    "@cotana/types": "workspace:*",
+    "openai": "^6.33.0",
+    "zod": "^4.3.6"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit"
+  }
+}

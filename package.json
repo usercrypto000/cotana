@@ -1,0 +1,30 @@
+{
+  "name": "cotana",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev --parallel --filter=@cotana/store --filter=@cotana/admin",
+    "dev:store": "pnpm --filter @cotana/store dev",
+    "dev:admin": "pnpm --filter @cotana/admin dev",
+    "deploy:prepare": "node ./scripts/prepare-vercel-bundles.mjs",
+    "lint": "turbo lint",
+    "test": "vitest run",
+    "typecheck": "turbo typecheck",
+    "db:generate": "pnpm --filter @cotana/db db:generate",
+    "db:migrate": "pnpm --filter @cotana/db db:migrate",
+    "db:seed": "pnpm --filter @cotana/db db:seed"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@eslint/eslintrc": "^3.3.1",
+    "eslint": "^9.38.0",
+    "eslint-config-next": "^15.5.6",
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
