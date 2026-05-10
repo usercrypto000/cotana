@@ -18,8 +18,7 @@ export default async function ProfilePage() {
           select: {
             appLikes: true,
             libraryItems: true,
-            reviews: true,
-            appViews: true
+            reviews: true
           }
         }
       }
@@ -32,7 +31,7 @@ export default async function ProfilePage() {
         <SectionHeading
           eyebrow="Profile"
           title="Your Cotana profile"
-          description="Profile completeness feeds review eligibility, while your activity stays inside a consumer-style account surface."
+          description="A small account surface for saved apps, likes, and review eligibility."
         />
         {!sessionUser || !profile ? (
           <Card>
@@ -40,8 +39,8 @@ export default async function ProfilePage() {
               <CardTitle>Sign in to view your profile</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-slate-500">
-                Signing in unlocks your saved apps, reviews, and personalized eligibility checks.
+                <p className="text-sm text-slate-500">
+                Signing in unlocks your saved apps, likes, reviews, and eligibility checks.
               </p>
             </CardContent>
           </Card>
@@ -68,10 +67,10 @@ export default async function ProfilePage() {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-slate-600">
                 <p>Profile complete: {profile.profile?.profileCompleted ? "Yes" : "Not yet"}</p>
-                <p>{profile.profile?.bio ?? "Add a bio later if we open up richer profiles."}</p>
+                <p>{profile.profile?.bio ?? "Your profile stays minimal while Cotana focuses on discovery."}</p>
               </CardContent>
             </Card>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4">
               <Card>
                 <CardHeader>
                   <CardTitle>Saved apps</CardTitle>
@@ -94,14 +93,6 @@ export default async function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-4xl font-semibold text-slate-950">{profile._count.reviews}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>App views</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-4xl font-semibold text-slate-950">{profile._count.appViews}</p>
                 </CardContent>
               </Card>
             </div>

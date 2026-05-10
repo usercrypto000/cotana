@@ -1,11 +1,22 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, Open_Sans, Ubuntu } from "next/font/google";
 import { StorePrivyProvider } from "../components/store-privy-provider";
 import "./globals.css";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const ubuntu = Ubuntu({
   subsets: ["latin"],
-  variable: "--font-plus-jakarta-sans"
+  weight: ["400", "500", "700"],
+  variable: "--font-ubuntu"
+});
+
+const openSans = Open_Sans({
+  subsets: ["latin"],
+  variable: "--font-open-sans"
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter"
 });
 
 export const metadata: Metadata = {
@@ -19,8 +30,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={plusJakartaSans.variable}>
-      <body className="font-sans antialiased">
+    <html lang="en" className={`${ubuntu.variable} ${openSans.variable} ${inter.variable}`}>
+      <body className="font-body antialiased">
         <StorePrivyProvider>{children}</StorePrivyProvider>
       </body>
     </html>

@@ -5,8 +5,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./discovery": "./src/discovery.ts",
     "./providers/defillama": "./src/providers/defillama.ts",
-    "./providers/dune": "./src/providers/dune.ts"
+    "./providers/covalent": "./src/providers/covalent.ts"
   },
   "dependencies": {
     "@cotana/db": "workspace:*",

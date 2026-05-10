@@ -1,12 +1,40 @@
-import { AppStatus, ReviewStatus, prisma } from "@cotana/db";
-import { getCounterValue } from "@cotana/db/redis";
-import type { AppSummary, CandidateScoreInput, CategorySignalMap, SearchCategoryHint } from "@cotana/types";
+import {
+  AppStatus,
+  ReviewStatus,
+  getAgentCapabilityQualitySignals,
+  getAgentCapabilityReadinessBucket,
+  listAgentRegistryApps,
+  prisma,
+  recordAgentRegistryIntentTestRun
+} from "@cotana/db";
+import { getCacheValue, getCounterValue, setCacheValue } from "@cotana/db/redis";
+import type {
+  AgentCapabilitySummary,
+  AgentIntentTestCase,
+  AgentIntentTestResult,
+  AgentMatchedCapability,
+  AgentRegistryExcludedCandidate,
+  AgentRegistryApp,
+  AgentRegistrySearchEvaluation,
+  AgentRegistrySearchFilters,
+  AgentRegistrySearchResult,
+  AppSummary,
+  CandidateScoreInput,
+  CategorySignalMap,
+  SearchCategoryHint,
+  SearchSort
+} from "@cotana/types";
 import OpenAI from "openai";
 import { z } from "zod";
+import { boostSimilarCandidates } from "./similar";
+import { sortSearchCandidateList } from "./sort";
 
 const EMBEDDING_DIMENSIONS = 1536;
 const PAGE_VELOCITY_WINDOW_DAYS = 7;
 const DEFAULT_RETRIEVAL_LIMIT = 24;
+const SEARCH_CACHE_TTL_SECONDS = 60 * 5;
+const SIMILAR_APPS_CACHE_TTL_SECONDS = 60 * 15;
+const AGENT_SEARCH_CACHE_TTL_SECONDS = 60 * 5;
 
 const configSchema = z.object({
   similarityWeight: z.number().min(0),
@@ -24,12 +52,22 @@ type EmbeddableApp = {
   name: string;
   shortDescription: string;
   longDescription: string;
+  agentAudience: string;
+  agentListingStatus: string;
+  agentSummary?: string | null;
+  agentDocsUrl?: string | null;
   category: {
     slug: string;
     name: string;
     sortOrder: number;
   };
   tags?: string[];
+  agentCapabilities?: Array<{
+    name: string;
+    description: string;
+    capabilityType: string;
+    docsUrl?: string | null;
+  }>;
 };
 
 export type SearchCandidate = {
@@ -48,6 +86,11 @@ export type SearchCandidate = {
 type CandidateRow = {
   appId: string;
   similarity: number;
+};
+
+type DiscoveryScoreRow = {
+  appId: string;
+  score: number;
 };
 
 const DEFAULT_RANKING_CONFIG: RankingConfig = {
@@ -192,6 +235,27 @@ function serializeVector(vector: number[]) {
   return `[${vector.map((value) => Number(value.toFixed(8))).join(",")}]`;
 }
 
+function cosineSimilarity(left: number[], right: number[]) {
+  const length = Math.min(left.length, right.length);
+  let dotProduct = 0;
+  let leftMagnitude = 0;
+  let rightMagnitude = 0;
+
+  for (let index = 0; index < length; index += 1) {
+    const leftValue = left[index] ?? 0;
+    const rightValue = right[index] ?? 0;
+    dotProduct += leftValue * rightValue;
+    leftMagnitude += leftValue ** 2;
+    rightMagnitude += rightValue ** 2;
+  }
+
+  if (leftMagnitude === 0 || rightMagnitude === 0) {
+    return 0;
+  }
+
+  return dotProduct / (Math.sqrt(leftMagnitude) * Math.sqrt(rightMagnitude));
+}
+
 function inferCategoryHint(query: string): SearchCategoryHint {
   const normalized = normalizeQuery(query);
 
@@ -248,6 +312,14 @@ async function getEmbeddableApp(appId: string) {
       tags: {
         orderBy: {
           tag: "asc"
+        }
+      },
+      agentCapabilities: {
+        where: {
+          status: "ACTIVE"
+        },
+        orderBy: {
+          name: "asc"
         }
       }
     }
@@ -416,8 +488,11 @@ async function buildCandidateSummaries(rows: CandidateRow[]) {
         name: app.name,
         logoUrl: app.logoUrl,
         verified: app.verified,
+        agentAudience: app.agentAudience,
+        communityPick: app.communityPick,
         shortDescription: app.shortDescription,
         longDescription: app.longDescription,
+        publishedAt: app.publishedAt,
         category: app.category,
         rating: reviewStats.get(app.id)?.averageRating ?? 0,
         reviewCount: reviewStats.get(app.id)?.reviewCount ?? 0,
@@ -435,23 +510,93 @@ async function buildCandidateSummaries(rows: CandidateRow[]) {
     .sort((left, right) => (orderMap.get(right.app.id) ?? 0) - (orderMap.get(left.app.id) ?? 0));
 }
 
-export function buildAppEmbeddingText(app: Pick<EmbeddableApp, "name" | "shortDescription" | "longDescription" | "category" | "tags">) {
+async function loadTrendingScoreMap(categorySlug?: string) {
+  const latest = await prisma.discoveryInsightSnapshot.findFirst({
+    where: {
+      kind: "TRENDING",
+      categorySlug: categorySlug ?? null
+    },
+    orderBy: {
+      computedAt: "desc"
+    },
+    select: {
+      computedAt: true
+    }
+  });
+
+  if (!latest) {
+    return new Map<string, number>();
+  }
+
+  const rows = await prisma.discoveryInsightSnapshot.findMany({
+    where: {
+      kind: "TRENDING",
+      categorySlug: categorySlug ?? null,
+      computedAt: latest.computedAt
+    },
+    select: {
+      appId: true,
+      score: true
+    }
+  });
+
+  return new Map(rows.map((row: DiscoveryScoreRow) => [row.appId, row.score]));
+}
+
+async function sortCandidates(candidates: SearchCandidate[], sort: SearchSort, categorySlug?: string) {
+  const normalizedCategorySlug = categorySlug && categorySlug !== "all" ? categorySlug : undefined;
+  const trendingScores = sort === "trending" ? await loadTrendingScoreMap(normalizedCategorySlug) : undefined;
+  return sortSearchCandidateList(candidates, sort, trendingScores);
+}
+
+export function buildAppEmbeddingText(
+  app: Pick<
+    EmbeddableApp,
+    | "name"
+    | "shortDescription"
+    | "longDescription"
+    | "agentAudience"
+    | "agentListingStatus"
+    | "agentSummary"
+    | "agentDocsUrl"
+    | "category"
+    | "tags"
+    | "agentCapabilities"
+  >,
+) {
+  const activeAgentText = app.agentListingStatus === "PUBLISHED";
+
   return [
     `Name: ${app.name}`,
     `Short description: ${app.shortDescription}`,
     `Long description: ${app.longDescription}`,
+    `Audience: ${app.agentAudience}`,
+    activeAgentText && app.agentSummary ? `Agent summary: ${app.agentSummary}` : null,
+    activeAgentText && app.agentDocsUrl ? `Agent documentation: ${app.agentDocsUrl}` : null,
     `Category: ${app.category.name}`,
-    app.tags && app.tags.length > 0 ? `Tags: ${app.tags.join(", ")}` : null
+    app.tags && app.tags.length > 0 ? `Tags: ${app.tags.join(", ")}` : null,
+    activeAgentText && app.agentCapabilities && app.agentCapabilities.length > 0
+      ? `Agent capabilities: ${app.agentCapabilities
+          .map((capability) =>
+            `${capability.name} (${capability.capabilityType}): ${capability.description}${capability.docsUrl ? ` Docs: ${capability.docsUrl}` : ""}`,
+          )
+          .join("; ")}`
+      : null
   ]
     .filter(Boolean)
     .join("\n");
 }
 
 export async function embedText(text: string): Promise<number[]> {
+  const embeddings = await embedTexts([text]);
+  return embeddings[0] ?? fallbackEmbedText(text);
+}
+
+export async function embedTexts(texts: string[]): Promise<number[][]> {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
-    return fallbackEmbedText(text);
+    return texts.map(fallbackEmbedText);
   }
 
   const client = new OpenAI({
@@ -460,11 +605,349 @@ export async function embedText(text: string): Promise<number[]> {
 
   const response = await client.embeddings.create({
     model: getEmbeddingModel(),
-    input: text,
+    input: texts,
     dimensions: EMBEDDING_DIMENSIONS
   });
 
-  return response.data[0]?.embedding ?? fallbackEmbedText(text);
+  return texts.map((text, index) => response.data[index]?.embedding ?? fallbackEmbedText(text));
+}
+
+function buildAgentCapabilityText(app: AgentRegistryApp, capability: AgentCapabilitySummary) {
+  return [
+    `App: ${app.name}`,
+    `Category: ${app.category.name}`,
+    `Agent summary: ${app.agentSummary}`,
+    `Capability: ${capability.name}`,
+    `Capability type: ${capability.capabilityType}`,
+    `Description: ${capability.description}`,
+    capability.authType ? `Auth: ${capability.authType}` : null,
+    capability.interfaceType ? `Interface: ${capability.interfaceType}` : null,
+    capability.interactionMode ? `Interaction: ${capability.interactionMode}` : null,
+    capability.safetyNotes ? `Safety: ${capability.safetyNotes}` : null,
+    capability.docsUrl ? `Docs: ${capability.docsUrl}` : null
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function buildAgentMatchReason(capability: AgentCapabilitySummary, similarity: number) {
+  const access =
+    capability.authType === "NONE"
+      ? "without app-specific authentication"
+      : `with ${capability.authType.toLowerCase().replace("_", " ")} access`;
+  const schemaSignal =
+    capability.inputSchemaJson && capability.outputSchemaJson
+      ? "with declared input and output schemas"
+      : "with partial schema metadata";
+  const safetySignal = capability.safetyNotes ? "and explicit safety notes" : "and no published safety notes";
+
+  return `${capability.name} matched through its ${capability.capabilityType} capability ${access}, ${schemaSignal}, ${safetySignal}. Semantic similarity: ${similarity.toFixed(3)}.`;
+}
+
+function getCapabilityFilterMismatch(capability: AgentCapabilitySummary, filters?: AgentRegistrySearchFilters) {
+  if (filters?.authTypes?.length && !filters.authTypes.includes(capability.authType)) {
+    return `Auth type ${capability.authType} is outside requested compatibility filters.`;
+  }
+
+  if (filters?.interfaceTypes?.length && !filters.interfaceTypes.includes(capability.interfaceType)) {
+    return `Interface type ${capability.interfaceType} is outside requested compatibility filters.`;
+  }
+
+  if (filters?.interactionModes?.length && !filters.interactionModes.includes(capability.interactionMode)) {
+    return `Interaction mode ${capability.interactionMode} is outside requested compatibility filters.`;
+  }
+
+  return null;
+}
+
+function scoreAgentCapability(capability: AgentCapabilitySummary, similarity: number) {
+  const reliability = capability.reliabilityScore ?? 0.5;
+  const schemaCompleteness = capability.inputSchemaJson && capability.outputSchemaJson ? 1 : 0.35;
+  const safetyCompleteness = capability.safetyNotes ? 1 : 0.5;
+  const authSimplicity = capability.authType === "NONE" ? 1 : capability.authType === "API_KEY" ? 0.85 : 0.7;
+  const docsCompleteness = capability.docsUrl || capability.endpointUrl ? 1 : 0.25;
+  const latencyScore =
+    typeof capability.latencyP50Ms === "number" ? Math.max(0.2, 1 - Math.min(capability.latencyP50Ms, 5000) / 5000) : 0.6;
+
+  return (
+    similarity * 0.56 +
+    reliability * 0.14 +
+    schemaCompleteness * 0.1 +
+    safetyCompleteness * 0.08 +
+    authSimplicity * 0.06 +
+    docsCompleteness * 0.04 +
+    latencyScore * 0.02
+  );
+}
+
+export async function searchAgentRegistryCapabilitiesWithEvaluation(
+  query: string,
+  options?: {
+    categorySlug?: string | null;
+    limit?: number;
+    filters?: AgentRegistrySearchFilters;
+  },
+): Promise<{
+  results: AgentRegistrySearchResult[];
+  evaluation: AgentRegistrySearchEvaluation;
+}> {
+  const normalizedQuery = normalizeQuery(query);
+
+  if (!normalizedQuery) {
+    return {
+      results: [],
+      evaluation: {
+        query,
+        normalizedQuery,
+        filters: {
+          ...(options?.filters ?? {}),
+          categorySlug: options?.categorySlug
+        },
+        candidateCount: 0,
+        matchedCapabilityCount: 0,
+        resultCount: 0,
+        topMatch: null,
+        excludedCandidates: [],
+        blockingIssueCount: 0
+      }
+    };
+  }
+
+  const filterKey = JSON.stringify(options?.filters ?? {});
+  const cacheKey = `agent-search:${normalizedQuery}:${options?.categorySlug ?? "all"}:${options?.limit ?? 10}:${filterKey}`;
+  const cached = await getCacheValue<{
+    results: AgentRegistrySearchResult[];
+    evaluation: AgentRegistrySearchEvaluation;
+  }>(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const apps = await listAgentRegistryApps(options?.categorySlug);
+  const allCapabilityRows = apps.flatMap((app) =>
+    app.capabilities.map((capability) => ({
+      app,
+      capability,
+      text: buildAgentCapabilityText(app, capability)
+    })),
+  );
+  const excludedCandidates: AgentRegistryExcludedCandidate[] = [];
+  const capabilityRows = allCapabilityRows.filter((row) => {
+    const reason = getCapabilityFilterMismatch(row.capability, options?.filters);
+
+    if (reason) {
+      excludedCandidates.push({
+        appId: row.app.id,
+        appSlug: row.app.slug,
+        appName: row.app.name,
+        capabilityId: row.capability.id,
+        capabilitySlug: row.capability.slug,
+        capabilityName: row.capability.name,
+        reason
+      });
+      return false;
+    }
+
+    return true;
+  });
+
+  if (capabilityRows.length === 0) {
+    const response = {
+      results: [],
+      evaluation: {
+        query,
+        normalizedQuery,
+        filters: {
+          ...(options?.filters ?? {}),
+          categorySlug: options?.categorySlug
+        },
+        candidateCount: allCapabilityRows.length,
+        matchedCapabilityCount: 0,
+        resultCount: 0,
+        topMatch: null,
+        excludedCandidates,
+        blockingIssueCount: excludedCandidates.length
+      }
+    };
+    await setCacheValue(cacheKey, response, AGENT_SEARCH_CACHE_TTL_SECONDS);
+    return response;
+  }
+
+  const [queryEmbedding, ...capabilityEmbeddings] = await embedTexts([
+    normalizedQuery,
+    ...capabilityRows.map((row) => row.text)
+  ]);
+  const scoredCapabilities = capabilityRows
+    .map((row, index) => {
+      const similarity = cosineSimilarity(queryEmbedding ?? fallbackEmbedText(normalizedQuery), capabilityEmbeddings[index] ?? fallbackEmbedText(row.text));
+      const matchScore = scoreAgentCapability(row.capability, similarity);
+
+      return {
+        ...row,
+        similarity,
+        matchScore,
+        matchReason: buildAgentMatchReason(row.capability, similarity)
+      };
+    })
+    .filter((row) => {
+      if (row.similarity <= 0.05) {
+        excludedCandidates.push({
+          appId: row.app.id,
+          appSlug: row.app.slug,
+          appName: row.app.name,
+          capabilityId: row.capability.id,
+          capabilitySlug: row.capability.slug,
+          capabilityName: row.capability.name,
+          reason: `Semantic similarity ${row.similarity.toFixed(3)} is below the minimum match threshold.`
+        });
+        return false;
+      }
+
+      return true;
+    })
+    .sort((left, right) => right.matchScore - left.matchScore);
+
+  const grouped = new Map<string, AgentRegistrySearchResult>();
+
+  for (const row of scoredCapabilities) {
+    const existing = grouped.get(row.app.id);
+    const matchedCapability: AgentMatchedCapability = {
+      ...row.capability,
+      similarity: row.similarity,
+      matchScore: row.matchScore,
+      matchReason: row.matchReason,
+      qualitySignals: getAgentCapabilityQualitySignals(row.capability)
+    };
+
+    if (!existing) {
+      grouped.set(row.app.id, {
+        app: row.app,
+        matchedCapabilities: [matchedCapability],
+        score: row.matchScore,
+        matchReason: row.matchReason
+      });
+      continue;
+    }
+
+    existing.matchedCapabilities.push(matchedCapability);
+    existing.score = Math.max(existing.score, row.matchScore);
+    existing.matchReason = existing.matchedCapabilities[0]?.matchReason ?? existing.matchReason;
+  }
+
+  const results = [...grouped.values()]
+    .map((result) => ({
+      ...result,
+      matchedCapabilities: result.matchedCapabilities
+        .sort((left, right) => right.matchScore - left.matchScore)
+        .slice(0, 3)
+    }))
+    .sort((left, right) => right.score - left.score)
+    .slice(0, options?.limit ?? 10);
+  const topCapability = results[0]?.matchedCapabilities[0] ?? null;
+  const response = {
+    results,
+    evaluation: {
+      query,
+      normalizedQuery,
+      filters: {
+        ...(options?.filters ?? {}),
+        categorySlug: options?.categorySlug
+      },
+      candidateCount: allCapabilityRows.length,
+      matchedCapabilityCount: scoredCapabilities.length,
+      resultCount: results.length,
+      topMatch: topCapability && results[0]
+        ? {
+            appId: results[0].app.id,
+            appSlug: results[0].app.slug,
+            capabilityId: topCapability.id,
+            capabilitySlug: topCapability.slug,
+            categorySlug: results[0].app.category.slug,
+            capabilityType: topCapability.capabilityType,
+            readinessBucket: getAgentCapabilityReadinessBucket(topCapability),
+            similarity: topCapability.similarity,
+            score: topCapability.matchScore,
+            qualityScore: topCapability.qualitySignals.qualityScore,
+            matchReason: topCapability.matchReason
+          }
+        : null,
+      excludedCandidates,
+      blockingIssueCount: excludedCandidates.length
+    }
+  };
+
+  await setCacheValue(cacheKey, response, AGENT_SEARCH_CACHE_TTL_SECONDS);
+  return response;
+}
+
+export async function searchAgentRegistryCapabilities(
+  query: string,
+  options?: {
+    categorySlug?: string | null;
+    limit?: number;
+    filters?: AgentRegistrySearchFilters;
+  },
+): Promise<AgentRegistrySearchResult[]> {
+  const { results } = await searchAgentRegistryCapabilitiesWithEvaluation(query, options);
+  return results;
+}
+
+export async function runAgentIntentTestSuite(testCases: AgentIntentTestCase[]): Promise<AgentIntentTestResult[]> {
+  const results = await Promise.all(
+    testCases.map(async (testCase) => {
+      const searchResults = await searchAgentRegistryCapabilities(testCase.intent, {
+        categorySlug: testCase.categorySlug,
+        limit: 5,
+        filters: testCase.filters
+      });
+      const topResult = searchResults[0] ?? null;
+      const topCapability = topResult?.matchedCapabilities[0] ?? null;
+      const expectedTypes = testCase.expectedCapabilityTypes ?? [];
+      const expectedCapabilitySlugs = testCase.expectedCapabilitySlugs ?? [];
+      const categoryMatches = !testCase.categorySlug || topResult?.app.category.slug === testCase.categorySlug;
+      const capabilityTypeMatches =
+        expectedTypes.length === 0 || expectedTypes.includes(topCapability?.capabilityType ?? "");
+      const capabilitySlugMatches =
+        expectedCapabilitySlugs.length === 0 || expectedCapabilitySlugs.includes(topCapability?.slug ?? "");
+      const passed =
+        Boolean(topCapability) &&
+        categoryMatches &&
+        capabilityTypeMatches &&
+        capabilitySlugMatches;
+      const failureReason = passed
+        ? null
+        : !topCapability
+          ? "No capability matched this seeded intent."
+          : !categoryMatches
+            ? `Top category ${topResult?.app.category.slug ?? "none"} did not match expected category ${testCase.categorySlug}.`
+            : !capabilitySlugMatches
+              ? `Top capability ${topCapability.slug} did not match expected capability.`
+              : `Top capability type ${topCapability.capabilityType} did not match expected profile.`;
+
+      const result = {
+        ...testCase,
+        passed,
+        topAppId: topResult?.app.id ?? null,
+        topAppSlug: topResult?.app.slug ?? null,
+        topCategorySlug: topResult?.app.category.slug ?? null,
+        topCapabilityId: topCapability?.id ?? null,
+        topCapabilitySlug: topCapability?.slug ?? null,
+        topCapabilityType: topCapability?.capabilityType ?? null,
+        topScore: topCapability?.matchScore ?? null,
+        topMatchReason: topCapability?.matchReason ?? null,
+        reason: passed
+          ? "Top capability matched the expected intent profile."
+          : failureReason,
+        failureReason
+      };
+
+      await recordAgentRegistryIntentTestRun(result).catch(() => undefined);
+      return result;
+    }),
+  );
+
+  return results;
 }
 
 export async function upsertAppEmbedding(appId: string) {
@@ -476,7 +959,13 @@ export async function upsertAppEmbedding(appId: string) {
 
   const sourceText = buildAppEmbeddingText({
     ...app,
-    tags: app.tags.map((tag) => tag.tag)
+    tags: app.tags.map((tag) => tag.tag),
+    agentCapabilities: app.agentCapabilities.map((capability) => ({
+      name: capability.name,
+      description: capability.description,
+      capabilityType: capability.capabilityType,
+      docsUrl: capability.docsUrl
+    }))
   });
   const embedding = await embedText(sourceText);
   const vector = serializeVector(embedding);
@@ -626,15 +1115,33 @@ export async function searchApps(
   options?: {
     limit?: number;
     categorySlug?: string;
+    sort?: SearchSort;
   },
 ) {
   const normalizedQuery = normalizeQuery(query);
+  const sort = options?.sort ?? "relevance";
 
   if (!normalizedQuery) {
     return {
       query: normalizedQuery,
       categoryHint: options?.categorySlug && options.categorySlug !== "all" ? (options.categorySlug as SearchCategoryHint) : null,
+      sort,
       results: [] as SearchCandidate[]
+    };
+  }
+
+  const cacheKey = `search:results:${normalizedQuery}:${options?.categorySlug ?? "all"}:${sort}`;
+  const cached = await getCacheValue<{
+    categoryHint: SearchCategoryHint;
+    results: SearchCandidate[];
+  }>(cacheKey);
+
+  if (cached) {
+    return {
+      query: normalizedQuery,
+      categoryHint: cached.categoryHint,
+      sort,
+      results: cached.results
     };
   }
 
@@ -649,15 +1156,53 @@ export async function searchApps(
     categorySlug: options?.categorySlug
   });
   const reranked = await rerankCandidates(candidates, categoryHint);
+  const sorted = await sortCandidates(reranked, sort, options?.categorySlug);
+
+  await setCacheValue(
+    cacheKey,
+    {
+      categoryHint,
+      results: sorted
+    },
+    SEARCH_CACHE_TTL_SECONDS,
+  );
 
   return {
     query: normalizedQuery,
     categoryHint,
-    results: reranked
+    sort,
+    results: sorted
   };
 }
 
-export async function getSimilarApps(appId: string) {
+export async function getSimilarApps(
+  appId: string,
+  options?: {
+    limit?: number;
+    categorySlug?: string;
+    boostSameCategory?: boolean;
+  },
+) {
+  const cacheKey = `similar-apps:${appId}:${options?.categorySlug ?? "auto"}:${options?.limit ?? 4}:${options?.boostSameCategory === false ? "off" : "on"}`;
+  const cached = await getCacheValue<AppSummary[]>(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const sourceApp = await prisma.app.findUnique({
+    where: {
+      id: appId
+    },
+    include: {
+      category: true
+    }
+  });
+
+  if (!sourceApp) {
+    return [];
+  }
+
   const embeddingRow = (await prisma.$queryRawUnsafe(
     `
       SELECT "appId", "embedding"::text AS "embedding"
@@ -695,14 +1240,24 @@ export async function getSimilarApps(appId: string) {
         1 - (ae."embedding" <=> $1::vector) AS "similarity"
       FROM "AppEmbedding" ae
       INNER JOIN "App" a ON a."id" = ae."appId"
+      INNER JOIN "Category" c ON c."id" = a."categoryId"
       WHERE a."status" = 'PUBLISHED' AND ae."appId" <> $2
+      ${options?.categorySlug ? `AND c."slug" = '${options.categorySlug.replace(/'/g, "''")}'` : ""}
       ORDER BY ae."embedding" <=> $1::vector ASC
-      LIMIT 4
+      LIMIT $3
     `,
     vector,
     appId,
+    Math.max(options?.limit ?? 4, 8),
   )) as CandidateRow[];
 
   const candidates = await buildCandidateSummaries(rows);
-  return candidates.map((candidate) => candidate.app);
+  const reranked = await rerankCandidates(
+    boostSimilarCandidates(candidates, sourceApp.category.slug, options?.boostSameCategory ?? true),
+    sourceApp.category.slug as SearchCategoryHint,
+  );
+  const result = reranked.slice(0, options?.limit ?? 4).map((candidate) => candidate.app);
+
+  await setCacheValue(cacheKey, result, SIMILAR_APPS_CACHE_TTL_SECONDS);
+  return result;
 }

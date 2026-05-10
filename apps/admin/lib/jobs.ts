@@ -1,15 +1,17 @@
 import {
   appendAppSignals,
+  listDiscoveryDebugRows,
   listAppsForSignalCategory,
   listSignalJobStatuses,
   prisma,
+  recomputeDiscoveryInsights,
   storeWeeklySignalSnapshots,
   updateSignalJobStatus
 } from "@cotana/db";
 import { setCacheValue } from "@cotana/db/redis";
 import { upsertAppEmbedding } from "@cotana/search";
 import { fetchDefiSignals, fetchLendingYieldSignals } from "@cotana/search/providers/defillama";
-import { fetchDuneSignals } from "@cotana/search/providers/dune";
+import { fetchCovalentSignals } from "@cotana/search/providers/covalent";
 
 export const signalJobCatalog = [
   {
@@ -38,9 +40,14 @@ export const signalJobCatalog = [
     schedule: "Every hour"
   },
   {
+    key: "rising.recompute",
+    label: "Rising recompute",
+    schedule: "Every hour"
+  },
+  {
     key: "community_pick.recompute",
-    label: "Community pick placeholder",
-    schedule: "Manual or scheduled placeholder"
+    label: "Community pick recompute",
+    schedule: "First day of month 00:00 UTC"
   }
 ] as const;
 
@@ -105,11 +112,11 @@ export async function runSignalRefresh(jobKey: Extract<SignalJobKey, `signals.re
       categorySlug === "lending-yield"
         ? [
             ...(await fetchLendingYieldSignals(apps)),
-            ...(await fetchDuneSignals("lending-yield", apps))
+            ...(await fetchCovalentSignals("lending-yield", apps))
           ]
         : categorySlug === "prediction-markets"
-          ? await fetchDuneSignals("prediction-markets", apps)
-          : [...(await fetchDefiSignals(apps)), ...(await fetchDuneSignals("defi", apps))];
+          ? await fetchCovalentSignals("prediction-markets", apps)
+          : [...(await fetchDefiSignals(apps)), ...(await fetchCovalentSignals("defi", apps))];
 
     let insertedSignals = 0;
 
@@ -138,118 +145,74 @@ export async function runWeeklySnapshots() {
 
 export async function runTrendingRecompute() {
   return withJobStatus("trending.recompute", async () => {
-    const publishedApps = await prisma.app.findMany({
-      where: {
-        status: "PUBLISHED"
-      },
-      select: {
-        id: true,
-        slug: true
-      }
-    });
-    const appIds = publishedApps.map((app) => app.id);
-
-    if (appIds.length === 0) {
-      return "No published apps available for trending.";
-    }
-
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 7);
-
-    const [viewCounts, likeCounts] = await Promise.all([
-      prisma.appView.groupBy({
-        by: ["appId"],
-        where: {
-          appId: {
-            in: appIds
-          },
-          createdAt: {
-            gte: cutoff
-          }
-        },
-        _count: {
-          _all: true
-        }
-      }),
-      prisma.appLike.groupBy({
-        by: ["appId"],
-        where: {
-          appId: {
-            in: appIds
-          }
-        },
-        _count: {
-          _all: true
-        }
-      })
-    ]);
-
-    const viewMap = new Map(viewCounts.map((row) => [row.appId, row._count._all]));
-    const likeMap = new Map(likeCounts.map((row) => [row.appId, row._count._all]));
-
-    const ranked = publishedApps
-      .map((app) => ({
-        appId: app.id,
-        slug: app.slug,
-        score: (viewMap.get(app.id) ?? 0) * 2 + (likeMap.get(app.id) ?? 0)
-      }))
-      .sort((left, right) => right.score - left.score)
-      .slice(0, 12);
-
-    await prisma.configKV.upsert({
-      where: {
-        key: "cache.trending.default"
-      },
-      update: {
-        valueJson: {
-          computedAt: new Date().toISOString(),
-          appIds: ranked.map((item) => item.appId)
-        }
-      },
-      create: {
-        key: "cache.trending.default",
-        valueJson: {
-          computedAt: new Date().toISOString(),
-          appIds: ranked.map((item) => item.appId)
-        }
-      }
+    const result = await recomputeDiscoveryInsights({ trending: true });
+    const debugRows = await listDiscoveryDebugRows("TRENDING", {
+      limit: 5
     });
 
     await setCacheValue(
       "trending:default",
       {
-        computedAt: new Date().toISOString(),
-        appIds: ranked.map((item) => item.appId)
+        computedAt: result.computedAt.toISOString(),
+        rows: debugRows.rows.map((row) => ({
+          appId: row.appId,
+          score: row.score
+        }))
       },
       60 * 60,
     );
 
-    return `Recomputed trending cache for ${ranked.length} apps.`;
+    return `Recomputed trending for ${result.trendingCount} apps.`;
   });
 }
 
-export async function runCommunityPickPlaceholder() {
+export async function runRisingRecompute() {
+  return withJobStatus("rising.recompute", async () => {
+    const result = await recomputeDiscoveryInsights({ rising: true });
+    const debugRows = await listDiscoveryDebugRows("RISING", {
+      limit: 5
+    });
+
+    await setCacheValue(
+      "rising:default",
+      {
+        computedAt: result.computedAt.toISOString(),
+        rows: debugRows.rows.map((row) => ({
+          appId: row.appId,
+          score: row.score
+        }))
+      },
+      60 * 60,
+    );
+
+    return `Recomputed rising for ${result.risingCount} apps.`;
+  });
+}
+
+export async function runCommunityPickRecompute() {
   return withJobStatus("community_pick.recompute", async () => {
+    const result = await recomputeDiscoveryInsights({ communityPick: true });
+
     await prisma.configKV.upsert({
       where: {
-        key: "cache.community_pick.placeholder"
+        key: "cache.community_pick.current"
       },
       update: {
         valueJson: {
-          computedAt: new Date().toISOString(),
-          status: "placeholder"
+          computedAt: result.computedAt.toISOString(),
+          count: result.communityPickCount
         }
       },
       create: {
-        key: "cache.community_pick.placeholder",
+        key: "cache.community_pick.current",
         valueJson: {
-          computedAt: new Date().toISOString(),
-          status: "placeholder"
+          computedAt: result.computedAt.toISOString(),
+          count: result.communityPickCount
         }
       }
     });
 
-    return "Community pick placeholder job completed.";
+    return `Recomputed community picks for ${result.communityPickCount} apps.`;
   });
 }
 
@@ -277,7 +240,9 @@ export async function runManualSignalJob(jobKey: SignalJobKey) {
       return runWeeklySnapshots();
     case "trending.recompute":
       return runTrendingRecompute();
+    case "rising.recompute":
+      return runRisingRecompute();
     case "community_pick.recompute":
-      return runCommunityPickPlaceholder();
+      return runCommunityPickRecompute();
   }
 }

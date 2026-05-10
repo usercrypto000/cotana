@@ -1,5 +1,15 @@
-import { AppStatus, ReviewStatus } from "@prisma/client";
-import type { AppSummary } from "@cotana/types";
+import {
+  AgentAuthType,
+  AgentCapabilityStatus,
+  AgentInteractionMode,
+  AgentInterfaceType,
+  AgentListingStatus,
+  AppAudience,
+  AppStatus,
+  Prisma,
+  ReviewStatus
+} from "@prisma/client";
+import type { AgentCapabilitySummary, AppSummary } from "@cotana/types";
 import { incrementCounter } from "../redis";
 import { prisma } from "../client";
 
@@ -20,9 +30,34 @@ export type AdminAppInput = {
   websiteUrl: string;
   logoUrl: string;
   verified: boolean;
+  verifiedNote?: string | null;
+  agentAudience: AppAudience;
+  agentListingStatus: AgentListingStatus;
+  agentSummary?: string | null;
+  agentDocsUrl?: string | null;
+  agentIntegrationNotes?: string | null;
   categoryId: string;
   tags: string[];
   screenshots: string[];
+  agentCapabilities: AgentCapabilityInput[];
+};
+
+export type AgentCapabilityInput = {
+  name: string;
+  slug?: string;
+  description: string;
+  capabilityType: string;
+  authType: AgentAuthType;
+  interfaceType: AgentInterfaceType;
+  interactionMode: AgentInteractionMode;
+  endpointUrl?: string | null;
+  docsUrl?: string | null;
+  inputSchemaJson?: unknown | null;
+  outputSchemaJson?: unknown | null;
+  safetyNotes?: string | null;
+  status: AgentCapabilityStatus;
+  reliabilityScore?: number | null;
+  latencyP50Ms?: number | null;
 };
 
 export type AdminAppRecord = {
@@ -34,6 +69,13 @@ export type AdminAppRecord = {
   websiteUrl: string;
   logoUrl: string;
   verified: boolean;
+  verifiedNote: string | null;
+  agentAudience: AppAudience;
+  agentListingStatus: AgentListingStatus;
+  agentSummary: string | null;
+  agentDocsUrl: string | null;
+  agentIntegrationNotes: string | null;
+  communityPick: boolean;
   status: AppStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -49,6 +91,7 @@ export type AdminAppRecord = {
     imageUrl: string;
     sortOrder: number;
   }[];
+  agentCapabilities: AgentCapabilitySummary[];
   rating: number;
   reviewCount: number;
   likeCount: number;
@@ -63,6 +106,11 @@ export type AppDetailRecord = {
   websiteUrl: string;
   logoUrl: string;
   verified: boolean;
+  agentAudience: AppAudience;
+  agentListingStatus: AgentListingStatus;
+  agentSummary: string | null;
+  agentDocsUrl: string | null;
+  communityPick: boolean;
   createdAt: Date;
   publishedAt: Date | null;
   category: {
@@ -76,6 +124,7 @@ export type AppDetailRecord = {
     imageUrl: string;
     sortOrder: number;
   }[];
+  agentCapabilities: AgentCapabilitySummary[];
   rating: number;
   reviewCount: number;
   likeCount: number;
@@ -102,6 +151,11 @@ type PublishedAppInclude = {
   websiteUrl: string;
   logoUrl: string;
   verified: boolean;
+  agentAudience: AppAudience;
+  agentListingStatus: AgentListingStatus;
+  agentSummary: string | null;
+  agentDocsUrl: string | null;
+  communityPick: boolean;
   createdAt: Date;
   publishedAt: Date | null;
   category: {
@@ -118,6 +172,7 @@ type PublishedAppInclude = {
     imageUrl: string;
     sortOrder: number;
   }[];
+  agentCapabilities: AgentCapabilitySummary[];
   reviews: {
     id: string;
     rating: number;
@@ -150,6 +205,64 @@ function normalizeTags(tags: string[]) {
 
 function normalizeScreenshots(screenshots: string[]) {
   return [...new Set(screenshots.map((url) => url.trim()).filter(Boolean))];
+}
+
+function normalizeAgentCapabilities(capabilities: AgentCapabilityInput[]) {
+  const seen = new Set<string>();
+
+  return capabilities
+    .map((capability) => {
+      const name = capability.name.trim();
+      const slug = capability.slug?.trim() ? slugify(capability.slug) : slugify(name);
+      const description = capability.description.trim();
+      const capabilityType = capability.capabilityType.trim().toLowerCase();
+
+      if (!name || !slug || !description || !capabilityType || seen.has(slug)) {
+        return null;
+      }
+
+      seen.add(slug);
+
+      return {
+        name,
+        slug,
+        description,
+        capabilityType,
+        authType: capability.authType,
+        interfaceType: capability.interfaceType,
+        interactionMode: capability.interactionMode,
+        endpointUrl: capability.endpointUrl?.trim() || null,
+        docsUrl: capability.docsUrl?.trim() || null,
+        inputSchemaJson: capability.inputSchemaJson ?? null,
+        outputSchemaJson: capability.outputSchemaJson ?? null,
+        safetyNotes: capability.safetyNotes?.trim() || null,
+        status: capability.status,
+        reliabilityScore: capability.reliabilityScore ?? null,
+        latencyP50Ms: capability.latencyP50Ms ?? null
+      };
+    })
+    .filter((capability): capability is NonNullable<typeof capability> => Boolean(capability));
+}
+
+function toAgentCapabilitySummary(capability: AgentCapabilitySummary): AgentCapabilitySummary {
+  return {
+    id: capability.id,
+    name: capability.name,
+    slug: capability.slug,
+    description: capability.description,
+    capabilityType: capability.capabilityType,
+    authType: capability.authType,
+    interfaceType: capability.interfaceType,
+    interactionMode: capability.interactionMode,
+    endpointUrl: capability.endpointUrl,
+    docsUrl: capability.docsUrl,
+    inputSchemaJson: capability.inputSchemaJson,
+    outputSchemaJson: capability.outputSchemaJson,
+    safetyNotes: capability.safetyNotes,
+    status: capability.status,
+    reliabilityScore: capability.reliabilityScore,
+    latencyP50Ms: capability.latencyP50Ms
+  };
 }
 
 async function getReviewStats(appIds: string[]) {
@@ -220,8 +333,11 @@ function toSummary(
     name: string;
     logoUrl: string;
     verified: boolean;
+    agentAudience: AppAudience;
+    communityPick: boolean;
     shortDescription: string;
     longDescription: string;
+    publishedAt: Date | null;
     category: {
       slug: string;
       name: string;
@@ -237,8 +353,11 @@ function toSummary(
     name: app.name,
     logoUrl: app.logoUrl,
     verified: app.verified,
+    agentAudience: app.agentAudience,
+    communityPick: app.communityPick,
     shortDescription: app.shortDescription,
     longDescription: app.longDescription,
+    publishedAt: app.publishedAt,
     category: app.category,
     rating: reviewStats?.rating ?? 0,
     reviewCount: reviewStats?.reviewCount ?? 0,
@@ -256,6 +375,13 @@ async function enrichAdminApps(
     websiteUrl: string;
     logoUrl: string;
     verified: boolean;
+    verifiedNote: string | null;
+    agentAudience: AppAudience;
+    agentListingStatus: AgentListingStatus;
+    agentSummary: string | null;
+    agentDocsUrl: string | null;
+    agentIntegrationNotes: string | null;
+    communityPick: boolean;
     status: AppStatus;
     createdAt: Date;
     updatedAt: Date;
@@ -273,6 +399,7 @@ async function enrichAdminApps(
       imageUrl: string;
       sortOrder: number;
     }[];
+    agentCapabilities: AgentCapabilitySummary[];
   }>,
 ) {
   const appIds = apps.map((app) => app.id);
@@ -288,6 +415,13 @@ async function enrichAdminApps(
     websiteUrl: app.websiteUrl,
     logoUrl: app.logoUrl,
     verified: app.verified,
+    verifiedNote: app.verifiedNote,
+    agentAudience: app.agentAudience,
+    agentListingStatus: app.agentListingStatus,
+    agentSummary: app.agentSummary,
+    agentDocsUrl: app.agentDocsUrl,
+    agentIntegrationNotes: app.agentIntegrationNotes,
+    communityPick: app.communityPick,
     status: app.status,
     createdAt: app.createdAt,
     updatedAt: app.updatedAt,
@@ -295,6 +429,7 @@ async function enrichAdminApps(
     category: app.category,
     tags: app.tags.map((tag) => tag.tag),
     screenshots: app.screenshots,
+    agentCapabilities: app.agentCapabilities.map(toAgentCapabilitySummary),
     rating: reviewStats.get(app.id)?.rating ?? 0,
     reviewCount: reviewStats.get(app.id)?.reviewCount ?? 0,
     likeCount: likeStats.get(app.id)?.likeCount ?? 0
@@ -322,6 +457,11 @@ export async function listAdminApps() {
         orderBy: {
           sortOrder: "asc"
         }
+      },
+      agentCapabilities: {
+        orderBy: {
+          name: "asc"
+        }
       }
     },
     orderBy: {
@@ -345,6 +485,11 @@ export async function getAdminAppById(id: string) {
       screenshots: {
         orderBy: {
           sortOrder: "asc"
+        }
+      },
+      agentCapabilities: {
+        orderBy: {
+          name: "asc"
         }
       }
     }
@@ -390,6 +535,41 @@ async function replaceTagsAndScreenshots(appId: string, input: AdminAppInput) {
   }
 }
 
+async function replaceAgentCapabilities(appId: string, input: AdminAppInput) {
+  const capabilities = normalizeAgentCapabilities(input.agentCapabilities);
+
+  await prisma.agentCapability.deleteMany({
+    where: { appId }
+  });
+
+  if (capabilities.length === 0) {
+    return;
+  }
+
+  await prisma.agentCapability.createMany({
+    data: capabilities.map((capability) => ({
+      appId,
+      name: capability.name,
+      slug: capability.slug,
+      description: capability.description,
+      capabilityType: capability.capabilityType,
+      authType: capability.authType,
+      interfaceType: capability.interfaceType,
+      interactionMode: capability.interactionMode,
+      endpointUrl: capability.endpointUrl,
+      docsUrl: capability.docsUrl,
+      inputSchemaJson:
+        capability.inputSchemaJson === null ? Prisma.JsonNull : (capability.inputSchemaJson as Prisma.InputJsonValue),
+      outputSchemaJson:
+        capability.outputSchemaJson === null ? Prisma.JsonNull : (capability.outputSchemaJson as Prisma.InputJsonValue),
+      safetyNotes: capability.safetyNotes,
+      status: capability.status,
+      reliabilityScore: capability.reliabilityScore,
+      latencyP50Ms: capability.latencyP50Ms
+    }))
+  });
+}
+
 export async function createAdminApp(input: AdminAppInput, createdByUserId: string) {
   const app = await prisma.app.create({
     data: {
@@ -400,12 +580,19 @@ export async function createAdminApp(input: AdminAppInput, createdByUserId: stri
       websiteUrl: input.websiteUrl.trim(),
       logoUrl: input.logoUrl.trim(),
       verified: input.verified,
+      verifiedNote: input.verifiedNote?.trim() || null,
+      agentAudience: input.agentAudience,
+      agentListingStatus: input.agentAudience === AppAudience.HUMAN ? AgentListingStatus.NOT_APPLICABLE : input.agentListingStatus,
+      agentSummary: input.agentSummary?.trim() || null,
+      agentDocsUrl: input.agentDocsUrl?.trim() || null,
+      agentIntegrationNotes: input.agentIntegrationNotes?.trim() || null,
       categoryId: input.categoryId,
       createdByUserId
     }
   });
 
   await replaceTagsAndScreenshots(app.id, input);
+  await replaceAgentCapabilities(app.id, input);
   return getAdminAppById(app.id);
 }
 
@@ -421,6 +608,12 @@ export async function updateAdminApp(id: string, input: AdminAppInput) {
         websiteUrl: input.websiteUrl.trim(),
         logoUrl: input.logoUrl.trim(),
         verified: input.verified,
+        verifiedNote: input.verifiedNote?.trim() || null,
+        agentAudience: input.agentAudience,
+        agentListingStatus: input.agentAudience === AppAudience.HUMAN ? AgentListingStatus.NOT_APPLICABLE : input.agentListingStatus,
+        agentSummary: input.agentSummary?.trim() || null,
+        agentDocsUrl: input.agentDocsUrl?.trim() || null,
+        agentIntegrationNotes: input.agentIntegrationNotes?.trim() || null,
         categoryId: input.categoryId
       }
     });
@@ -429,6 +622,7 @@ export async function updateAdminApp(id: string, input: AdminAppInput) {
   }
 
   await replaceTagsAndScreenshots(id, input);
+  await replaceAgentCapabilities(id, input);
   return getAdminAppById(id);
 }
 
@@ -494,11 +688,18 @@ function toAppDetailRecord(
     websiteUrl: app.websiteUrl,
     logoUrl: app.logoUrl,
     verified: app.verified,
+    agentAudience: app.agentAudience,
+    agentListingStatus: app.agentListingStatus,
+    agentSummary: app.agentSummary,
+    agentDocsUrl: app.agentDocsUrl,
+    communityPick: app.communityPick,
     createdAt: app.createdAt,
     publishedAt: app.publishedAt,
     category: app.category,
     tags: app.tags.map((tag) => tag.tag),
     screenshots: app.screenshots,
+    agentCapabilities:
+      app.agentListingStatus === AgentListingStatus.PUBLISHED ? app.agentCapabilities.map(toAgentCapabilitySummary) : [],
     rating: reviewStats?.rating ?? 0,
     reviewCount: reviewStats?.reviewCount ?? 0,
     likeCount: likeStats?.likeCount ?? 0,
@@ -533,6 +734,14 @@ async function getPublishedApp(
       screenshots: {
         orderBy: {
           sortOrder: "asc"
+        }
+      },
+      agentCapabilities: {
+        where: {
+          status: AgentCapabilityStatus.ACTIVE
+        },
+        orderBy: {
+          name: "asc"
         }
       },
       reviews: {

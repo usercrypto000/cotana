@@ -2,8 +2,9 @@ import { cron, eventType } from "inngest";
 import { serve } from "inngest/next";
 import { inngest } from "./inngest";
 import {
-  runCommunityPickPlaceholder,
+  runCommunityPickRecompute,
   runEmbeddingRefresh,
+  runRisingRecompute,
   runSignalRefresh,
   runTrendingRecompute,
   runWeeklySnapshots
@@ -81,13 +82,23 @@ const trendingRecompute = inngest.createFunction(
   },
 );
 
+const risingRecompute = inngest.createFunction(
+  {
+    id: "rising-recompute",
+    triggers: [cron("15 * * * *")]
+  },
+  async () => {
+    await runRisingRecompute();
+  },
+);
+
 const communityPickRecompute = inngest.createFunction(
   {
     id: "community-pick-recompute",
-    triggers: [cron("0 12 * * 1")]
+    triggers: [cron("0 0 1 * *")]
   },
   async () => {
-    await runCommunityPickPlaceholder();
+    await runCommunityPickRecompute();
   },
 );
 
@@ -99,6 +110,7 @@ export const inngestFunctions = [
   refreshPredictionMarketSignals,
   weeklySnapshots,
   trendingRecompute,
+  risingRecompute,
   communityPickRecompute
 ];
 

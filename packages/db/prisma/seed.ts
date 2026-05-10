@@ -1,4 +1,17 @@
-import { AppStatus, PrismaClient, UserRole } from "@prisma/client";
+import {
+  AgentAuthType,
+  AgentCapabilityStatus,
+  AgentInteractionMode,
+  AgentInterfaceType,
+  AgentListingStatus,
+  AppAudience,
+  AppStatus,
+  AppUpdateType,
+  EditorialShelfStatus,
+  EditorialShelfVisibility,
+  PrismaClient,
+  UserRole
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -72,8 +85,55 @@ async function main() {
       websiteUrl: "https://example.com/harbor-yield",
       logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=HarborYield",
       verified: true,
+      verifiedNote: "Established lending interface with strong product clarity and internal review completed.",
+      agentAudience: AppAudience.HYBRID,
+      agentSummary: "Agents can compare yield options and return read-only product recommendations for a user intent.",
       categorySlug: "lending-yield",
       tags: ["yield", "savings", "stablecoins"],
+      agentCapabilities: [
+        {
+          name: "Compare yield options",
+          slug: "compare-yield-options",
+          description: "Returns a ranked read-only summary of available yield options for a requested asset profile.",
+          capabilityType: "comparison",
+          authType: AgentAuthType.API_KEY,
+          interfaceType: AgentInterfaceType.HTTP_API,
+          interactionMode: AgentInteractionMode.READ_ONLY,
+          status: AgentCapabilityStatus.ACTIVE,
+          endpointUrl: "https://example.com/harbor-yield/api/agent/yield-options",
+          inputSchemaJson: {
+            type: "object",
+            properties: {
+              asset: { type: "string" },
+              riskPreference: { type: "string" }
+            },
+            required: ["asset"]
+          },
+          outputSchemaJson: {
+            type: "object",
+            properties: {
+              options: { type: "array" }
+            }
+          },
+          safetyNotes: "Read-only discovery capability. No account actions.",
+          reliabilityScore: 0.92,
+          latencyP50Ms: 480
+        }
+      ],
+      updates: [
+        {
+          versionLabel: "v1.8",
+          title: "Yield comparison refresh",
+          body: "Updated vault scoring, cleaner stablecoin risk labels, and faster comparison loading across the main save flow.",
+          type: AppUpdateType.FEATURE
+        },
+        {
+          versionLabel: "Mar 2026",
+          title: "Improved onboarding guidance",
+          body: "Simplified the first-run experience and clarified how passive savers should compare strategies before saving an app.",
+          type: AppUpdateType.GENERAL
+        }
+      ],
       signals: [
         { signalType: "category_metric", signalKey: "apy", numericValue: 8.4 },
         { signalType: "category_metric", signalKey: "tvl", numericValue: 142000000 },
@@ -90,8 +150,48 @@ async function main() {
       websiteUrl: "https://example.com/signal-bet",
       logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=SignalBet",
       verified: true,
+      verifiedNote: "Strong market clarity and liquidity coverage verified by internal review.",
+      agentAudience: AppAudience.HYBRID,
+      agentSummary: "Agents can inspect market availability and summarize event-market context for a user.",
       categorySlug: "prediction-markets",
       tags: ["events", "markets", "forecasts"],
+      agentCapabilities: [
+        {
+          name: "Find active markets",
+          slug: "find-active-markets",
+          description: "Searches active event markets and returns structured market summaries.",
+          capabilityType: "search",
+          authType: AgentAuthType.API_KEY,
+          interfaceType: AgentInterfaceType.HTTP_API,
+          interactionMode: AgentInteractionMode.READ_ONLY,
+          status: AgentCapabilityStatus.ACTIVE,
+          endpointUrl: "https://example.com/signal-bet/api/agent/markets",
+          inputSchemaJson: {
+            type: "object",
+            properties: {
+              topic: { type: "string" }
+            },
+            required: ["topic"]
+          },
+          outputSchemaJson: {
+            type: "object",
+            properties: {
+              markets: { type: "array" }
+            }
+          },
+          safetyNotes: "Market discovery only. No trading actions.",
+          reliabilityScore: 0.88,
+          latencyP50Ms: 620
+        }
+      ],
+      updates: [
+        {
+          versionLabel: "v2.1",
+          title: "Daily events feed",
+          body: "Added a cleaner daily events feed and better resolved-market summaries for returning users.",
+          type: AppUpdateType.FEATURE
+        }
+      ],
       signals: [
         { signalType: "category_metric", signalKey: "open_interest", numericValue: 8800000 },
         { signalType: "category_metric", signalKey: "active_markets", numericValue: 146 },
@@ -107,18 +207,300 @@ async function main() {
       websiteUrl: "https://example.com/fjord-defi",
       logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=FjordDefi",
       verified: true,
+      verifiedNote: "Consistent liquidity coverage and polished consumer experience.",
+      agentAudience: AppAudience.HYBRID,
+      agentSummary: "Agents can retrieve route and liquidity context for comparison workflows.",
       categorySlug: "defi",
       tags: ["defi", "liquidity", "swaps"],
+      agentCapabilities: [
+        {
+          name: "Inspect liquidity routes",
+          slug: "inspect-liquidity-routes",
+          description: "Returns read-only liquidity route metadata for app comparison and discovery.",
+          capabilityType: "data",
+          authType: AgentAuthType.API_KEY,
+          interfaceType: AgentInterfaceType.DATA_FEED,
+          interactionMode: AgentInteractionMode.READ_ONLY,
+          status: AgentCapabilityStatus.ACTIVE,
+          endpointUrl: "https://example.com/fjord-defi/api/agent/routes",
+          inputSchemaJson: {
+            type: "object",
+            properties: {
+              assetPair: { type: "string" }
+            },
+            required: ["assetPair"]
+          },
+          outputSchemaJson: {
+            type: "object",
+            properties: {
+              routes: { type: "array" }
+            }
+          },
+          safetyNotes: "Read-only route inspection.",
+          reliabilityScore: 0.9,
+          latencyP50Ms: 540
+        }
+      ],
+      updates: [
+        {
+          versionLabel: "v1.4",
+          title: "Cleaner route explorer",
+          body: "Refined liquidity route previews and made it easier to compare trusted paths before visiting the app website.",
+          type: AppUpdateType.FEATURE
+        }
+      ],
       signals: [
         { signalType: "category_metric", signalKey: "tvl", numericValue: 265000000 },
         { signalType: "category_metric", signalKey: "volume", numericValue: 94000000 },
         { signalType: "category_metric", signalKey: "liquidity_depth", numericValue: 7200000 }
       ]
+    },
+    {
+      slug: "atlas-trade",
+      name: "Atlas Trade",
+      shortDescription: "Fast cross-market trading workflows.",
+      longDescription:
+        "Atlas Trade packages market scanning, execution shortcuts, and watchlist organization into a streamlined consumer trading surface.",
+      websiteUrl: "https://example.com/atlas-trade",
+      logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=AtlasTrade",
+      verified: false,
+      verifiedNote: null,
+      agentAudience: AppAudience.HUMAN,
+      agentSummary: null,
+      categorySlug: "trading",
+      tags: ["trading", "markets", "watchlists"],
+      agentCapabilities: [],
+      updates: [
+        {
+          versionLabel: "Launch",
+          title: "Watchlists and quick routes",
+          body: "Introduced a cleaner trading launch surface with saved watchlists and faster market switching.",
+          type: AppUpdateType.GENERAL
+        }
+      ],
+      signals: []
+    },
+    {
+      slug: "echo-social",
+      name: "Echo Social",
+      shortDescription: "Social discovery for crypto communities.",
+      longDescription:
+        "Echo Social helps users discover conversations, creators, and communities through a feed that feels familiar and easy to browse.",
+      websiteUrl: "https://example.com/echo-social",
+      logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=EchoSocial",
+      verified: true,
+      verifiedNote: "Internal review confirmed a strong consumer UX and clear moderation posture.",
+      agentAudience: AppAudience.HYBRID,
+      agentSummary: "Agents can fetch creator and community discovery metadata for planning workflows.",
+      categorySlug: "social",
+      tags: ["social", "creators", "communities"],
+      agentCapabilities: [
+        {
+          name: "Discover communities",
+          slug: "discover-communities",
+          description: "Finds public communities and creators that match a topic.",
+          capabilityType: "search",
+          authType: AgentAuthType.OAUTH2,
+          interfaceType: AgentInterfaceType.HTTP_API,
+          interactionMode: AgentInteractionMode.READ_ONLY,
+          status: AgentCapabilityStatus.ACTIVE,
+          endpointUrl: "https://example.com/echo-social/api/agent/communities",
+          inputSchemaJson: {
+            type: "object",
+            properties: {
+              topic: { type: "string" }
+            },
+            required: ["topic"]
+          },
+          outputSchemaJson: {
+            type: "object",
+            properties: {
+              communities: { type: "array" }
+            }
+          },
+          safetyNotes: "Public discovery metadata only.",
+          reliabilityScore: 0.84,
+          latencyP50Ms: 720
+        }
+      ],
+      updates: [
+        {
+          versionLabel: "v1.2",
+          title: "Creator collections",
+          body: "Added cleaner community collections and easier ways to keep track of trusted creators.",
+          type: AppUpdateType.FEATURE
+        }
+      ],
+      signals: []
+    },
+    {
+      slug: "vault-stake",
+      name: "Vault Stake",
+      shortDescription: "Simple staking choices with guided setup.",
+      longDescription:
+        "Vault Stake makes validator selection and staking comparisons feel straightforward for mainstream users who want simplicity first.",
+      websiteUrl: "https://example.com/vault-stake",
+      logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=VaultStake",
+      verified: false,
+      verifiedNote: null,
+      agentAudience: AppAudience.HUMAN,
+      agentSummary: null,
+      categorySlug: "staking",
+      tags: ["staking", "validators", "guides"],
+      agentCapabilities: [],
+      updates: [
+        {
+          versionLabel: "v1.0",
+          title: "Validator comparison cards",
+          body: "Improved validator comparison cards and simplified the main staking selection experience.",
+          type: AppUpdateType.FEATURE
+        }
+      ],
+      signals: [
+        { signalType: "category_metric", signalKey: "apr", numericValue: 6.1 },
+        { signalType: "category_metric", signalKey: "supported_assets", numericValue: 9 },
+        { signalType: "category_metric", signalKey: "validator_count", numericValue: 42 }
+      ]
+    },
+    {
+      slug: "civic-pass",
+      name: "Civic Pass",
+      shortDescription: "Portable identity checks for safer access.",
+      longDescription:
+        "Civic Pass helps people move through identity-sensitive experiences with a clean, consumer-friendly interface.",
+      websiteUrl: "https://example.com/civic-pass",
+      logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=CivicPass",
+      verified: true,
+      verifiedNote: "Verified due to clear compliance posture and high trust utility.",
+      agentAudience: AppAudience.AGENT,
+      agentSummary: "Agents can request eligibility and verification-status checks through structured, permissioned workflows.",
+      categorySlug: "identity",
+      tags: ["identity", "trust", "access"],
+      agentCapabilities: [
+        {
+          name: "Check verification status",
+          slug: "check-verification-status",
+          description: "Returns a scoped status response for permissioned identity workflows.",
+          capabilityType: "workflow",
+          authType: AgentAuthType.OAUTH2,
+          interfaceType: AgentInterfaceType.HTTP_API,
+          interactionMode: AgentInteractionMode.READ_ONLY,
+          status: AgentCapabilityStatus.ACTIVE,
+          endpointUrl: "https://example.com/civic-pass/api/agent/status",
+          inputSchemaJson: {
+            type: "object",
+            properties: {
+              requestId: { type: "string" }
+            },
+            required: ["requestId"]
+          },
+          outputSchemaJson: {
+            type: "object",
+            properties: {
+              status: { type: "string" }
+            }
+          },
+          safetyNotes: "Requires delegated user consent.",
+          reliabilityScore: 0.94,
+          latencyP50Ms: 360
+        }
+      ],
+      updates: [
+        {
+          versionLabel: "Spring 2026",
+          title: "Faster verification handoff",
+          body: "Reduced friction in the identity handoff flow and improved status visibility after submission.",
+          type: AppUpdateType.PERFORMANCE
+        }
+      ],
+      signals: []
+    },
+    {
+      slug: "pixel-port",
+      name: "Pixel Port",
+      shortDescription: "Game discovery with player-first curation.",
+      longDescription:
+        "Pixel Port organizes game worlds, daily activity, and discovery cues into a storefront-like experience that feels easy to browse.",
+      websiteUrl: "https://example.com/pixel-port",
+      logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=PixelPort",
+      verified: false,
+      verifiedNote: null,
+      agentAudience: AppAudience.HUMAN,
+      agentSummary: null,
+      categorySlug: "gaming",
+      tags: ["gaming", "quests", "worlds"],
+      agentCapabilities: [],
+      updates: [
+        {
+          versionLabel: "v0.9",
+          title: "New launch queue",
+          body: "Added a cleaner launch queue and better discovery cues for returning players.",
+          type: AppUpdateType.FEATURE
+        }
+      ],
+      signals: []
+    },
+    {
+      slug: "rwa-hub",
+      name: "RWA Hub",
+      shortDescription: "Track real-world asset platforms simply.",
+      longDescription:
+        "RWA Hub gives people a simple way to compare asset-backed products without drowning them in metrics-heavy dashboards.",
+      websiteUrl: "https://example.com/rwa-hub",
+      logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=RWAHub",
+      verified: true,
+      verifiedNote: "Verified for strong product clarity and curated scope.",
+      agentAudience: AppAudience.HYBRID,
+      agentSummary: "Agents can pull comparison metadata for asset-backed products.",
+      categorySlug: "rwa",
+      tags: ["rwa", "assets", "comparison"],
+      agentCapabilities: [
+        {
+          name: "Compare asset products",
+          slug: "compare-asset-products",
+          description: "Returns structured comparison metadata for asset-backed products.",
+          capabilityType: "comparison",
+          authType: AgentAuthType.API_KEY,
+          interfaceType: AgentInterfaceType.HTTP_API,
+          interactionMode: AgentInteractionMode.READ_ONLY,
+          status: AgentCapabilityStatus.ACTIVE,
+          endpointUrl: "https://example.com/rwa-hub/api/agent/products",
+          inputSchemaJson: {
+            type: "object",
+            properties: {
+              assetType: { type: "string" }
+            },
+            required: ["assetType"]
+          },
+          outputSchemaJson: {
+            type: "object",
+            properties: {
+              products: { type: "array" }
+            }
+          },
+          safetyNotes: "Read-only comparison data.",
+          reliabilityScore: 0.86,
+          latencyP50Ms: 690
+        }
+      ],
+      updates: [
+        {
+          versionLabel: "v1.1",
+          title: "Asset comparison refresh",
+          body: "Improved comparison cards and made it easier to distinguish conservative products from riskier options.",
+          type: AppUpdateType.GENERAL
+        }
+      ],
+      signals: []
     }
   ];
 
   for (const app of exampleApps) {
     const categoryId = categoryLookup.get(app.categorySlug);
+    const agentListingStatus =
+      app.agentAudience === AppAudience.HUMAN ? AgentListingStatus.NOT_APPLICABLE : AgentListingStatus.PUBLISHED;
+    const agentDocsUrl =
+      app.agentAudience === AppAudience.HUMAN ? null : `https://example.com/${app.slug}/docs/agents`;
 
     if (!categoryId) {
       throw new Error(`Missing category ${app.categorySlug}`);
@@ -133,6 +515,15 @@ async function main() {
         websiteUrl: app.websiteUrl,
         logoUrl: app.logoUrl,
         verified: app.verified,
+        verifiedNote: app.verifiedNote,
+        agentAudience: app.agentAudience,
+        agentListingStatus,
+        agentSummary: app.agentSummary,
+        agentDocsUrl,
+        agentIntegrationNotes:
+          app.agentAudience === AppAudience.HUMAN
+            ? null
+            : "Seeded as a discovery-only registry listing. Cotana does not execute this capability.",
         categoryId,
         status: AppStatus.PUBLISHED,
         publishedAt: new Date()
@@ -145,6 +536,15 @@ async function main() {
         websiteUrl: app.websiteUrl,
         logoUrl: app.logoUrl,
         verified: app.verified,
+        verifiedNote: app.verifiedNote,
+        agentAudience: app.agentAudience,
+        agentListingStatus,
+        agentSummary: app.agentSummary,
+        agentDocsUrl,
+        agentIntegrationNotes:
+          app.agentAudience === AppAudience.HUMAN
+            ? null
+            : "Seeded as a discovery-only registry listing. Cotana does not execute this capability.",
         categoryId,
         status: AppStatus.PUBLISHED,
         createdByUserId: adminUser.id,
@@ -177,6 +577,159 @@ async function main() {
         observedAt: new Date()
       }))
     });
+
+    await prisma.appUpdate.deleteMany({
+      where: {
+        appId: createdApp.id
+      }
+    });
+
+    await prisma.appUpdate.createMany({
+      data: app.updates.map((update, index) => ({
+        appId: createdApp.id,
+        versionLabel: update.versionLabel,
+        title: update.title,
+        body: update.body,
+        type: update.type,
+        publishedAt: new Date(Date.now() - index * 1000 * 60 * 60 * 24 * 7)
+      }))
+    });
+
+    await prisma.agentCapability.deleteMany({
+      where: {
+        appId: createdApp.id
+      }
+    });
+
+    if (app.agentCapabilities.length > 0) {
+      await prisma.agentCapability.createMany({
+        data: app.agentCapabilities.map((capability) => ({
+          appId: createdApp.id,
+          name: capability.name,
+          slug: capability.slug,
+          description: capability.description,
+          capabilityType: capability.capabilityType,
+          authType: capability.authType,
+          interfaceType: capability.interfaceType,
+          interactionMode: capability.interactionMode,
+          endpointUrl: capability.endpointUrl,
+          docsUrl: `https://example.com/${app.slug}/docs/agents#${capability.slug}`,
+          inputSchemaJson: capability.inputSchemaJson,
+          outputSchemaJson: capability.outputSchemaJson,
+          safetyNotes: capability.safetyNotes,
+          status: capability.status,
+          reliabilityScore: capability.reliabilityScore,
+          latencyP50Ms: capability.latencyP50Ms
+        }))
+      });
+    }
+  }
+
+  const seededApps = await prisma.app.findMany({
+    where: {
+      slug: {
+        in: exampleApps.map((app) => app.slug)
+      }
+    },
+    include: {
+      category: true
+    }
+  });
+
+  const appLookup = new Map(seededApps.map((app) => [app.slug, app]));
+
+  const editorialShelves = [
+    {
+      title: "Featured",
+      slug: "featured",
+      description: "A tight selection of trustworthy apps for first-time Cotana visitors.",
+      status: EditorialShelfStatus.PUBLISHED,
+      sortOrder: 0,
+      visibility: EditorialShelfVisibility.HOME,
+      pinned: true,
+      categoryId: null,
+      appSlugs: ["harbor-yield", "signal-bet", "fjord-defi", "echo-social"]
+    },
+    {
+      title: "Best for beginners",
+      slug: "best-for-beginners",
+      description: "Approachable apps with clear onboarding and strong early trust signals.",
+      status: EditorialShelfStatus.PUBLISHED,
+      sortOrder: 1,
+      visibility: EditorialShelfVisibility.BOTH,
+      pinned: false,
+      categoryId: null,
+      appSlugs: ["harbor-yield", "fjord-defi", "vault-stake", "civic-pass"]
+    },
+    {
+      title: "Prediction markets to watch",
+      slug: "prediction-markets-to-watch",
+      description: "Editorial picks for the prediction markets category page.",
+      status: EditorialShelfStatus.PUBLISHED,
+      sortOrder: 0,
+      visibility: EditorialShelfVisibility.CATEGORY,
+      pinned: false,
+      categoryId: categoryLookup.get("prediction-markets") ?? null,
+      appSlugs: ["signal-bet"]
+    },
+    {
+      title: "New this week",
+      slug: "new-this-week",
+      description: "Fresh additions to the catalog with strong early product quality.",
+      status: EditorialShelfStatus.PUBLISHED,
+      sortOrder: 2,
+      visibility: EditorialShelfVisibility.HOME,
+      pinned: false,
+      categoryId: null,
+      appSlugs: ["pixel-port", "rwa-hub", "civic-pass"]
+    }
+  ];
+
+  for (const shelf of editorialShelves) {
+    const upsertedShelf = await prisma.editorialShelf.upsert({
+      where: { slug: shelf.slug },
+      update: {
+        title: shelf.title,
+        description: shelf.description,
+        status: shelf.status,
+        sortOrder: shelf.sortOrder,
+        visibility: shelf.visibility,
+        pinned: shelf.pinned,
+        categoryId: shelf.categoryId,
+        publishedAt: shelf.status === EditorialShelfStatus.PUBLISHED ? new Date() : null
+      },
+      create: {
+        title: shelf.title,
+        slug: shelf.slug,
+        description: shelf.description,
+        status: shelf.status,
+        sortOrder: shelf.sortOrder,
+        visibility: shelf.visibility,
+        pinned: shelf.pinned,
+        categoryId: shelf.categoryId,
+        publishedAt: shelf.status === EditorialShelfStatus.PUBLISHED ? new Date() : null
+      }
+    });
+
+    await prisma.editorialShelfItem.deleteMany({
+      where: {
+        shelfId: upsertedShelf.id
+      }
+    });
+
+    const appIds = shelf.appSlugs
+      .map((slug) => appLookup.get(slug)?.id ?? null)
+      .filter((appId): appId is string => Boolean(appId));
+
+    if (appIds.length > 0) {
+      await prisma.editorialShelfItem.createMany({
+        data: appIds.map((appId, index) => ({
+          shelfId: upsertedShelf.id,
+          appId,
+          sortOrder: index
+        }))
+      });
+    }
   }
 
   const rankingConfigs = [
@@ -239,6 +792,82 @@ async function main() {
           liquidity_depth: 0.03
         }
       }
+    },
+    {
+      key: "discovery.weights.trending",
+      valueJson: {
+        viewVelocity: 0.32,
+        searchCtr: 0.18,
+        likeVelocity: 0.2,
+        reviewVelocity: 0.12,
+        signalMomentum: 0.18
+      }
+    },
+    {
+      key: "discovery.weights.rising",
+      valueJson: {
+        viewGrowth: 0.28,
+        clickGrowth: 0.24,
+        likeGrowth: 0.18,
+        reviewGrowth: 0.16,
+        signalMomentum: 0.08,
+        lowHistoryBoost: 0.06
+      }
+    },
+    {
+      key: "discovery.weights.community_pick",
+      valueJson: {
+        ratingQuality: 0.34,
+        reviewCountQuality: 0.18,
+        likeVelocity: 0.18,
+        engagementQuality: 0.15,
+        moderationSafety: 0.15,
+        minRating: 4,
+        minReviewCount: 2,
+        maxModerationRisk: 0.35,
+        scoreThreshold: 0.58
+      }
+    },
+    {
+      key: "agent.intent_tests",
+      valueJson: [
+        {
+          id: "yield-rates-read-only",
+          intent: "find read-only yield rates",
+          categorySlug: "lending-yield",
+          expectedCapabilityTypes: ["comparison"],
+          filters: {
+            interactionModes: ["READ_ONLY"]
+          }
+        },
+        {
+          id: "prediction-market-odds",
+          intent: "compare prediction market odds",
+          categorySlug: "prediction-markets",
+          expectedCapabilityTypes: ["search"],
+          filters: {
+            interactionModes: ["READ_ONLY"]
+          }
+        },
+        {
+          id: "protocol-tvl",
+          intent: "get protocol TVL",
+          categorySlug: "defi",
+          expectedCapabilityTypes: ["data"],
+          filters: {
+            interactionModes: ["READ_ONLY"]
+          }
+        },
+        {
+          id: "stablecoin-swap-routes",
+          intent: "find stablecoin swap routes",
+          categorySlug: "defi",
+          expectedCapabilityTypes: ["data"],
+          filters: {
+            interactionModes: ["READ_ONLY"]
+          }
+        }
+      ]
     }
   ];
 

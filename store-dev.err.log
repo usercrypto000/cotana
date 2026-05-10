@@ -1,0 +1,26 @@
+Error [PrismaClientInitializationError]: 
+Invalid `prisma.app.findMany()` invocation:
+
+
+error: Environment variable not found: DATABASE_URL.
+  -->  schema.prisma:7
+   | 
+ 6 |   provider  = "postgresql"
+ 7 |   url       = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at <unknown> (-->  schema.prisma:7)
+    at async listAgentRegistryApps (..\..\packages\db\src\services\agents.ts:73:16)
+    at async GET (app\api\agent-registry\route.ts:6:16)
+  71 |
+  72 | export async function listAgentRegistryApps(categorySlug?: string | null) {
+> 73 |   const apps = await prisma.app.findMany({
+     |                ^
+  74 |     where: agentRegistryWhere(categorySlug),
+  75 |     include: {
+  76 |       category: { {
+  clientVersion: '6.19.2',
+  errorCode: undefined,
+  retryable: undefined
+}

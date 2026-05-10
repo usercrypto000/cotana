@@ -5,13 +5,13 @@ import { StoreAuthControls } from "./store-auth-controls";
 
 export function StoreHeader() {
   return (
-    <header className="sticky top-0 z-20 border-b border-white/70 bg-white/80 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-neutral-border bg-white/85 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4">
         <div>
-          <Link href="/" className="text-lg font-semibold tracking-tight text-slate-950">
+          <Link href="/" className="font-heading text-lg font-semibold tracking-tight text-brand-primary">
             Cotana
           </Link>
-          <p className="text-sm text-slate-500">Discover apps by intent, not noise.</p>
+          <p className="text-sm text-neutral-muted">Discover apps by intent, not noise.</p>
         </div>
         <nav className="hidden items-center gap-2 lg:flex">
           {storeCategories.slice(0, 6).map((category) => (
@@ -20,7 +20,7 @@ export function StoreHeader() {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-3 text-sm text-slate-600">
+        <div className="flex items-center gap-3 text-sm text-brand-text">
           <Link href="/search">Search</Link>
           <Link href="/library">My Library</Link>
           <Link href="/profile">Profile</Link>

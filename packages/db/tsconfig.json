@@ -4,6 +4,12 @@
     "outDir": "dist"
   },
   "include": ["src/**/*.ts", "prisma/**/*.ts"],
-  "exclude": ["dist", "node_modules"]
+  "exclude": [
+    "dist",
+    "node_modules",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "prisma/**/*.test.ts",
+    "prisma/**/*.test.tsx"
+  ]
 }
-

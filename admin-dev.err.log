@@ -1,0 +1,7 @@
+ ⚠ ../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_fac1d1bea465175b9b0ee31da05a1a28/node_modules/@privy-io/react-auth/dist/esm/index-YDEix4mU.mjs
+Module not found: Can't resolve '@farcaster/mini-app-solana' in 'C:\Users\HP\cotana\node_modules\.pnpm\@privy-io+react-auth@3.18.0_fac1d1bea465175b9b0ee31da05a1a28\node_modules\@privy-io\react-auth\dist\esm'
+
+Import trace for requested module:
+../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_fac1d1bea465175b9b0ee31da05a1a28/node_modules/@privy-io/react-auth/dist/esm/index-YDEix4mU.mjs
+../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_fac1d1bea465175b9b0ee31da05a1a28/node_modules/@privy-io/react-auth/dist/esm/index.mjs
+./components/admin-auth-controls.tsx

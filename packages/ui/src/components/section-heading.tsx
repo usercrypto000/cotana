@@ -13,16 +13,15 @@ export function SectionHeading({
 }) {
   return (
     <div className="space-y-2">
-      <p className={cn("text-sm uppercase tracking-[0.2em]", inverse ? "text-emerald-200" : "text-teal-800")}>
+      <p className={cn("font-heading text-sm uppercase tracking-[0.16em]", inverse ? "text-lime-200" : "text-brand-primary")}>
         {eyebrow}
       </p>
-      <h2 className={cn("text-3xl font-semibold tracking-tight", inverse ? "text-white" : "text-slate-950")}>
+      <h2 className={cn("font-heading text-3xl font-semibold tracking-tight", inverse ? "text-white" : "text-brand-text")}>
         {title}
       </h2>
-      <p className={cn("max-w-3xl text-sm leading-6", inverse ? "text-white/70" : "text-slate-500")}>
+      <p className={cn("max-w-3xl font-body text-sm leading-6", inverse ? "text-white/70" : "text-neutral-muted")}>
         {description}
       </p>
     </div>
   );
 }
-

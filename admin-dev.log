@@ -1,0 +1,13 @@
+
+> @cotana/admin@0.1.0 dev C:\Users\HP\cotana\apps\admin
+> next dev --port 3001
+
+   ▲ Next.js 15.5.14
+   - Local:        http://localhost:3001
+   - Network:      http://10.197.126.237:3001
+
+ ✓ Starting...
+ ✓ Ready in 13.4s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 3.8s (279 modules)
+ ○ Compiling / ...

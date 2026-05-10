@@ -11,13 +11,81 @@ datasource db {
 enum UserRole {
   USER
   ADMIN
-  DEVELOPER_PORTAL
 }
 
 enum AppStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+enum AppAudience {
+  HUMAN
+  AGENT
+  HYBRID
+}
+
+enum AgentListingStatus {
+  NOT_APPLICABLE
+  DRAFT
+  PUBLISHED
+  PAUSED
+}
+
+enum AgentAuthType {
+  NONE
+  API_KEY
+  OAUTH2
+  MCP
+  CUSTOM
+}
+
+enum AgentInterfaceType {
+  HTTP_API
+  MCP_SERVER
+  SDK
+  WEBHOOK
+  DATA_FEED
+  DOCS_ONLY
+}
+
+enum AgentInteractionMode {
+  READ_ONLY
+  WRITE_ACTION
+  TRANSACTIONAL
+  HUMAN_HANDOFF
+}
+
+enum AgentCapabilityStatus {
+  ACTIVE
+  PAUSED
+  DEPRECATED
+}
+
+enum EditorialShelfStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EditorialShelfVisibility {
+  HOME
+  CATEGORY
+  BOTH
+}
+
+enum AppUpdateType {
+  GENERAL
+  FEATURE
+  FIX
+  PERFORMANCE
+  SECURITY
+}
+
+enum DiscoveryInsightKind {
+  TRENDING
+  RISING
+  COMMUNITY_PICK
 }
 
 enum ReviewStatus {
@@ -64,11 +132,12 @@ model UserProfile {
 }
 
 model Category {
-  id        String @id @default(cuid())
-  slug      String @unique
-  name      String @unique
-  sortOrder Int
-  apps      App[]
+  id               String          @id @default(cuid())
+  slug             String          @unique
+  name             String          @unique
+  sortOrder        Int
+  apps             App[]
+  editorialShelves EditorialShelf[]
 }
 
 model App {
@@ -80,6 +149,17 @@ model App {
   websiteUrl       String
   logoUrl          String
   verified         Boolean             @default(false)
+  verifiedNote     String?
+  verifiedUpdatedAt DateTime?
+  agentAudience    AppAudience         @default(HUMAN)
+  agentListingStatus AgentListingStatus @default(NOT_APPLICABLE)
+  agentSummary     String?
+  agentDocsUrl     String?
+  agentIntegrationNotes String?
+  communityPick    Boolean             @default(false)
+  communityPickMonth String?
+  communityPickReason Json?
+  communityPickUpdatedAt DateTime?
   categoryId       String
   status           AppStatus           @default(DRAFT)
   createdByUserId  String
@@ -98,10 +178,131 @@ model App {
   libraryItems     AppLibraryItem[]
   views            AppView[]
   searchClicks     SearchClick[]
+  editorialItems   EditorialShelfItem[]
+  updates          AppUpdate[]
+  agentCapabilities AgentCapability[]
+  discoveryInsights DiscoveryInsightSnapshot[]
 
   @@index([categoryId, status])
   @@index([createdByUserId])
   @@index([status, publishedAt])
+  @@index([agentAudience, agentListingStatus, status])
+  @@index([communityPick, communityPickUpdatedAt])
+}
+
+model AgentCapability {
+  id               String                 @id @default(cuid())
+  appId            String
+  name             String
+  slug             String
+  description      String
+  capabilityType   String
+  authType         AgentAuthType          @default(NONE)
+  interfaceType    AgentInterfaceType     @default(HTTP_API)
+  interactionMode  AgentInteractionMode   @default(READ_ONLY)
+  endpointUrl      String?
+  docsUrl          String?
+  inputSchemaJson  Json?
+  outputSchemaJson Json?
+  safetyNotes      String?
+  status           AgentCapabilityStatus  @default(ACTIVE)
+  reliabilityScore Float?
+  latencyP50Ms     Int?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  app              App                    @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@unique([appId, slug])
+  @@index([appId, status])
+  @@index([capabilityType, status])
+  @@index([interfaceType, interactionMode, status])
+}
+
+model AgentRegistryEvaluationLog {
+  id                     String   @id @default(cuid())
+  query                  String
+  normalizedQuery        String
+  filtersJson            Json
+  resultCount            Int
+  candidateCount         Int
+  matchedCapabilityCount Int
+  topAppId               String?
+  topCapabilityId        String?
+  topCategorySlug        String?
+  topCapabilityType      String?
+  topReadinessBucket     String?
+  topSimilarity          Float?
+  topScore               Float?
+  topQualityScore        Int?
+  topMatchReason         String?
+  excludedCandidatesJson Json
+  blockingIssueCount     Int
+  createdAt              DateTime @default(now())
+
+  @@index([normalizedQuery, createdAt])
+  @@index([topAppId, createdAt])
+  @@index([topCategorySlug, createdAt])
+  @@index([topCapabilityType, createdAt])
+  @@index([topReadinessBucket, createdAt])
+}
+
+model AgentRegistryIntentTestRun {
+  id                          String   @id @default(cuid())
+  testCaseId                  String
+  query                       String
+  filtersJson                 Json
+  expectedCategorySlug        String?
+  expectedCapabilityTypesJson Json?
+  expectedCapabilitySlugsJson Json?
+  topMatchedAppId             String?
+  topMatchedAppSlug           String?
+  topMatchedCategorySlug      String?
+  topMatchedCapabilityId      String?
+  topMatchedCapabilitySlug    String?
+  topMatchedCapabilityType    String?
+  score                       Float?
+  matchReason                 String?
+  passed                      Boolean
+  failureReason               String?
+  ranAt                       DateTime @default(now())
+
+  @@index([testCaseId, ranAt])
+  @@index([passed, ranAt])
+  @@index([expectedCategorySlug, ranAt])
+}
+
+model EditorialShelf {
+  id          String                   @id @default(cuid())
+  title       String
+  slug        String                   @unique
+  description String
+  status      EditorialShelfStatus     @default(DRAFT)
+  sortOrder   Int                      @default(0)
+  visibility  EditorialShelfVisibility @default(HOME)
+  pinned      Boolean                  @default(false)
+  categoryId  String?
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  publishedAt DateTime?
+  category    Category?                @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  items       EditorialShelfItem[]
+
+  @@index([status, visibility, sortOrder])
+  @@index([categoryId, status, visibility, sortOrder])
+}
+
+model EditorialShelfItem {
+  id        String         @id @default(cuid())
+  shelfId   String
+  appId     String
+  sortOrder Int
+  createdAt DateTime       @default(now())
+  shelf     EditorialShelf @relation(fields: [shelfId], references: [id], onDelete: Cascade)
+  app       App            @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@unique([shelfId, appId])
+  @@unique([shelfId, sortOrder])
+  @@index([appId])
 }
 
 model AppTag {
@@ -162,6 +363,39 @@ model AppSignalSnapshot {
   app          App      @relation(fields: [appId], references: [id], onDelete: Cascade)
 
   @@index([appId, category, metric])
+  @@index([category, metric, observedAt])
+}
+
+model AppUpdate {
+  id           String        @id @default(cuid())
+  appId        String
+  versionLabel String
+  title        String
+  body         String
+  publishedAt  DateTime
+  type         AppUpdateType?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  app          App           @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId, publishedAt])
+}
+
+model DiscoveryInsightSnapshot {
+  id          String               @id @default(cuid())
+  appId       String
+  kind        DiscoveryInsightKind
+  categorySlug String?
+  score       Float
+  rank        Int
+  inputsJson  Json
+  windowStart DateTime?
+  windowEnd   DateTime?
+  computedAt  DateTime             @default(now())
+  app         App                  @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([kind, categorySlug, computedAt, rank])
+  @@index([appId, kind, computedAt])
 }
 
 model Review {

@@ -69,11 +69,11 @@ export function AdminPrivyProvider({
         appId={appId}
         clientId={clientId}
         config={{
-          loginMethods: ["email", "google", "apple", "passkey"],
+          loginMethods: ["email", "passkey"],
           appearance: {
             theme: "dark",
             landingHeader: "Cotana Admin",
-            loginMessage: "Sign in with your normal account. Admin access is checked by email allowlist or database role.",
+            loginMessage: "Sign in with email or a browser passkey. Admin access is checked by allowlist or role.",
             walletChainType: "ethereum-only"
           },
           embeddedWallets: {

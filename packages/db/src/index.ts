@@ -1,6 +1,10 @@
 export * from "@prisma/client";
 export { prisma } from "./client";
+export * from "./services/agents";
 export * from "./services/apps";
+export * from "./services/discovery";
+export * from "./services/editorial";
 export * from "./services/reviews";
 export * from "./services/search";
 export * from "./services/signals";
+export * from "./services/updates";

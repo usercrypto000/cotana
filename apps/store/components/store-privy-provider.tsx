@@ -69,11 +69,11 @@ export function StorePrivyProvider({
         appId={appId}
         clientId={clientId}
         config={{
-          loginMethods: ["email", "google", "apple", "passkey"],
+          loginMethods: ["email", "passkey"],
           appearance: {
             theme: "light",
             landingHeader: "Sign in to Cotana",
-            loginMessage: "Use email, Google, Apple, or a passkey. No wallet steps are shown.",
+            loginMessage: "Use email or a browser passkey. No wallet steps are shown.",
             walletChainType: "ethereum-only"
           },
           embeddedWallets: {

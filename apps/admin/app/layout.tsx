@@ -1,12 +1,22 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans } from "next/font/google";
+import { Inter, Open_Sans, Ubuntu } from "next/font/google";
 import { AdminPrivyProvider } from "../components/admin-privy-provider";
 import "./globals.css";
 
-const ibmPlexSans = IBM_Plex_Sans({
+const ubuntu = Ubuntu({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-ibm-plex-sans"
+  weight: ["400", "500", "700"],
+  variable: "--font-ubuntu"
+});
+
+const openSans = Open_Sans({
+  subsets: ["latin"],
+  variable: "--font-open-sans"
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter"
 });
 
 export const metadata: Metadata = {
@@ -20,8 +30,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={ibmPlexSans.variable}>
-      <body className="font-sans antialiased">
+    <html lang="en" className={`${ubuntu.variable} ${openSans.variable} ${inter.variable}`}>
+      <body className="font-body antialiased">
         <AdminPrivyProvider>{children}</AdminPrivyProvider>
       </body>
     </html>

@@ -22,10 +22,9 @@ const environmentSchema = z
     OPENAI_API_KEY: z.string().min(1).optional(),
     OPENAI_EMBEDDING_MODEL: z.string().min(1).default("text-embedding-3-large"),
     DEFILLAMA_API_KEY: z.string().min(1).optional(),
-    DUNE_API_KEY: z.string().min(1).optional(),
-    DUNE_DEFI_QUERY_ID: z.string().min(1).optional(),
-    DUNE_LENDING_YIELD_QUERY_ID: z.string().min(1).optional(),
-    DUNE_PREDICTION_MARKETS_QUERY_ID: z.string().min(1).optional()
+    COVALENT_API_KEY: z.string().min(1).optional(),
+    COVALENT_BASE_URL: z.string().url().default("https://api.covalenthq.com/v1"),
+    COVALENT_TIMEOUT_MS: z.coerce.number().int().positive().default(10000)
   })
   .passthrough();
 
@@ -219,13 +218,9 @@ export function requireSearchProviderEnv(source: NodeJS.ProcessEnv = process.env
 }
 
 export function requireSignalProviderEnv(source: NodeJS.ProcessEnv = process.env) {
-  return assertKeysPresent(
-    ["DUNE_API_KEY", "DUNE_DEFI_QUERY_ID", "DUNE_LENDING_YIELD_QUERY_ID", "DUNE_PREDICTION_MARKETS_QUERY_ID"],
-    source,
-    {
-      scope: "signals"
-    },
-  );
+  return assertKeysPresent(["COVALENT_API_KEY"], source, {
+    scope: "signals"
+  });
 }
 
 export function createApplicationError(input: ConstructorParameters<typeof ApplicationError>[0]) {

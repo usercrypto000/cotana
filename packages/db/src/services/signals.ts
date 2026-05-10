@@ -163,6 +163,29 @@ export async function storeWeeklySignalSnapshots(observedAt = new Date()) {
   return snapshotRows.length;
 }
 
+export async function listAppSignalSnapshots(
+  appId: string,
+  options?: {
+    metric?: string;
+    limit?: number;
+  },
+) {
+  return prisma.appSignalSnapshot.findMany({
+    where: {
+      appId,
+      ...(options?.metric
+        ? {
+            metric: options.metric
+          }
+        : {})
+    },
+    orderBy: {
+      observedAt: "desc"
+    },
+    take: options?.limit ?? 26
+  });
+}
+
 export async function updateSignalJobStatus(
   key: string,
   input: Partial<SignalJobStatus> & Pick<SignalJobStatus, "status">,

@@ -1,0 +1,13 @@
+
+> @cotana/store@0.1.0 dev C:\Users\HP\cotana\apps\store
+> next dev --port 3000
+
+   ▲ Next.js 15.5.14
+   - Local:        http://localhost:3000
+   - Network:      http://10.197.126.237:3000
+
+ ✓ Starting...
+ ✓ Ready in 13.3s
+ ○ Compiling /api/agent-registry ...
+ ✓ Compiled /api/agent-registry in 9.7s (514 modules)
+ GET /api/agent-registry 500 in 11133ms

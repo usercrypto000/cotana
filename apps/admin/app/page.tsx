@@ -39,8 +39,8 @@ export default async function AdminHomePage() {
             <CardTitle>Published-ready apps</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-semibold text-slate-950">{publishedCount}</p>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="font-heading text-4xl font-semibold text-brand-text">{publishedCount}</p>
+            <p className="mt-2 text-sm text-neutral-muted">
               {draftCount} draft {draftCount === 1 ? "entry is" : "entries are"} still waiting on publish decisions.
             </p>
           </CardContent>
@@ -50,8 +50,8 @@ export default async function AdminHomePage() {
             <CardTitle>Flag queue</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-semibold text-slate-950">{flaggedReviews.length}</p>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="font-heading text-4xl font-semibold text-brand-text">{flaggedReviews.length}</p>
+            <p className="mt-2 text-sm text-neutral-muted">
               Reviews stay public until moderation decides to dismiss or remove them.
             </p>
           </CardContent>
@@ -61,19 +61,19 @@ export default async function AdminHomePage() {
             <CardTitle>Signal jobs</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-semibold text-slate-950">3</p>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="font-heading text-4xl font-semibold text-brand-text">3</p>
+            <p className="mt-2 text-sm text-neutral-muted">
               DeFi, lending &amp; yield, and prediction markets are planned first.
             </p>
           </CardContent>
         </Card>
       </section>
 
-      <section className="space-y-4 rounded-[1.75rem] border border-white/10 bg-slate-900 p-6">
+      <section className="space-y-4 rounded-card border border-neutral-border bg-white p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-white">Catalog entries</h2>
-            <p className="text-sm text-slate-400">Admin-only creation and editing starts from this baseline.</p>
+            <h2 className="font-heading text-xl font-semibold text-brand-text">Catalog entries</h2>
+            <p className="text-sm text-neutral-muted">Admin-only creation and editing starts from this baseline.</p>
           </div>
           <Button asChild>
             <Link href="/apps/new">Create app</Link>
@@ -83,25 +83,25 @@ export default async function AdminHomePage() {
           {apps.map((app) => (
             <div
               key={app.id}
-              className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-200 md:flex-row md:items-center md:justify-between"
+              className="flex flex-col gap-3 rounded-card border border-neutral-border bg-neutral-surface p-4 text-sm text-brand-text md:flex-row md:items-center md:justify-between"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-2xl">
+                <div className="flex h-12 w-12 items-center justify-center rounded-card bg-white text-2xl">
                   <Image
                     src={app.logoUrl}
                     alt={`${app.name} logo`}
                     width={40}
                     height={40}
                     unoptimized
-                    className="h-10 w-10 rounded-xl object-cover"
+                    className="h-10 w-10 rounded-card object-cover"
                   />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-white">{app.name}</span>
-                    {app.verified ? <Badge>Verified</Badge> : null}
+                    <span className="font-heading font-medium text-brand-text">{app.name}</span>
+                    {app.verified ? <Badge variant="verified">Verified</Badge> : null}
                   </div>
-                  <p className="text-slate-400">{app.shortDescription}</p>
+                  <p className="text-neutral-muted">{app.shortDescription}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -114,7 +114,7 @@ export default async function AdminHomePage() {
             </div>
           ))}
           {apps.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-6 text-sm text-slate-400">
+            <div className="rounded-card border border-dashed border-neutral-border bg-neutral-surface p-6 text-sm text-neutral-muted">
               No apps are in the catalog yet. Create the first draft to unlock the public store.
             </div>
           ) : null}
