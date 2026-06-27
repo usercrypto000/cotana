@@ -8,12 +8,12 @@ function EnabledGate() {
   const { login, ready } = usePrivy();
 
   return (
-    <Card className="max-w-xl bg-slate-900 text-white">
+    <Card className="max-w-xl bg-brand-text text-neutral-inverse">
       <CardHeader>
         <CardTitle className="text-white">Admin access required</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-neutral-inverse/72">
           Sign in with an allowlisted email or a user account that already has the ADMIN role in the database.
         </p>
         <Button onClick={() => void login()} disabled={!ready}>
@@ -29,12 +29,12 @@ export function AdminAuthGate() {
 
   if (!authEnabled) {
     return (
-      <Card className="max-w-xl bg-slate-900 text-white">
+      <Card className="max-w-xl bg-brand-text text-neutral-inverse">
         <CardHeader>
           <CardTitle className="text-white">Privy not configured</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-neutral-inverse/72">
             Set your Privy environment variables before using the admin dashboard.
           </p>
         </CardContent>

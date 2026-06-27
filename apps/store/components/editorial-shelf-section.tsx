@@ -4,13 +4,13 @@ import { AppCard, Badge, SectionHeading } from "@cotana/ui";
 
 export function EditorialShelfSection({ shelf }: { shelf: PublicEditorialShelf }) {
   return (
-    <section className="space-y-5">
+    <section className="space-y-3.5">
       <SectionHeading
         eyebrow={shelf.category?.name ?? "Editorial"}
         title={shelf.title}
         description={shelf.description}
       />
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {shelf.pinned ? <Badge>Pinned</Badge> : null}
         {shelf.category ? (
           <Link href={`/category/${shelf.category.slug}`}>
@@ -18,7 +18,7 @@ export function EditorialShelfSection({ shelf }: { shelf: PublicEditorialShelf }
           </Link>
         ) : null}
       </div>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3.5 md:grid-cols-2 xl:grid-cols-4">
         {shelf.items.map((app, index) => (
           <AppCard
             key={app.id}

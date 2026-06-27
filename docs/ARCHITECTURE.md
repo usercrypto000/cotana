@@ -89,7 +89,7 @@ Phase 2 adds:
 
 Implemented details:
 
-- `embedText()` uses OpenAI embeddings when `OPENAI_API_KEY` is present and a deterministic local fallback when it is not
+- `embedText()` uses Vercel AI Gateway embeddings when `AI_GATEWAY_API_KEY` or Vercel OIDC is present, falls back to legacy `OPENAI_API_KEY` only if needed, and uses a deterministic local fallback when no embedding credentials are configured
 - `retrieveCandidates()` uses raw SQL against `AppEmbedding` with cosine similarity
 - `rerankCandidates()` combines semantic similarity, ratings, review count, likes, page-view velocity, and category-specific signal values
 - `getSimilarApps()` uses embedding similarity first, excludes the current app, applies optional same-category boosting, reranks by quality signals, and caches results
@@ -143,6 +143,26 @@ Capability manifests expose one selected capability with quality signals for sch
 Phase 4 adds a capability quality score to the same signal set. The score is deterministic and ranges from `0` to `100`, with penalties for weak metadata and unsafe interaction modes. Registry search also returns an evaluation object and persists `AgentRegistryEvaluationLog` rows with query, filters, candidate counts, matched capability, similarity, score, quality score, exclusions, and blocking issue count.
 
 Admin app CRUD owns the first operational surface for agent metadata. Capability editing is currently JSON-based to keep the back office compact while the data model settles. The admin discovery page also exposes registry quality rows and an agent search preview panel for testing intents safely.
+
+Phase 4.5 extends the internal QA layer without changing the public registry contract. `AgentRegistryEvaluationLog` now stores top app/capability slugs plus auth, interface, and interaction mode so admin filters can explain why a search ranked or excluded candidates. `AgentRegistryIntentTestRun` stores a test-set version, expected app/capability metadata, top quality score, and run timestamps so seeded ConfigKV intent tests can be compared across runs.
+
+The admin registry-quality surface and admin-only API routes provide:
+
+- filtered evaluation logs and single-log diagnostics
+- seeded intent-test execution and regression comparison
+- deterministic capability quality distribution and blocked non-read-only capability summaries
+- trust trend helper previews based on evaluation logs, signal snapshots, discovery insight snapshots, and current missing-metadata counts
+- an internal registry health export endpoint for QA and future dashboarding
+
+None of these routes execute downstream actions, handle credentials, initiate wallet activity, or route user instructions to external apps.
+
+Phase 4.6 turns the registry contract into a stable machine-client surface. Public registry routes now share version metadata from `@cotana/config`: `schemaVersion`, `registryVersion`, `generatedAt`, discovery-only boundary metadata, and the supported endpoint list. App and capability manifests expose current manifest versions, update timestamps, last-reviewed timestamps, and deprecation metadata without exposing internal admin notes.
+
+Registry-sensitive edits create `AgentRegistryChangeLog` rows for audience changes, registry status changes, capability status changes, auth/interface/interaction changes, schema changes, docs URL changes, safety note changes, and reliability or latency metadata changes. These logs remain admin-only.
+
+Deprecated capabilities are excluded from default search because default search reads active capabilities only. Direct capability manifest reads can still explain deprecation status and replacement metadata when a deprecated capability is addressable. Paused listings remain outside public registry list and search results.
+
+The public machine-client docs at `/agent-registry/docs`, the policy endpoint, `llms.txt`, and the schema endpoint describe versioning, deprecation, response shapes, rate limits, compatibility filters, and the no-execution rule. Compatibility reports add deterministic confidence scoring from coverage, quality, schemas, docs, safety notes, read-only status, and reliability metadata.
 
 The admin discovery page now groups registry readiness into operational buckets: ready, needs metadata, unsafe interaction mode, missing schema, missing safety notes, weak docs, and low reliability. Seeded intent tests live in `ConfigKV` under `agent.intent_tests` and run against registry search for fast calibration.
 
@@ -241,6 +261,17 @@ Provider usage:
 - prediction-market metrics degrade to platform-native activity until Cotana stores provider identifiers that can support reliable external signal lookup
 - provider failures degrade safely because discovery falls back to platform-native activity signals
 
+## Production preview architecture
+
+- GitHub source repository is `usercrypto000/cotana`
+- public store deploys from the Vercel project `cotana` and serves `https://cotana.xyz`
+- admin deploys from the Vercel project `cotana-admin`
+- shared workspace packages are copied into app-specific Vercel bundles by `pnpm deploy:prepare`
+- Prisma client generation runs inside the bundle install step
+- production migrations run separately through `pnpm db:migrate:deploy`
+- catalog imports are internal admin operations with validation, dry-run mode, and explicit production write confirmation
+- beta E2E checks are URL-driven and target deployed preview or production URLs
+
 ## Caching and rate limits
 
 - Redis is used for search-result caching, app detail caching, editorial shelf reads, discovery result caching, similar-app caching, review cooldown helpers, and page-view velocity counters
@@ -291,3 +322,21 @@ Vitest currently covers:
 - search sorting
 - similar-app boosting and quality ordering
 - trust badge visibility
+
+## Phase 4.7 launch QA architecture
+
+Catalog coverage is computed in the DB service layer from existing categories, apps, screenshots, reviews, updates, signal snapshots, registry listings, and capabilities. The admin route and page are read-only QA surfaces.
+
+Public registry readiness metadata is derived from published registry apps and active capabilities only. Detailed health exports, blocked publication reasons, and change-log notes remain admin-only.
+
+Manifest warnings are deterministic and public-safe: deprecated, docs missing, partial schema, reliability unknown, human handoff required, and read-only only. They describe manifest caveats without leaking internal admin notes.
+
+Red-team registry queries reuse the existing intent-test execution and `AgentRegistryIntentTestRun` persistence path, with test-set versions prefixed as `red-team-*`.
+
+## Phase 4.8 staging readiness architecture
+
+Environment validation lives in `@cotana/config` so store, admin, DB services, tests, and scripts share the same interpretation of required variables, optional variables, invalid URLs, invalid booleans/numbers, and local fallbacks.
+
+Deployment health is assembled in the DB service layer from runtime validation, database reachability, Redis reachability/fallback mode, auth config presence, analytics config presence, build metadata, and registry version. Public health responses expose booleans and versions only; detailed diagnostics stay admin-only.
+
+The launch checklist composes existing audit and registry QA helpers instead of adding a second quality model. Smoke tests exercise launch-critical pages and routes separately through `pnpm test:smoke`.

@@ -1,6 +1,7 @@
 import { DiscoveryInsightKind, Prisma, ReviewStatus } from "@prisma/client";
 import { z } from "zod";
-import type { AppSummary, DiscoveryScoreInputs } from "@cotana/types";
+import type { AppSummary, AppTrustMetadata, DiscoveryScoreInputs } from "@cotana/types";
+import { normalizeTrustMetadata } from "@cotana/types";
 import {
   ageScore,
   defaultCommunityPickWeights,
@@ -61,6 +62,16 @@ type PublishedAppRecord = {
   name: string;
   logoUrl: string;
   verified: boolean;
+  verificationStatus?: AppTrustMetadata["verificationStatus"] | null;
+  publisherName?: string | null;
+  publisherType?: AppTrustMetadata["publisherType"] | null;
+  supportedChains?: string[] | null;
+  permissionScopes?: string[] | null;
+  paymentCapabilities?: string[] | null;
+  custodyModel?: string | null;
+  externalRiskNotes?: string | null;
+  lastReviewedAt?: Date | null;
+  reviewSummary?: string | null;
   agentAudience: "HUMAN" | "AGENT" | "HYBRID";
   communityPick: boolean;
   shortDescription: string;
@@ -144,7 +155,26 @@ function toSummary(
     category: app.category,
     rating: stats.rating,
     reviewCount: stats.reviewCount,
-    likeCount: stats.likeCount
+    likeCount: stats.likeCount,
+    trustMetadata: normalizeTrustMetadata(
+      {
+        verificationStatus: app.verificationStatus ?? undefined,
+        publisherName: app.publisherName ?? undefined,
+        publisherType: app.publisherType ?? undefined,
+        supportedChains: app.supportedChains ?? undefined,
+        permissionScopes: app.permissionScopes ?? undefined,
+        paymentCapabilities: app.paymentCapabilities ?? undefined,
+        custodyModel: app.custodyModel ?? undefined,
+        externalRiskNotes: app.externalRiskNotes ?? undefined,
+        lastReviewedAt: app.lastReviewedAt ?? undefined,
+        reviewSummary: app.reviewSummary ?? undefined
+      },
+      {
+        verified: app.verified,
+        lastReviewedAt: app.lastReviewedAt,
+        agentAudience: app.agentAudience
+      },
+    )
   };
 }
 
@@ -964,7 +994,10 @@ export async function recomputeDiscoveryInsights(options?: {
   };
 }
 
-export async function listDiscoveryResults(kind: DiscoveryKind, options?: { categorySlug?: string | null; limit?: number }) {
+export async function listDiscoveryResults(
+  kind: DiscoveryKind,
+  options?: { categorySlug?: string | null; limit?: number },
+): Promise<{ computedAt: Date | null; rows: DiscoveryAppResult[] }> {
   const categorySlug = options?.categorySlug ?? null;
   const cacheKey = buildDiscoveryCacheKey(kind, categorySlug);
   const cached = await getCacheValue<DiscoveryCachePayload>(cacheKey);

@@ -14,13 +14,21 @@
     "typecheck": "turbo typecheck",
     "db:generate": "pnpm --filter @cotana/db db:generate",
     "db:migrate": "pnpm --filter @cotana/db db:migrate",
-    "db:seed": "pnpm --filter @cotana/db db:seed"
+    "db:seed": "pnpm --filter @cotana/db db:seed",
+    "db:migrate:deploy": "pnpm --filter @cotana/db db:migrate:deploy",
+    "catalog:import": "pnpm --filter @cotana/db catalog:import",
+    "seed:local": "node ./scripts/seed-local.mjs",
+    "seed:staging": "node ./scripts/seed-staging.mjs",
+    "seed:reset-local": "node ./scripts/reset-local.mjs",
+    "test:smoke": "vitest run apps/store/smoke",
+    "test:e2e": "node ./scripts/beta-e2e.mjs"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@playwright/test": "^1.61.0",
     "@types/node": "^24.7.2",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
-    "@eslint/eslintrc": "^3.3.1",
     "eslint": "^9.38.0",
     "eslint-config-next": "^15.5.6",
     "turbo": "^2.5.8",

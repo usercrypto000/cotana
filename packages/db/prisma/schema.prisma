@@ -25,6 +25,20 @@ enum AppAudience {
   HYBRID
 }
 
+enum AppVerificationStatus {
+  verified
+  reviewed
+  unreviewed
+  experimental
+}
+
+enum AppPublisherType {
+  team
+  individual
+  protocol
+  unknown
+}
+
 enum AgentListingStatus {
   NOT_APPLICABLE
   DRAFT
@@ -151,11 +165,23 @@ model App {
   verified         Boolean             @default(false)
   verifiedNote     String?
   verifiedUpdatedAt DateTime?
+  verificationStatus AppVerificationStatus @default(unreviewed)
+  publisherName    String?
+  publisherType    AppPublisherType    @default(unknown)
+  supportedChains  String[]            @default([])
+  permissionScopes String[]            @default([])
+  paymentCapabilities String[]         @default([])
+  custodyModel     String?
+  externalRiskNotes String?
+  lastReviewedAt   DateTime?
+  reviewSummary    String?
   agentAudience    AppAudience         @default(HUMAN)
   agentListingStatus AgentListingStatus @default(NOT_APPLICABLE)
   agentSummary     String?
   agentDocsUrl     String?
   agentIntegrationNotes String?
+  agentManifestVersion Int                 @default(1)
+  agentLastReviewedAt DateTime?
   communityPick    Boolean             @default(false)
   communityPickMonth String?
   communityPickReason Json?
@@ -181,6 +207,7 @@ model App {
   editorialItems   EditorialShelfItem[]
   updates          AppUpdate[]
   agentCapabilities AgentCapability[]
+  agentRegistryChanges AgentRegistryChangeLog[]
   discoveryInsights DiscoveryInsightSnapshot[]
 
   @@index([categoryId, status])
@@ -208,14 +235,40 @@ model AgentCapability {
   status           AgentCapabilityStatus  @default(ACTIVE)
   reliabilityScore Float?
   latencyP50Ms     Int?
+  manifestVersion  Int                    @default(1)
+  lastReviewedAt   DateTime?
+  deprecatedAt     DateTime?
+  deprecationReason String?
+  replacementCapabilityId String?
+  replacementDocsUrl String?
   createdAt        DateTime               @default(now())
   updatedAt        DateTime               @updatedAt
   app              App                    @relation(fields: [appId], references: [id], onDelete: Cascade)
+  registryChanges  AgentRegistryChangeLog[]
 
   @@unique([appId, slug])
   @@index([appId, status])
   @@index([capabilityType, status])
   @@index([interfaceType, interactionMode, status])
+}
+
+model AgentRegistryChangeLog {
+  id             String   @id @default(cuid())
+  appId          String
+  capabilityId   String?
+  changeType     String
+  fieldName      String
+  previousValueJson Json?
+  nextValueJson  Json?
+  internalNote   String?
+  createdByUserId String?
+  createdAt      DateTime @default(now())
+  app            App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  capability     AgentCapability? @relation(fields: [capabilityId], references: [id], onDelete: SetNull)
+
+  @@index([appId, createdAt])
+  @@index([capabilityId, createdAt])
+  @@index([changeType, createdAt])
 }
 
 model AgentRegistryEvaluationLog {
@@ -227,9 +280,14 @@ model AgentRegistryEvaluationLog {
   candidateCount         Int
   matchedCapabilityCount Int
   topAppId               String?
+  topAppSlug             String?
   topCapabilityId        String?
+  topCapabilitySlug      String?
   topCategorySlug        String?
   topCapabilityType      String?
+  topAuthType            String?
+  topInterfaceType       String?
+  topInteractionMode     String?
   topReadinessBucket     String?
   topSimilarity          Float?
   topScore               Float?
@@ -241,17 +299,23 @@ model AgentRegistryEvaluationLog {
 
   @@index([normalizedQuery, createdAt])
   @@index([topAppId, createdAt])
+  @@index([topAppSlug, createdAt])
   @@index([topCategorySlug, createdAt])
   @@index([topCapabilityType, createdAt])
+  @@index([topAuthType, createdAt])
+  @@index([topInterfaceType, createdAt])
+  @@index([topInteractionMode, createdAt])
   @@index([topReadinessBucket, createdAt])
 }
 
 model AgentRegistryIntentTestRun {
   id                          String   @id @default(cuid())
+  testSetVersion              String   @default("manual")
   testCaseId                  String
   query                       String
   filtersJson                 Json
   expectedCategorySlug        String?
+  expectedAppSlugsJson        Json?
   expectedCapabilityTypesJson Json?
   expectedCapabilitySlugsJson Json?
   topMatchedAppId             String?
@@ -261,11 +325,14 @@ model AgentRegistryIntentTestRun {
   topMatchedCapabilitySlug    String?
   topMatchedCapabilityType    String?
   score                       Float?
+  qualityScore                Int?
   matchReason                 String?
   passed                      Boolean
   failureReason               String?
+  createdAt                   DateTime @default(now())
   ranAt                       DateTime @default(now())
 
+  @@index([testSetVersion, ranAt])
   @@index([testCaseId, ranAt])
   @@index([passed, ranAt])
   @@index([expectedCategorySlug, ranAt])

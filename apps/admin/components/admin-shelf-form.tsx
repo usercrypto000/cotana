@@ -142,7 +142,7 @@ export function AdminShelfForm({
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle>{mode === "create" ? "Create shelf" : "Edit shelf"}</CardTitle>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-neutral-muted">
             Editorial shelves are manually curated and ordered. Keep them tight and intentional.
           </p>
         </div>
@@ -150,30 +150,30 @@ export function AdminShelfForm({
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Title</span>
             <input
               value={form.title}
               onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             />
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Slug</span>
             <input
               value={form.slug}
               onChange={(event) => setForm((current) => ({ ...current, slug: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             />
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Status</span>
             <select
               value={form.status}
               onChange={(event) =>
                 setForm((current) => ({ ...current, status: event.target.value as EditorialShelfStatusValue }))
               }
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             >
               {editorialShelfStatusValues.map((status) => (
                 <option key={status} value={status}>
@@ -182,14 +182,14 @@ export function AdminShelfForm({
               ))}
             </select>
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Visibility</span>
             <select
               value={form.visibility}
               onChange={(event) =>
                 setForm((current) => ({ ...current, visibility: event.target.value as EditorialShelfVisibilityValue }))
               }
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             >
               {editorialShelfVisibilityValues.map((visibility) => (
                 <option key={visibility} value={visibility}>
@@ -198,7 +198,7 @@ export function AdminShelfForm({
               ))}
             </select>
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Sort order</span>
             <input
               type="number"
@@ -207,15 +207,15 @@ export function AdminShelfForm({
               onChange={(event) =>
                 setForm((current) => ({ ...current, sortOrder: Number(event.target.value || 0) }))
               }
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             />
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Category scope</span>
             <select
               value={form.categoryId}
               onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             >
               <option value="">Global</option>
               {categories
@@ -229,16 +229,16 @@ export function AdminShelfForm({
           </label>
         </div>
 
-        <label className="space-y-2 text-sm text-slate-600">
+        <label className="space-y-2 text-sm text-brand-text/72">
           <span>Description</span>
           <textarea
             value={form.description}
             onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
-            className="min-h-24 w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-950"
+            className="min-h-24 w-full rounded-xl border bg-neutral-panel px-4 py-3 text-sm text-brand-text"
           />
         </label>
 
-        <label className="flex items-center gap-3 rounded-xl border p-4 text-sm text-slate-600">
+        <label className="flex items-center gap-3 rounded-xl border p-4 text-sm text-brand-text/72">
           <input
             type="checkbox"
             checked={form.pinned}
@@ -247,13 +247,13 @@ export function AdminShelfForm({
           Pin on homepage ordering
         </label>
 
-        <div className="space-y-3 rounded-2xl border border-slate-200 p-4">
+        <div className="space-y-3 rounded-2xl border border-neutral-border p-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-64 flex-1">
               <select
                 value={selectedAppId}
                 onChange={(event) => setSelectedAppId(event.target.value)}
-                className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+                className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
               >
                 <option value="">Add app to shelf</option>
                 {availableApps.map((app) => (
@@ -291,11 +291,11 @@ export function AdminShelfForm({
               return (
                 <div
                   key={app.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-slate-50 p-3 text-sm text-slate-700"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-neutral-surface p-3 text-sm text-brand-text/80"
                 >
                   <div>
-                    <p className="font-medium text-slate-950">{app.name}</p>
-                    <p className="text-slate-500">{app.slug}</p>
+                    <p className="font-medium text-brand-text">{app.name}</p>
+                    <p className="text-neutral-muted">{app.slug}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" onClick={() => moveApp(index, -1)} disabled={index === 0}>
@@ -324,12 +324,12 @@ export function AdminShelfForm({
               );
             })}
             {form.appIds.length === 0 ? (
-              <p className="text-sm text-slate-500">Add apps to define the shelf order.</p>
+              <p className="text-sm text-neutral-muted">Add apps to define the shelf order.</p>
             ) : null}
           </div>
         </div>
 
-        {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+        {error ? <p className="text-sm ui-copy-danger">{error}</p> : null}
 
         <div className="flex gap-3">
           <Button onClick={() => void submit()} disabled={saving}>

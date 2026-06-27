@@ -55,6 +55,12 @@ Agents discover capabilities, not generic app pages. A capability describes one 
 - `status`
 - `reliabilityScore`
 - `latencyP50Ms`
+- `manifestVersion`
+- `lastReviewedAt`
+- `deprecatedAt`
+- `deprecationReason`
+- `replacementCapabilityId`
+- `replacementDocsUrl`
 
 Capability metadata should describe what an agent can discover or request from the app. It should not imply that Cotana performs the downstream action.
 
@@ -81,7 +87,10 @@ The public registry exposes discovery data only:
 - `GET /api/agent-registry/compatibility`
 - `GET /api/agent-registry/policy`
 - `GET /api/agent-registry/stats`
+- `GET /agent-registry/docs`
 - `GET /llms.txt`
+
+Major registry responses include `schemaVersion`, `registryVersion`, `generatedAt`, discovery-only boundary metadata, and the supported endpoint list. The current registry contract version is `2026-05-17`.
 
 The manifest includes a trust boundary block:
 
@@ -108,9 +117,21 @@ Agents may pass compatibility filters for auth type, interface type, and interac
 
 The capability taxonomy endpoint summarizes live capability types, category coverage, auth models, interface types, and interaction modes. The compatibility endpoint lets an outside agent check coverage for its own constraints before running intent search. This is how Cotana handles agent variance: universal agents do not share one default tool stack, so agents declare the surfaces they can use through filters and inspect the report before selecting a target.
 
+Compatibility reports include deterministic confidence scoring. The score combines matching coverage, quality score distribution, schema coverage, docs or endpoint coverage, safety-note coverage, read-only coverage, and reliability metadata. Low confidence explains blocking gaps and can recommend narrower or safer filters.
+
 Per-capability manifests provide a narrower object for agents that already selected an app and capability. The manifest includes quality signals, the exact schemas, safety notes, usage boundary, and target docs or endpoint metadata without asking Cotana to execute anything.
 
 Phase 4 adds trust surfaces around the registry rather than execution. Capability quality scores help agents and admins reason about metadata completeness, while evaluation logs make searches inspectable after the fact. Cotana still stops at discovery: the outside agent chooses where to act, and the downstream app remains responsible for permissions, credentials, and execution.
+
+Phase 4.6 adds registry contract stability. Public manifests expose current manifest versions, update timestamps, review timestamps, and deprecation metadata. Deprecated capabilities are excluded from default search while direct capability manifests can explain deprecation and replacement metadata. Registry-sensitive admin edits are recorded in admin-only change logs and are never exposed as internal notes in public responses.
+
+Phase 4.7 adds launch QA and public-safe coverage context. Registry discovery documents include summary readiness metadata such as published app count, active capability count, supported capability/auth/interface/interaction coverage, docs URL, and policy URL. App and capability manifests include deterministic public-safe warnings for deprecation, missing docs, partial schemas, unknown reliability, human handoff, and read-only-only surfaces.
+
+Admin catalog coverage audits inspect human category depth and registry coverage by category and capability type. Red-team registry queries persist beside normal intent tests so unsafe, transactional, credential-like, empty, irrelevant, and wrong-category intents can be checked without adding execution.
+
+Phase 4.8 adds staging readiness around the registry contract. Public health responses expose safe status and registry version, while admin-only launch checks inspect environment validation, catalog coverage, registry readiness, red-team status, and smoke-critical route wiring. Public docs include copy-paste curl examples for discovery, schema, search, compatibility, manifests, policy, and `llms.txt`.
+
+Phase 4.9 pins production preview to `https://cotana.xyz`, so outside agents should treat that domain as the canonical public registry host once DNS is attached to the Vercel `cotana` project. Beta E2E checks exercise the registry discovery document, registry search, compatibility metadata, manifests, `llms.txt`, and health endpoints without adding execution or credential routing.
 
 ## Non-Goals
 

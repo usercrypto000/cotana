@@ -1,5 +1,5 @@
 import React from "react";
-import { Badge } from "@cotana/ui";
+import { Badge, TrustBadge } from "@cotana/ui";
 
 export function AppTrustBadges({
   verified,
@@ -14,7 +14,7 @@ export function AppTrustBadges({
 
   return (
     <>
-      {verified ? <Badge variant="verified">Verified</Badge> : null}
+      {verified ? <TrustBadge tone="verified">Verified</TrustBadge> : null}
       {communityPick ? <Badge variant="secondary">Community pick</Badge> : null}
     </>
   );

@@ -154,26 +154,26 @@ export function AdminAppUpdatesPanel({
     <Card>
       <CardHeader>
         <CardTitle>Changelog updates</CardTitle>
-        <p className="text-sm text-slate-500">Ship concise updates so app detail pages stay fresh and useful.</p>
+        <p className="text-sm text-neutral-muted">Ship concise updates so app detail pages stay fresh and useful.</p>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Version or label</span>
             <input
               value={form.versionLabel}
               onChange={(event) => setForm((current) => ({ ...current, versionLabel: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             />
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Type</span>
             <select
               value={form.type}
               onChange={(event) =>
                 setForm((current) => ({ ...current, type: event.target.value as AppUpdateTypeValue | "" }))
               }
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             >
               <option value="">General</option>
               {appUpdateTypeValues.map((type) => (
@@ -183,34 +183,34 @@ export function AdminAppUpdatesPanel({
               ))}
             </select>
           </label>
-          <label className="space-y-2 text-sm text-slate-600 md:col-span-2">
+          <label className="space-y-2 text-sm text-brand-text/72 md:col-span-2">
             <span>Title</span>
             <input
               value={form.title}
               onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             />
           </label>
-          <label className="space-y-2 text-sm text-slate-600 md:col-span-2">
+          <label className="space-y-2 text-sm text-brand-text/72 md:col-span-2">
             <span>Body</span>
             <textarea
               value={form.body}
               onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))}
-              className="min-h-28 w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-950"
+              className="min-h-28 w-full rounded-xl border bg-neutral-panel px-4 py-3 text-sm text-brand-text"
             />
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Published at</span>
             <input
               type="datetime-local"
               value={form.publishedAt}
               onChange={(event) => setForm((current) => ({ ...current, publishedAt: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             />
           </label>
         </div>
 
-        {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+        {error ? <p className="text-sm ui-copy-danger">{error}</p> : null}
 
         <div className="flex flex-wrap gap-3">
           <Button onClick={() => void submit()} disabled={saving}>
@@ -232,16 +232,16 @@ export function AdminAppUpdatesPanel({
 
         <div className="space-y-3">
           {updates.map((update) => (
-            <div key={update.id} className="rounded-2xl border bg-slate-50 p-4">
+            <div key={update.id} className="rounded-2xl border bg-neutral-surface p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium text-slate-950">{update.title}</p>
+                    <p className="font-medium text-brand-text">{update.title}</p>
                     <Badge variant="secondary">{update.versionLabel}</Badge>
                     {update.type ? <Badge>{update.type}</Badge> : <Badge>{AppUpdateType.GENERAL}</Badge>}
                   </div>
-                  <p className="text-sm text-slate-500">{new Date(update.publishedAt).toLocaleString()}</p>
-                  <p className="text-sm leading-6 text-slate-700">{update.body}</p>
+                  <p className="text-sm text-neutral-muted">{new Date(update.publishedAt).toLocaleString()}</p>
+                  <p className="text-sm leading-6 text-brand-text/80">{update.body}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => startEditing(update)} disabled={saving}>
@@ -255,7 +255,7 @@ export function AdminAppUpdatesPanel({
             </div>
           ))}
           {updates.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
+            <div className="rounded-2xl border border-dashed border-neutral-border bg-neutral-panel p-4 text-sm text-neutral-muted">
               No updates published yet.
             </div>
           ) : null}

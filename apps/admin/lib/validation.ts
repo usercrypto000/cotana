@@ -45,7 +45,12 @@ export const adminAppPayloadSchema = z.object({
         safetyNotes: z.string().nullable().optional(),
         status: z.nativeEnum(AgentCapabilityStatus).default(AgentCapabilityStatus.ACTIVE),
         reliabilityScore: z.coerce.number().min(0).max(1).nullable().optional(),
-        latencyP50Ms: z.coerce.number().int().min(0).nullable().optional()
+        latencyP50Ms: z.coerce.number().int().min(0).nullable().optional(),
+        lastReviewedAt: z.coerce.date().nullable().optional(),
+        deprecatedAt: z.coerce.date().nullable().optional(),
+        deprecationReason: z.string().nullable().optional(),
+        replacementCapabilityId: z.string().nullable().optional(),
+        replacementDocsUrl: z.string().url("Replacement docs URL must be valid.").nullable().optional()
       }),
     )
     .default([]),

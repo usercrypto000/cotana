@@ -1,5 +1,6 @@
 import { AppStatus, EditorialShelfStatus, EditorialShelfVisibility, ReviewStatus } from "@prisma/client";
-import type { AppSummary } from "@cotana/types";
+import type { AppSummary, AppTrustMetadata } from "@cotana/types";
+import { normalizeTrustMetadata } from "@cotana/types";
 import { deleteCacheValue, getCacheValue, setCacheValue } from "../redis";
 import { prisma } from "../client";
 
@@ -42,6 +43,16 @@ export type EditorialShelfRecord = {
       longDescription: string;
       logoUrl: string;
       verified: boolean;
+      verificationStatus?: AppTrustMetadata["verificationStatus"] | null;
+      publisherName?: string | null;
+      publisherType?: AppTrustMetadata["publisherType"] | null;
+      supportedChains?: string[] | null;
+      permissionScopes?: string[] | null;
+      paymentCapabilities?: string[] | null;
+      custodyModel?: string | null;
+      externalRiskNotes?: string | null;
+      lastReviewedAt?: Date | null;
+      reviewSummary?: string | null;
       agentAudience: "HUMAN" | "AGENT" | "HYBRID";
       communityPick: boolean;
       publishedAt: Date | null;
@@ -87,6 +98,16 @@ type EditorialShelfWithRelations = Awaited<ReturnType<typeof prisma.editorialShe
       longDescription: string;
       logoUrl: string;
       verified: boolean;
+      verificationStatus?: AppTrustMetadata["verificationStatus"] | null;
+      publisherName?: string | null;
+      publisherType?: AppTrustMetadata["publisherType"] | null;
+      supportedChains?: string[] | null;
+      permissionScopes?: string[] | null;
+      paymentCapabilities?: string[] | null;
+      custodyModel?: string | null;
+      externalRiskNotes?: string | null;
+      lastReviewedAt?: Date | null;
+      reviewSummary?: string | null;
       agentAudience: "HUMAN" | "AGENT" | "HYBRID";
       communityPick: boolean;
       publishedAt: Date | null;
@@ -210,6 +231,16 @@ function toAppSummary(
     name: string;
     logoUrl: string;
     verified: boolean;
+    verificationStatus?: AppTrustMetadata["verificationStatus"] | null;
+    publisherName?: string | null;
+    publisherType?: AppTrustMetadata["publisherType"] | null;
+    supportedChains?: string[] | null;
+    permissionScopes?: string[] | null;
+    paymentCapabilities?: string[] | null;
+    custodyModel?: string | null;
+    externalRiskNotes?: string | null;
+    lastReviewedAt?: Date | null;
+    reviewSummary?: string | null;
     agentAudience: "HUMAN" | "AGENT" | "HYBRID";
     communityPick: boolean;
     shortDescription: string;
@@ -238,7 +269,26 @@ function toAppSummary(
     category: app.category,
     rating: reviewStats?.rating ?? 0,
     reviewCount: reviewStats?.reviewCount ?? 0,
-    likeCount: likeCount ?? 0
+    likeCount: likeCount ?? 0,
+    trustMetadata: normalizeTrustMetadata(
+      {
+        verificationStatus: app.verificationStatus ?? undefined,
+        publisherName: app.publisherName ?? undefined,
+        publisherType: app.publisherType ?? undefined,
+        supportedChains: app.supportedChains ?? undefined,
+        permissionScopes: app.permissionScopes ?? undefined,
+        paymentCapabilities: app.paymentCapabilities ?? undefined,
+        custodyModel: app.custodyModel ?? undefined,
+        externalRiskNotes: app.externalRiskNotes ?? undefined,
+        lastReviewedAt: app.lastReviewedAt ?? undefined,
+        reviewSummary: app.reviewSummary ?? undefined
+      },
+      {
+        verified: app.verified,
+        lastReviewedAt: app.lastReviewedAt,
+        agentAudience: app.agentAudience
+      },
+    )
   };
 }
 
@@ -387,7 +437,10 @@ export async function updateEditorialShelf(id: string, input: EditorialShelfInpu
   return getAdminEditorialShelfById(id);
 }
 
-export async function listPublicEditorialShelves(input: { surface: "home" | "category"; categorySlug?: string }) {
+export async function listPublicEditorialShelves(input: {
+  surface: "home" | "category";
+  categorySlug?: string;
+}): Promise<PublicEditorialShelf[]> {
   const cacheKey =
     input.surface === "home" ? "editorial-shelves:home" : `editorial-shelves:category:${input.categorySlug ?? "all"}`;
   const cached = await getCacheValue<PublicEditorialShelf[]>(cacheKey);

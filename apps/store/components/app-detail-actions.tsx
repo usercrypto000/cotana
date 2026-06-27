@@ -95,8 +95,8 @@ export function AppDetailActions({
           {pendingAction === "like" ? "Updating..." : liked ? `Liked (${likeCount})` : `Like (${likeCount})`}
         </Button>
       </div>
-      {!canInteract ? <p className="text-sm text-slate-500">Sign in to like, save, and review apps.</p> : null}
-      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {!canInteract ? <p className="text-sm text-neutral-muted">Sign in to like, save, and review apps.</p> : null}
+      {error ? <p className="text-sm ui-copy-danger">{error}</p> : null}
     </div>
   );
 }

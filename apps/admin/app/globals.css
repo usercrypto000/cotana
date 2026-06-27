@@ -1,33 +1,5 @@
+@import "@cotana/ui/brand.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  --background: 60 23% 97%;
-  --foreground: 213 30% 6%;
-  --border: 220 13% 91%;
-  --brand-primary: 221 83% 53%;
-  --brand-accent: 80 61% 44%;
-  --brand-agent: 258 90% 66%;
-  --trust-warning: 32 95% 44%;
-  --trust-danger: 0 72% 51%;
-}
-
-* {
-  border-color: hsl(var(--border));
-}
-
-body {
-  min-height: 100vh;
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-ubuntu), var(--font-inter), system-ui, sans-serif;
-}

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cotanaRegistryContract } from "@cotana/config";
 
 export async function GET() {
   return new NextResponse(
@@ -7,6 +8,8 @@ export async function GET() {
       "",
       "Cotana is a discovery channel for humans and AI agents.",
       "Cotana does not execute actions, handle credentials, initiate wallet actions, or complete tasks for agents.",
+      `Registry version: ${cotanaRegistryContract.registryVersion}`,
+      `Schema version: ${cotanaRegistryContract.schemaVersion}`,
       "",
       "## Agent Registry",
       "",
@@ -19,6 +22,7 @@ export async function GET() {
       "- Capability taxonomy: /api/agent-registry/capabilities",
       "- Policy: /api/agent-registry/policy",
       "- Schema: /api/agent-registry/schema",
+      "- Public docs: /agent-registry/docs",
       "",
       "## Usage Boundary",
       "",

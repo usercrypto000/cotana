@@ -98,18 +98,71 @@ Cotana is a discovery channel for humans and AI agents. Humans discover apps thr
 - Done: documentation updates for registry quality and trust surfaces.
 - Done: validation across typecheck, tests, lint, and build.
 
+## Phase 4.5 Ledger
+
+- Done: dedicated admin registry quality page.
+- Done: evaluation-log filters and single-log detail inspection.
+- Done: persisted intent test run history and latest-vs-previous regression comparison.
+- Done: deterministic trust trend helpers from evaluation logs, signal snapshots, discovery insight snapshots, and current metadata buckets.
+- Done: capability quality distribution by grade, readiness bucket, type, auth, interface, interaction mode, and listing status.
+- Done: optional weak metadata fixtures gated by `COTANA_SEED_WEAK_AGENT_FIXTURES=true`.
+- Done: admin-only registry health export endpoint.
+
+## Phase 4.6 Ledger
+
+- Done: shared registry contract metadata in `@cotana/config`.
+- Done: version metadata across public registry discovery surfaces and `llms.txt`.
+- Done: app and capability manifest versions, review timestamps, and deprecation metadata.
+- Done: admin-only registry-sensitive change history.
+- Done: public machine-client docs at `/agent-registry/docs`.
+- Done: expanded schema contract endpoint.
+- Done: deterministic compatibility confidence scoring.
+- Done: focused public registry contract tests.
+
+## Phase 4.7 Ledger
+
+- Done: admin-only catalog coverage audit with human category, agent category, and capability-type coverage.
+- Done: thin-area warnings for sparse human categories, sparse agent-ready capability types, low docs coverage, low schema coverage, and weak reliability coverage.
+- Done: launch catalog seed fixtures gated by `COTANA_SEED_LAUNCH_CATALOG=true`.
+- Done: red-team registry query definitions in `ConfigKV` and persisted run history beside seeded intent tests.
+- Done: public registry readiness metadata on discovery documents.
+- Done: manifest quality warnings that stay public-safe and exclude admin notes.
+- Done: internal catalog coverage route and compact admin page.
+
+## Phase 4.8 Ledger
+
+- Done: startup/runtime environment validation for required envs, optional envs, invalid URLs, invalid booleans/numbers, and local fallbacks.
+- Done: deployment health endpoints for store, admin, registry, and admin-only jobs health.
+- Done: staging seed workflow with explicit confirmation and production fixture guards.
+- Done: `pnpm test:smoke` launch-critical smoke route checks.
+- Done: admin launch checklist page and API.
+- Done: empty-state helper coverage for category/search/similar/changelog/reviews/registry/provider/Redis states.
+- Done: registry external-client curl examples and analytics QA event reference.
+- Done: Phase 4.8 follow-up public-store visibility fix. Seed now creates public reviews, likes, views, search clicks, screenshots, updates, shelves, registry fixtures, and recomputed trending, rising, and community-pick snapshots.
+- Done: public homepage polish for consumer-native hero copy, compact intent search, spotlight shelf, trending, rising, and category rows.
+- Done: minimal app card contract enforced through the shared card component and smoke coverage.
+- Done: launch checklist public seed visibility gate for published apps, spotlight items, trending rows, rising rows, category coverage, screenshots, reviews, updates, registry listings, and active capabilities.
+
+## Phase 4.9 Ledger
+
+- Done: Vercel deployment target constants for `usercrypto000/cotana`, `cotana`, `cotana-admin`, and `cotana.xyz`.
+- Done: production deployment runbook in `docs/DEPLOYMENT.md`.
+- Done: production migration preflight helper and runbook.
+- Done: CI workflow expanded to install, Prisma generate, typecheck, test, smoke, lint, build, and beta E2E command.
+- Done: URL-driven beta E2E script for production preview.
+- Done: structured logging for registry search, health endpoints, jobs, seed guards, and env validation warnings.
+- Done: beta QA checklist in `docs/BETA_QA.md`.
+- Done: internal catalog import validation, dry-run, guarded write script, and docs.
+- Done: launch checklist production readiness acknowledgements.
+- Done: beta preview health semantics with `ok_with_warnings`, dependency-level warnings, protected admin preview handling, and seed fixture review validation.
+
 ## Phase 4 Next Builds
 
-- Add a dedicated admin registry quality page if the discovery page becomes crowded.
-- Add intent test result history so regressions can be compared over time.
-- Add filters for evaluation logs by category, capability type, readiness bucket, and date.
-- Add historical trust chart helpers using weekly signal snapshots and discovery insight snapshots.
-- Add stronger seed coverage for more categories and intentionally weak metadata examples.
+- Use accumulated trust trend data for richer admin charts once enough history exists.
 - Add admin controls for editing seeded intent test cases through `ConfigKV`.
-- Add tests for app detail trust badge rendering.
-- Add tests for evaluation-log persistence on the public registry search route.
-- Add a compact admin view for capability quality score distributions.
-- Add a registry health export endpoint for internal QA.
+- Introduce breaking registry contract changes only with a new `schemaVersion` or `registryVersion`.
+- Use catalog coverage audit output to prioritize launch QA without adding public submission, paid ranking, feeds, or execution.
+- Keep first-release public surfaces blocked on seeded spotlight, trending, rising, and category app-card visibility.
 
 ## Out Of Scope
 
@@ -141,6 +194,9 @@ After each meaningful build:
 
 - Run `pnpm typecheck`.
 - Run `pnpm test`.
+- Run `pnpm test:smoke`.
+- Run `pnpm test:e2e` against preview or production URLs before beta handoff.
+- For the current beta preview, run `COTANA_E2E_STORE_URL=https://cotana-d6jswv85k-usercrypto000s-projects.vercel.app COTANA_E2E_ADMIN_URL=https://cotana-admin-ftoqcbq70-usercrypto000s-projects.vercel.app pnpm test:e2e`.
 - Run `pnpm lint`.
 - Run `pnpm build` when routes, schema, packages, or app pages change.
 

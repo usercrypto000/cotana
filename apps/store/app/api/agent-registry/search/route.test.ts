@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   checkRateLimit: vi.fn(),
-  recordAgentRegistryEvaluationLog: vi.fn(),
+  recordAgentRegistryEvaluationLog: vi.fn(async () => undefined),
   searchAgentRegistryCapabilitiesWithEvaluation: vi.fn(),
   trackServerEvent: vi.fn()
 }));
@@ -52,6 +52,9 @@ describe("agent registry search route", () => {
         capabilitySlug: "compare-yield-rates",
         categorySlug: "lending-yield",
         capabilityType: "comparison",
+        authType: "API_KEY",
+        interfaceType: "HTTP_API",
+        interactionMode: "READ_ONLY",
         readinessBucket: "ready",
         similarity: 0.82,
         score: 0.91,

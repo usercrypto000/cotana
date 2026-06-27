@@ -1,4 +1,5 @@
 import { analyticsEvents, trackServerEvent } from "@cotana/analytics";
+import { buildRegistryVersionMetadata, cotanaRegistryContract } from "@cotana/config";
 import { NextResponse } from "next/server";
 import { getRequestIdentity } from "../../../../lib/request";
 
@@ -9,9 +10,55 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json({
-    version: "2026-05-07",
+    ...buildRegistryVersionMetadata(),
+    version: cotanaRegistryContract.registryVersion,
     purpose: "discovery",
     schemas: {
+      RegistryVersionMetadata: {
+        type: "object",
+        required: ["schemaVersion", "registryVersion", "generatedAt", "discoveryOnly", "supportedEndpoints"],
+        properties: {
+          schemaVersion: { type: "string" },
+          registryVersion: { type: "string" },
+          generatedAt: { type: "string", format: "date-time" },
+          discoveryOnly: { type: "object" },
+          supportedEndpoints: { type: "object" }
+        }
+      },
+      RegistryDiscoveryDocument: {
+        type: "object",
+        required: ["schemaVersion", "registryVersion", "generatedAt", "name", "purpose", "readiness", "endpoints", "trustBoundary"],
+        properties: {
+          schemaVersion: { type: "string" },
+          registryVersion: { type: "string" },
+          generatedAt: { type: "string" },
+          name: { type: "string" },
+          purpose: { enum: ["discovery"] },
+          readiness: { type: "object" },
+          endpoints: { type: "object" },
+          supportedFilters: { type: "object" },
+          trustBoundary: { type: "object" }
+        }
+      },
+      AppManifest: {
+        type: "object",
+        required: ["schemaVersion", "registryVersion", "generatedAt", "version", "purpose", "app", "qualityWarnings", "trustBoundary"],
+        properties: {
+          schemaVersion: { type: "string" },
+          registryVersion: { type: "string" },
+          generatedAt: { type: "string" },
+          version: { type: "string" },
+          purpose: { enum: ["discovery"] },
+          app: { type: "object" },
+          qualityWarnings: {
+            type: "array",
+            items: {
+              enum: ["deprecated", "docs_missing", "schema_partial", "reliability_unknown", "human_handoff_required", "read_only_only"]
+            }
+          },
+          trustBoundary: { type: "object" }
+        }
+      },
       AgentCapability: {
         type: "object",
         required: [
@@ -41,7 +88,14 @@ export async function GET(request: Request) {
           safetyNotes: { type: ["string", "null"] },
           status: { enum: ["ACTIVE", "PAUSED", "DEPRECATED"] },
           reliabilityScore: { type: ["number", "null"], minimum: 0, maximum: 1 },
-          latencyP50Ms: { type: ["number", "null"], minimum: 0 }
+          latencyP50Ms: { type: ["number", "null"], minimum: 0 },
+          manifestVersion: { type: "number" },
+          updatedAt: { type: "string" },
+          lastReviewedAt: { type: ["string", "null"] },
+          deprecatedAt: { type: ["string", "null"] },
+          deprecationReason: { type: ["string", "null"] },
+          replacementCapabilityId: { type: ["string", "null"] },
+          replacementDocsUrl: { type: ["string", "null"] }
         }
       },
       AgentCapabilityQualitySignals: {
@@ -73,13 +127,19 @@ export async function GET(request: Request) {
       },
       AgentCapabilityManifest: {
         type: "object",
-        required: ["version", "purpose", "app", "capability", "qualitySignals", "usageBoundary", "trustBoundary"],
+        required: ["version", "purpose", "app", "capability", "qualitySignals", "qualityWarnings", "usageBoundary", "trustBoundary"],
         properties: {
           version: { type: "string" },
           purpose: { enum: ["discovery"] },
           app: { type: "object" },
           capability: { type: "object" },
           qualitySignals: { type: "object" },
+          qualityWarnings: {
+            type: "array",
+            items: {
+              enum: ["deprecated", "docs_missing", "schema_partial", "reliability_unknown", "human_handoff_required", "read_only_only"]
+            }
+          },
           usageBoundary: { type: "object" },
           trustBoundary: { type: "object" }
         }
@@ -92,6 +152,22 @@ export async function GET(request: Request) {
           matchedCapabilities: { type: "array" },
           score: { type: "number" },
           matchReason: { type: "string" }
+        }
+      },
+      SearchResponse: {
+        type: "object",
+        required: ["schemaVersion", "registryVersion", "generatedAt", "purpose", "query", "filters", "metadata", "evaluation", "trustBoundary", "results"],
+        properties: {
+          schemaVersion: { type: "string" },
+          registryVersion: { type: "string" },
+          generatedAt: { type: "string" },
+          purpose: { enum: ["discovery"] },
+          query: { type: "string" },
+          filters: { type: "object" },
+          metadata: { type: "object" },
+          evaluation: { type: "object" },
+          trustBoundary: { type: "object" },
+          results: { type: "array" }
         }
       },
       AgentCapabilityTaxonomyRow: {
@@ -109,13 +185,52 @@ export async function GET(request: Request) {
       },
       AgentCompatibilityReport: {
         type: "object",
-        required: ["filters", "totals", "compatible", "coverageRatio", "guidance"],
+        required: ["filters", "totals", "compatible", "coverageRatio", "compatibilityConfidence", "guidance"],
         properties: {
           filters: { type: "object" },
           totals: { type: "object" },
           compatible: { type: "object" },
           coverageRatio: { type: "number" },
+          compatibilityConfidence: { type: "object" },
           guidance: { type: "string" }
+        }
+      },
+      TaxonomyResponse: {
+        type: "object",
+        required: ["schemaVersion", "registryVersion", "generatedAt", "purpose", "capabilityTypes"],
+        properties: {
+          schemaVersion: { type: "string" },
+          registryVersion: { type: "string" },
+          generatedAt: { type: "string" },
+          purpose: { enum: ["discovery"] },
+          capabilityTypes: { type: "array" }
+        }
+      },
+      RegistryReadinessMetadata: {
+        type: "object",
+        required: [
+          "registryVersion",
+          "schemaVersion",
+          "publishedAppCount",
+          "activeCapabilityCount",
+          "supportedCapabilityTypes",
+          "supportedAuthTypes",
+          "supportedInterfaceTypes",
+          "supportedInteractionModes",
+          "docsUrl",
+          "policyUrl"
+        ],
+        properties: {
+          registryVersion: { type: "string" },
+          schemaVersion: { type: "string" },
+          publishedAppCount: { type: "number" },
+          activeCapabilityCount: { type: "number" },
+          supportedCapabilityTypes: { type: "array" },
+          supportedAuthTypes: { type: "array" },
+          supportedInterfaceTypes: { type: "array" },
+          supportedInteractionModes: { type: "array" },
+          docsUrl: { type: "string" },
+          policyUrl: { type: "string" }
         }
       },
       AgentRegistryPolicy: {

@@ -59,6 +59,8 @@ The admin product includes:
 - discovery inspection and weight tuning panels
 - agent registry quality checks
 - agent search preview for internal quality checks
+- launch checklist acknowledgements for production preview readiness
+- admin-safe catalog import operations through dry-run reports and guarded writes
 
 There is no developer-facing submission or claiming flow. If a dapp belongs in Cotana, the admin team adds and maintains it.
 
@@ -110,6 +112,42 @@ Agents that select a specific result can fetch a per-capability manifest before 
 ## Registry quality and trust surfaces
 
 Phase 4 deepens agent discovery quality without creating an execution product.
+
+## Phase 4.5: Registry QA and Trust Trend Foundations
+
+Phase 4.5 keeps Cotana hybrid and discovery-only. Human discovery remains in the public store, while agent discovery remains in the machine-readable registry.
+
+This phase adds internal QA surfaces for:
+
+- evaluation-log inspection with filters for date range, query, category, capability type, auth/interface/interaction mode, readiness bucket, matched app, and blocking issue count
+- single evaluation-log detail views showing query filters, candidate counts, exclusions, matched capability, scores, quality score, and match reason
+- persisted seeded intent test runs with run version, expected category/app/capability, actual top result, score, quality score, pass/fail state, and failure reason
+- latest-vs-previous intent test comparison for newly failing, newly passing, and unchanged failing tests
+- capability quality distribution by grade, readiness bucket, capability type, auth type, interface type, interaction mode, and registry listing status
+- admin-only trust trend previews and registry health export JSON
+- optional local weak-metadata fixtures for schemas, safety notes, docs-only surfaces, low reliability, unsafe modes, and weak endpoint metadata
+
+Unchanged non-goals: Cotana does not execute agent actions, handle credentials, initiate wallet actions, delegate trading, build follow graphs, publish feeds, send notifications, sell paid placement, expose promoted search slots, or offer developer self-submission.
+
+## Phase 4.6: Registry Contract Stability
+
+Phase 4.6 makes the machine-readable registry stable enough for outside agents, assistants, and workflow systems to inspect without ambiguity.
+
+Public registry surfaces now include shared contract metadata:
+
+- `schemaVersion`
+- `registryVersion`
+- `generatedAt`
+- discovery-only boundary metadata
+- supported endpoint metadata
+
+App and capability manifests expose current manifest versions and review/deprecation metadata. Internal admin change logs track registry-sensitive edits, including audience, listing status, capability status, auth/interface/interaction changes, schemas, docs URLs, safety notes, reliability, and latency metadata.
+
+Deprecated capabilities are excluded from default search results. Direct capability manifests may still explain deprecation status and replacement docs. Paused listings remain hidden from the public registry.
+
+Public machine-client docs live at `/agent-registry/docs`, linked from discovery surfaces, `llms.txt`, and policy metadata. These docs explain endpoints, query parameters, filters, response shapes, versioning, deprecation, rate limits, and the no-execution rule. They are not a developer portal and do not add submission or claim flows.
+
+Compatibility reports now include deterministic confidence scoring with a score, grade, reasons, blocking gaps, and recommended filter changes.
 
 - Each capability has a quality score based on schema completeness, docs availability, endpoint presence, safety notes, auth friction, latency tier, reliability tier, and interaction mode
 - Agent intent tests check whether seeded intents land on the expected capability types
@@ -208,3 +246,30 @@ Cotana now stores:
 - discovery insight snapshots for trending, rising, and community-pick debugging
 
 This gives the product a usable historical foundation before public trend lines are exposed.
+
+## Phase 4.7 launch QA
+
+Cotana now has an admin-only catalog coverage audit for launch readiness. It summarizes human category depth, screenshots, reviews, updates, verified/community-pick coverage, signal snapshots, registry listing coverage, capability quality, schema/docs/safety coverage, read-only coverage, and thin-area warnings.
+
+The public agent registry now includes a public-safe readiness object and manifest quality warnings. These help outside agents understand coverage and manifest caveats without exposing admin health exports, internal notes, or unpublished readiness buckets.
+
+Registry red-team queries live beside seeded intent tests and persist run history. They cover empty or irrelevant queries, risky write or transactional intents, unsupported credential-like requests, wrong-category cases, and normal read-only discovery. They remain QA checks only; they do not route instructions or execute actions.
+
+## Phase 4.8 staging launch readiness
+
+Cotana now has staging launch readiness surfaces for operators:
+
+- seed commands create a non-empty public homepage with spotlight, trending, rising, and category app rows
+- seeded app detail pages include screenshots, reviews, updates, similar apps, and trust states
+- admin `/launch-checklist` shows public seed visibility counters for published apps, shelves, discovery rows, category coverage, screenshots, reviews, updates, registry listings, and active capabilities
+- `pnpm test:smoke` asserts seeded public cards exist on homepage, category, and detail surfaces
+
+First-release public surfaces should not show empty states when seed data is loaded. Empty states are reserved for genuinely missing shelves, discovery rows, categories, screenshots, reviews, updates, or similar apps.
+
+- environment health shows required configuration, optional configuration, invalid values, and local fallbacks
+- deployment health endpoints report safe status for store, admin, registry, and jobs
+- launch checklist summarizes whether the catalog and registry are ready for a staging handoff
+- smoke tests cover homepage, category, search, app detail, registry discovery, registry search, schema, `llms.txt`, health, and protected admin QA routes
+- registry docs include curl examples for outside agents
+
+These are launch QA tools. They do not create developer submission, paid placement, notifications, feeds, wallet actions, credential handling, or execution.

@@ -1,23 +1,14 @@
 import type { Metadata } from "next";
-import { Inter, Open_Sans, Ubuntu } from "next/font/google";
+import type { CSSProperties } from "react";
+import { brandCssVariables } from "@cotana/config";
 import { AdminPrivyProvider } from "../components/admin-privy-provider";
 import "./globals.css";
 
-const ubuntu = Ubuntu({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-ubuntu"
-});
-
-const openSans = Open_Sans({
-  subsets: ["latin"],
-  variable: "--font-open-sans"
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter"
-});
+const fontVariables = {
+  "--font-ubuntu": "'Ubuntu'",
+  "--font-open-sans": "'Open Sans'",
+  "--font-inter": "'Inter'"
+};
 
 export const metadata: Metadata = {
   title: "Cotana Admin",
@@ -30,7 +21,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${ubuntu.variable} ${openSans.variable} ${inter.variable}`}>
+    <html
+      lang="en"
+      style={{ ...brandCssVariables, ...fontVariables } as CSSProperties}
+    >
       <body className="font-body antialiased">
         <AdminPrivyProvider>{children}</AdminPrivyProvider>
       </body>

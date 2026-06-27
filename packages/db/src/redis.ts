@@ -21,7 +21,20 @@ function getRedisClient() {
     return redisClient;
   }
 
-  const env = requireRedisEnv();
+  let env: ReturnType<typeof requireRedisEnv>;
+
+  try {
+    env = requireRedisEnv();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Redis configuration is invalid.";
+
+    logServerEvent("warn", "Redis is not available. Falling back to in-memory cache.", {
+      scope: "redis",
+      error: message
+    });
+    redisClient = null;
+    return redisClient;
+  }
 
   if (!env.REDIS_URL) {
     logServerEvent("warn", "Redis is not configured. Falling back to in-memory cache.", {
@@ -34,6 +47,8 @@ function getRedisClient() {
 
   redisClient = new Redis(env.REDIS_URL, {
     lazyConnect: true,
+    connectTimeout: 5000,
+    enableOfflineQueue: false,
     maxRetriesPerRequest: 1
   });
 
@@ -169,4 +184,33 @@ export async function checkRateLimit(key: string, limit: number, windowSeconds: 
     remaining: Math.max(limit - current, 0),
     resetAt: new Date(Date.now() + windowSeconds * 1000)
   };
+}
+
+export async function getRedisHealth() {
+  const redis = getRedisClient();
+
+  if (!redis) {
+    return {
+      reachable: false,
+      fallbackActive: true,
+      mode: "memory" as const
+    };
+  }
+
+  try {
+    await ensureRedisConnection(redis);
+    await redis.ping();
+    return {
+      reachable: true,
+      fallbackActive: false,
+      mode: "redis" as const
+    };
+  } catch {
+    redisClient = null;
+    return {
+      reachable: false,
+      fallbackActive: true,
+      mode: "memory" as const
+    };
+  }
 }

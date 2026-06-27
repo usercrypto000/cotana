@@ -1,5 +1,7 @@
-import { AppUpdateType } from "@prisma/client";
+import { AppUpdateType, Prisma } from "@prisma/client";
 import { prisma } from "../client";
+
+export type AppUpdateRecord = Prisma.AppUpdateGetPayload<Record<string, never>>;
 
 export type AppUpdateInput = {
   versionLabel: string;
@@ -9,7 +11,7 @@ export type AppUpdateInput = {
   type?: AppUpdateType | null;
 };
 
-export async function listAppUpdates(appId: string) {
+export async function listAppUpdates(appId: string): Promise<AppUpdateRecord[]> {
   return prisma.appUpdate.findMany({
     where: {
       appId

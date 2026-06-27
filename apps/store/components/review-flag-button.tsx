@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@cotana/ui";
+import { Button, Textarea } from "@cotana/ui";
 
 export function ReviewFlagButton({
   reviewId,
@@ -53,11 +53,10 @@ export function ReviewFlagButton({
         {open ? "Cancel flag" : "Flag review"}
       </Button>
       {open ? (
-        <div className="space-y-2 rounded-2xl border border-slate-200 p-4">
-          <textarea
+        <div className="ui-panel-subtle space-y-2 p-4">
+          <Textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            className="min-h-24 w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-950"
             placeholder="Tell the moderation team what looks off about this review."
             disabled={pending}
           />
@@ -66,7 +65,7 @@ export function ReviewFlagButton({
           </Button>
         </div>
       ) : null}
-      {message ? <p className="text-sm text-slate-500">{message}</p> : null}
+      {message ? <p className="text-sm text-neutral-muted">{message}</p> : null}
     </div>
   );
 }

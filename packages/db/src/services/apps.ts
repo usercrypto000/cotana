@@ -9,7 +9,8 @@ import {
   Prisma,
   ReviewStatus
 } from "@prisma/client";
-import type { AgentCapabilitySummary, AppSummary } from "@cotana/types";
+import type { AgentCapabilitySummary, AppSummary, AppTrustMetadata } from "@cotana/types";
+import { normalizeTrustMetadata } from "@cotana/types";
 import { incrementCounter } from "../redis";
 import { prisma } from "../client";
 
@@ -22,6 +23,8 @@ type LikeStats = {
   likeCount: number;
 };
 
+export type CategoryRecord = Prisma.CategoryGetPayload<Record<string, never>>;
+
 export type AdminAppInput = {
   slug?: string;
   name: string;
@@ -31,6 +34,7 @@ export type AdminAppInput = {
   logoUrl: string;
   verified: boolean;
   verifiedNote?: string | null;
+  trustMetadata?: Partial<AppTrustMetadata> | null;
   agentAudience: AppAudience;
   agentListingStatus: AgentListingStatus;
   agentSummary?: string | null;
@@ -58,6 +62,11 @@ export type AgentCapabilityInput = {
   status: AgentCapabilityStatus;
   reliabilityScore?: number | null;
   latencyP50Ms?: number | null;
+  lastReviewedAt?: Date | string | null;
+  deprecatedAt?: Date | string | null;
+  deprecationReason?: string | null;
+  replacementCapabilityId?: string | null;
+  replacementDocsUrl?: string | null;
 };
 
 export type AdminAppRecord = {
@@ -70,11 +79,14 @@ export type AdminAppRecord = {
   logoUrl: string;
   verified: boolean;
   verifiedNote: string | null;
+  trustMetadata: AppTrustMetadata;
   agentAudience: AppAudience;
   agentListingStatus: AgentListingStatus;
   agentSummary: string | null;
   agentDocsUrl: string | null;
   agentIntegrationNotes: string | null;
+  agentManifestVersion: number;
+  agentLastReviewedAt: Date | null;
   communityPick: boolean;
   status: AppStatus;
   createdAt: Date;
@@ -106,10 +118,13 @@ export type AppDetailRecord = {
   websiteUrl: string;
   logoUrl: string;
   verified: boolean;
+  trustMetadata: AppTrustMetadata;
   agentAudience: AppAudience;
   agentListingStatus: AgentListingStatus;
   agentSummary: string | null;
   agentDocsUrl: string | null;
+  agentManifestVersion: number;
+  agentLastReviewedAt: Date | null;
   communityPick: boolean;
   createdAt: Date;
   publishedAt: Date | null;
@@ -151,10 +166,22 @@ type PublishedAppInclude = {
   websiteUrl: string;
   logoUrl: string;
   verified: boolean;
+  verificationStatus?: AppTrustMetadata["verificationStatus"] | null;
+  publisherName?: string | null;
+  publisherType?: AppTrustMetadata["publisherType"] | null;
+  supportedChains?: string[] | null;
+  permissionScopes?: string[] | null;
+  paymentCapabilities?: string[] | null;
+  custodyModel?: string | null;
+  externalRiskNotes?: string | null;
+  lastReviewedAt?: Date | null;
+  reviewSummary?: string | null;
   agentAudience: AppAudience;
   agentListingStatus: AgentListingStatus;
   agentSummary: string | null;
   agentDocsUrl: string | null;
+  agentManifestVersion: number;
+  agentLastReviewedAt: Date | null;
   communityPick: boolean;
   createdAt: Date;
   publishedAt: Date | null;
@@ -238,7 +265,12 @@ function normalizeAgentCapabilities(capabilities: AgentCapabilityInput[]) {
         safetyNotes: capability.safetyNotes?.trim() || null,
         status: capability.status,
         reliabilityScore: capability.reliabilityScore ?? null,
-        latencyP50Ms: capability.latencyP50Ms ?? null
+        latencyP50Ms: capability.latencyP50Ms ?? null,
+        lastReviewedAt: capability.lastReviewedAt ? new Date(capability.lastReviewedAt) : null,
+        deprecatedAt: capability.deprecatedAt ? new Date(capability.deprecatedAt) : null,
+        deprecationReason: capability.deprecationReason?.trim() || null,
+        replacementCapabilityId: capability.replacementCapabilityId?.trim() || null,
+        replacementDocsUrl: capability.replacementDocsUrl?.trim() || null
       };
     })
     .filter((capability): capability is NonNullable<typeof capability> => Boolean(capability));
@@ -261,8 +293,50 @@ function toAgentCapabilitySummary(capability: AgentCapabilitySummary): AgentCapa
     safetyNotes: capability.safetyNotes,
     status: capability.status,
     reliabilityScore: capability.reliabilityScore,
-    latencyP50Ms: capability.latencyP50Ms
+    latencyP50Ms: capability.latencyP50Ms,
+    manifestVersion: capability.manifestVersion,
+    updatedAt: capability.updatedAt,
+    lastReviewedAt: capability.lastReviewedAt,
+    deprecatedAt: capability.deprecatedAt,
+    deprecationReason: capability.deprecationReason,
+    replacementCapabilityId: capability.replacementCapabilityId,
+    replacementDocsUrl: capability.replacementDocsUrl
   };
+}
+
+function toTrustMetadata(app: {
+  verified?: boolean;
+  verificationStatus?: AppTrustMetadata["verificationStatus"] | null;
+  publisherName?: string | null;
+  publisherType?: AppTrustMetadata["publisherType"] | null;
+  supportedChains?: string[] | null;
+  permissionScopes?: string[] | null;
+  paymentCapabilities?: string[] | null;
+  custodyModel?: string | null;
+  externalRiskNotes?: string | null;
+  lastReviewedAt?: Date | null;
+  reviewSummary?: string | null;
+  agentAudience?: AppAudience;
+}) {
+  return normalizeTrustMetadata(
+    {
+      verificationStatus: app.verificationStatus ?? undefined,
+      publisherName: app.publisherName ?? undefined,
+      publisherType: app.publisherType ?? undefined,
+      supportedChains: app.supportedChains ?? undefined,
+      permissionScopes: app.permissionScopes ?? undefined,
+      paymentCapabilities: app.paymentCapabilities ?? undefined,
+      custodyModel: app.custodyModel ?? undefined,
+      externalRiskNotes: app.externalRiskNotes ?? undefined,
+      lastReviewedAt: app.lastReviewedAt ?? undefined,
+      reviewSummary: app.reviewSummary ?? undefined
+    },
+    {
+      verified: app.verified,
+      lastReviewedAt: app.lastReviewedAt,
+      agentAudience: app.agentAudience
+    },
+  );
 }
 
 async function getReviewStats(appIds: string[]) {
@@ -333,6 +407,16 @@ function toSummary(
     name: string;
     logoUrl: string;
     verified: boolean;
+    verificationStatus?: AppTrustMetadata["verificationStatus"] | null;
+    publisherName?: string | null;
+    publisherType?: AppTrustMetadata["publisherType"] | null;
+    supportedChains?: string[] | null;
+    permissionScopes?: string[] | null;
+    paymentCapabilities?: string[] | null;
+    custodyModel?: string | null;
+    externalRiskNotes?: string | null;
+    lastReviewedAt?: Date | null;
+    reviewSummary?: string | null;
     agentAudience: AppAudience;
     communityPick: boolean;
     shortDescription: string;
@@ -361,7 +445,8 @@ function toSummary(
     category: app.category,
     rating: reviewStats?.rating ?? 0,
     reviewCount: reviewStats?.reviewCount ?? 0,
-    likeCount: likeStats?.likeCount ?? 0
+    likeCount: likeStats?.likeCount ?? 0,
+    trustMetadata: toTrustMetadata(app)
   };
 }
 
@@ -376,11 +461,23 @@ async function enrichAdminApps(
     logoUrl: string;
     verified: boolean;
     verifiedNote: string | null;
+    verificationStatus?: AppTrustMetadata["verificationStatus"] | null;
+    publisherName?: string | null;
+    publisherType?: AppTrustMetadata["publisherType"] | null;
+    supportedChains?: string[] | null;
+    permissionScopes?: string[] | null;
+    paymentCapabilities?: string[] | null;
+    custodyModel?: string | null;
+    externalRiskNotes?: string | null;
+    lastReviewedAt?: Date | null;
+    reviewSummary?: string | null;
     agentAudience: AppAudience;
     agentListingStatus: AgentListingStatus;
     agentSummary: string | null;
     agentDocsUrl: string | null;
     agentIntegrationNotes: string | null;
+    agentManifestVersion: number;
+    agentLastReviewedAt: Date | null;
     communityPick: boolean;
     status: AppStatus;
     createdAt: Date;
@@ -416,11 +513,14 @@ async function enrichAdminApps(
     logoUrl: app.logoUrl,
     verified: app.verified,
     verifiedNote: app.verifiedNote,
+    trustMetadata: toTrustMetadata(app),
     agentAudience: app.agentAudience,
     agentListingStatus: app.agentListingStatus,
     agentSummary: app.agentSummary,
     agentDocsUrl: app.agentDocsUrl,
     agentIntegrationNotes: app.agentIntegrationNotes,
+    agentManifestVersion: app.agentManifestVersion,
+    agentLastReviewedAt: app.agentLastReviewedAt,
     communityPick: app.communityPick,
     status: app.status,
     createdAt: app.createdAt,
@@ -436,7 +536,7 @@ async function enrichAdminApps(
   }));
 }
 
-export async function listCategories() {
+export async function listCategories(): Promise<CategoryRecord[]> {
   return prisma.category.findMany({
     orderBy: {
       sortOrder: "asc"
@@ -535,20 +635,94 @@ async function replaceTagsAndScreenshots(appId: string, input: AdminAppInput) {
   }
 }
 
-async function replaceAgentCapabilities(appId: string, input: AdminAppInput) {
-  const capabilities = normalizeAgentCapabilities(input.agentCapabilities);
+function toJsonValue(value: unknown) {
+  return value === undefined ? Prisma.JsonNull : (JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue);
+}
 
-  await prisma.agentCapability.deleteMany({
-    where: { appId }
-  });
+function trustMetadataData(input: AdminAppInput) {
+  return {
+    verificationStatus: input.trustMetadata?.verificationStatus ?? (input.verified ? "verified" : "unreviewed"),
+    publisherName: input.trustMetadata?.publisherName?.trim() || null,
+    publisherType: input.trustMetadata?.publisherType ?? "unknown",
+    supportedChains: input.trustMetadata?.supportedChains ?? [],
+    permissionScopes: input.trustMetadata?.permissionScopes ?? [],
+    paymentCapabilities: input.trustMetadata?.paymentCapabilities ?? [],
+    custodyModel: input.trustMetadata?.custodyModel?.trim() || null,
+    externalRiskNotes: input.trustMetadata?.externalRiskNotes?.trim() || null,
+    lastReviewedAt: input.trustMetadata?.lastReviewedAt ?? null,
+    reviewSummary: input.trustMetadata?.reviewSummary?.trim() || null
+  };
+}
 
-  if (capabilities.length === 0) {
+function valuesEqual(left: unknown, right: unknown) {
+  return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+}
+
+async function recordRegistryChange(input: {
+  appId: string;
+  capabilityId?: string | null;
+  changeType: string;
+  fieldName: string;
+  previousValue: unknown;
+  nextValue: unknown;
+  createdByUserId?: string | null;
+}) {
+  if (valuesEqual(input.previousValue, input.nextValue)) {
     return;
   }
 
-  await prisma.agentCapability.createMany({
-    data: capabilities.map((capability) => ({
-      appId,
+  await prisma.agentRegistryChangeLog.create({
+    data: {
+      appId: input.appId,
+      capabilityId: input.capabilityId ?? null,
+      changeType: input.changeType,
+      fieldName: input.fieldName,
+      previousValueJson: toJsonValue(input.previousValue),
+      nextValueJson: toJsonValue(input.nextValue),
+      createdByUserId: input.createdByUserId ?? null
+    }
+  });
+}
+
+async function replaceAgentCapabilities(appId: string, input: AdminAppInput, createdByUserId?: string | null) {
+  const capabilities = normalizeAgentCapabilities(input.agentCapabilities);
+  const existingCapabilities = await prisma.agentCapability.findMany({
+    where: {
+      appId
+    }
+  });
+  const existingBySlug = new Map(existingCapabilities.map((capability) => [capability.slug, capability]));
+  const nextSlugs = new Set(capabilities.map((capability) => capability.slug));
+
+  for (const capability of existingCapabilities) {
+    if (!nextSlugs.has(capability.slug) && capability.status !== AgentCapabilityStatus.PAUSED) {
+      await prisma.agentCapability.update({
+        where: {
+          id: capability.id
+        },
+        data: {
+          status: AgentCapabilityStatus.PAUSED,
+          manifestVersion: {
+            increment: 1
+          },
+          lastReviewedAt: new Date()
+        }
+      });
+      await recordRegistryChange({
+        appId,
+        capabilityId: capability.id,
+        changeType: "capability_status_change",
+        fieldName: "status",
+        previousValue: capability.status,
+        nextValue: AgentCapabilityStatus.PAUSED,
+        createdByUserId
+      });
+    }
+  }
+
+  for (const capability of capabilities) {
+    const existing = existingBySlug.get(capability.slug);
+    const data = {
       name: capability.name,
       slug: capability.slug,
       description: capability.description,
@@ -565,9 +739,92 @@ async function replaceAgentCapabilities(appId: string, input: AdminAppInput) {
       safetyNotes: capability.safetyNotes,
       status: capability.status,
       reliabilityScore: capability.reliabilityScore,
-      latencyP50Ms: capability.latencyP50Ms
-    }))
-  });
+      latencyP50Ms: capability.latencyP50Ms,
+      lastReviewedAt: capability.lastReviewedAt ?? null,
+      deprecatedAt:
+        capability.status === AgentCapabilityStatus.DEPRECATED ? (capability.deprecatedAt ?? new Date()) : capability.deprecatedAt,
+      deprecationReason: capability.deprecationReason,
+      replacementCapabilityId: capability.replacementCapabilityId,
+      replacementDocsUrl: capability.replacementDocsUrl
+    };
+
+    if (!existing) {
+      const created = await prisma.agentCapability.create({
+        data: {
+          appId,
+          ...data
+        }
+      });
+      await recordRegistryChange({
+        appId,
+        capabilityId: created.id,
+        changeType: "capability_status_change",
+        fieldName: "created",
+        previousValue: null,
+        nextValue: capability.slug,
+        createdByUserId
+      });
+      continue;
+    }
+
+    const sensitiveFields = [
+      "status",
+      "authType",
+      "interfaceType",
+      "interactionMode",
+      "inputSchemaJson",
+      "outputSchemaJson",
+      "docsUrl",
+      "safetyNotes",
+      "reliabilityScore",
+      "latencyP50Ms",
+      "deprecatedAt",
+      "deprecationReason",
+      "replacementCapabilityId",
+      "replacementDocsUrl"
+    ] as const;
+    const changed = sensitiveFields.some((field) => !valuesEqual(existing[field], data[field]));
+
+    await prisma.agentCapability.update({
+      where: {
+        id: existing.id
+      },
+      data: {
+        ...data,
+        manifestVersion: changed
+          ? {
+              increment: 1
+            }
+          : undefined,
+        lastReviewedAt: changed ? new Date() : data.lastReviewedAt
+      }
+    });
+
+    for (const field of sensitiveFields) {
+      await recordRegistryChange({
+        appId,
+        capabilityId: existing.id,
+        changeType:
+          field === "status"
+            ? "capability_status_change"
+            : field === "authType" || field === "interfaceType" || field === "interactionMode"
+              ? "compatibility_change"
+              : field === "inputSchemaJson" || field === "outputSchemaJson"
+                ? "schema_change"
+                : field === "docsUrl"
+                  ? "docs_url_change"
+                  : field === "safetyNotes"
+                    ? "safety_notes_change"
+                    : field === "reliabilityScore" || field === "latencyP50Ms"
+                      ? "reliability_latency_change"
+                      : "deprecation_change",
+        fieldName: field,
+        previousValue: existing[field],
+        nextValue: data[field],
+        createdByUserId
+      });
+    }
+  }
 }
 
 export async function createAdminApp(input: AdminAppInput, createdByUserId: string) {
@@ -581,22 +838,45 @@ export async function createAdminApp(input: AdminAppInput, createdByUserId: stri
       logoUrl: input.logoUrl.trim(),
       verified: input.verified,
       verifiedNote: input.verifiedNote?.trim() || null,
+      ...trustMetadataData(input),
       agentAudience: input.agentAudience,
       agentListingStatus: input.agentAudience === AppAudience.HUMAN ? AgentListingStatus.NOT_APPLICABLE : input.agentListingStatus,
       agentSummary: input.agentSummary?.trim() || null,
       agentDocsUrl: input.agentDocsUrl?.trim() || null,
       agentIntegrationNotes: input.agentIntegrationNotes?.trim() || null,
+      agentLastReviewedAt: input.agentAudience === AppAudience.HUMAN ? null : new Date(),
       categoryId: input.categoryId,
       createdByUserId
     }
   });
 
   await replaceTagsAndScreenshots(app.id, input);
-  await replaceAgentCapabilities(app.id, input);
+  await replaceAgentCapabilities(app.id, input, createdByUserId);
   return getAdminAppById(app.id);
 }
 
-export async function updateAdminApp(id: string, input: AdminAppInput) {
+export async function updateAdminApp(id: string, input: AdminAppInput, updatedByUserId?: string | null) {
+  const previous = await prisma.app.findUnique({
+    where: {
+      id
+    },
+    include: {
+      agentCapabilities: true
+    }
+  });
+
+  if (!previous) {
+    return null;
+  }
+
+  const nextAgentListingStatus =
+    input.agentAudience === AppAudience.HUMAN ? AgentListingStatus.NOT_APPLICABLE : input.agentListingStatus;
+  const registrySensitiveChanged =
+    previous.agentAudience !== input.agentAudience ||
+    previous.agentListingStatus !== nextAgentListingStatus ||
+    previous.agentSummary !== (input.agentSummary?.trim() || null) ||
+    previous.agentDocsUrl !== (input.agentDocsUrl?.trim() || null);
+
   try {
     await prisma.app.update({
       where: { id },
@@ -609,11 +889,18 @@ export async function updateAdminApp(id: string, input: AdminAppInput) {
         logoUrl: input.logoUrl.trim(),
         verified: input.verified,
         verifiedNote: input.verifiedNote?.trim() || null,
+        ...trustMetadataData(input),
         agentAudience: input.agentAudience,
-        agentListingStatus: input.agentAudience === AppAudience.HUMAN ? AgentListingStatus.NOT_APPLICABLE : input.agentListingStatus,
+        agentListingStatus: nextAgentListingStatus,
         agentSummary: input.agentSummary?.trim() || null,
         agentDocsUrl: input.agentDocsUrl?.trim() || null,
         agentIntegrationNotes: input.agentIntegrationNotes?.trim() || null,
+        agentManifestVersion: registrySensitiveChanged
+          ? {
+              increment: 1
+            }
+          : undefined,
+        agentLastReviewedAt: registrySensitiveChanged ? new Date() : undefined,
         categoryId: input.categoryId
       }
     });
@@ -622,7 +909,33 @@ export async function updateAdminApp(id: string, input: AdminAppInput) {
   }
 
   await replaceTagsAndScreenshots(id, input);
-  await replaceAgentCapabilities(id, input);
+  await Promise.all([
+    recordRegistryChange({
+      appId: id,
+      changeType: "audience_change",
+      fieldName: "agentAudience",
+      previousValue: previous.agentAudience,
+      nextValue: input.agentAudience,
+      createdByUserId: updatedByUserId
+    }),
+    recordRegistryChange({
+      appId: id,
+      changeType: "registry_status_change",
+      fieldName: "agentListingStatus",
+      previousValue: previous.agentListingStatus,
+      nextValue: nextAgentListingStatus,
+      createdByUserId: updatedByUserId
+    }),
+    recordRegistryChange({
+      appId: id,
+      changeType: "docs_url_change",
+      fieldName: "agentDocsUrl",
+      previousValue: previous.agentDocsUrl,
+      nextValue: input.agentDocsUrl?.trim() || null,
+      createdByUserId: updatedByUserId
+    })
+  ]);
+  await replaceAgentCapabilities(id, input, updatedByUserId);
   return getAdminAppById(id);
 }
 
@@ -642,7 +955,7 @@ export async function setAdminAppStatus(id: string, status: AppStatus) {
   return getAdminAppById(id);
 }
 
-export async function listPublishedApps(categorySlug?: string) {
+export async function listPublishedApps(categorySlug?: string): Promise<AppSummary[]> {
   const apps = await prisma.app.findMany({
     where: {
       status: AppStatus.PUBLISHED,
@@ -688,10 +1001,13 @@ function toAppDetailRecord(
     websiteUrl: app.websiteUrl,
     logoUrl: app.logoUrl,
     verified: app.verified,
+    trustMetadata: toTrustMetadata(app),
     agentAudience: app.agentAudience,
     agentListingStatus: app.agentListingStatus,
     agentSummary: app.agentSummary,
     agentDocsUrl: app.agentDocsUrl,
+    agentManifestVersion: app.agentManifestVersion,
+    agentLastReviewedAt: app.agentLastReviewedAt,
     communityPick: app.communityPick,
     createdAt: app.createdAt,
     publishedAt: app.publishedAt,
@@ -718,7 +1034,7 @@ function toAppDetailRecord(
 async function getPublishedApp(
   where: { id?: string; slug?: string },
   currentUserId?: string | null,
-) {
+): Promise<AppDetailRecord | null> {
   const app = await prisma.app.findFirst({
     where: {
       ...where,
@@ -795,15 +1111,15 @@ async function getPublishedApp(
   return toAppDetailRecord(app, reviewStats.get(app.id), likeStats.get(app.id));
 }
 
-export async function getPublishedAppBySlug(slug: string, currentUserId?: string | null) {
+export async function getPublishedAppBySlug(slug: string, currentUserId?: string | null): Promise<AppDetailRecord | null> {
   return getPublishedApp({ slug }, currentUserId);
 }
 
-export async function getPublishedAppById(id: string, currentUserId?: string | null) {
+export async function getPublishedAppById(id: string, currentUserId?: string | null): Promise<AppDetailRecord | null> {
   return getPublishedApp({ id }, currentUserId);
 }
 
-export async function listLibraryApps(userId: string) {
+export async function listLibraryApps(userId: string): Promise<AppSummary[]> {
   const libraryItems = await prisma.appLibraryItem.findMany({
     where: {
       userId,

@@ -12,7 +12,7 @@ type Params = {
 export async function GET(_request: Request, { params }: Params) {
   const sessionUser = await getSessionUser();
 
-  if (!isAdminUser(sessionUser)) {
+  if (!sessionUser || !isAdminUser(sessionUser)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -29,7 +29,7 @@ export async function GET(_request: Request, { params }: Params) {
 export async function PATCH(request: Request, { params }: Params) {
   const sessionUser = await getSessionUser();
 
-  if (!isAdminUser(sessionUser)) {
+  if (!sessionUser || !isAdminUser(sessionUser)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -40,7 +40,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const { id } = await params;
-  const app = await updateAdminApp(id, payload.data);
+  const app = await updateAdminApp(id, payload.data, sessionUser.id);
 
   if (!app) {
     return NextResponse.json({ error: "App not found." }, { status: 404 });

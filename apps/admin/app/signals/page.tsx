@@ -39,10 +39,10 @@ export default async function SignalsPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm text-slate-500">{job.schedule}</p>
-              <p className="text-sm text-slate-500">{job.summary ?? "No run summary yet."}</p>
-              {job.lastRunAt ? <p className="text-xs text-slate-400">Last run: {new Date(job.lastRunAt).toLocaleString()}</p> : null}
-              {job.lastError ? <p className="text-sm text-rose-600">{job.lastError}</p> : null}
+              <p className="text-sm text-neutral-muted">{job.schedule}</p>
+              <p className="text-sm text-neutral-muted">{job.summary ?? "No run summary yet."}</p>
+              {job.lastRunAt ? <p className="text-xs text-neutral-subtle">Last run: {new Date(job.lastRunAt).toLocaleString()}</p> : null}
+              {job.lastError ? <p className="text-sm ui-copy-danger">{job.lastError}</p> : null}
               <SignalJobControls jobKey={job.key} />
             </CardContent>
           </Card>

@@ -1,4 +1,5 @@
 import { analyticsEvents, trackServerEvent } from "@cotana/analytics";
+import { buildRegistryVersionMetadata, cotanaRegistryContract } from "@cotana/config";
 import { NextResponse } from "next/server";
 import { getRequestIdentity } from "../../../../lib/request";
 
@@ -9,7 +10,8 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json({
-    version: "2026-05-07",
+    ...buildRegistryVersionMetadata(),
+    version: cotanaRegistryContract.registryVersion,
     purpose: "discovery",
     policy: {
       cotanaRole: "Cotana helps agents discover compatible apps and capabilities.",
@@ -23,6 +25,11 @@ export async function GET(request: Request) {
         "At least one active capability has schemas, safety notes, and docs or endpoint metadata."
       ],
       publishedDefault: "Published registry capabilities should be READ_ONLY until explicit policy support expands.",
+      versioning:
+        "Registry contracts use explicit schemaVersion and registryVersion metadata. Additive fields may appear within the same version; breaking response-shape changes require a new version.",
+      deprecation:
+        "Deprecated capabilities are excluded from default registry search. Direct capability manifests may explain deprecation and replacement metadata.",
+      documentation: cotanaRegistryContract.endpoints.docs,
       agentResponsibility:
         "Outside agents must inspect the returned manifest and target app documentation before any external execution."
     },

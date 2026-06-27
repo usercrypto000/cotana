@@ -29,8 +29,8 @@ export default async function AdminShelvesPage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-white">Shelf list</h2>
-            <p className="text-sm text-slate-400">Create, reorder, and publish the shelves that shape discovery.</p>
+            <h2 className="text-xl font-semibold text-neutral-inverse">Shelf list</h2>
+            <p className="text-sm text-neutral-subtle">Create, reorder, and publish the shelves that shape discovery.</p>
           </div>
           <Button asChild>
             <Link href="/shelves/new">Create shelf</Link>
@@ -42,7 +42,7 @@ export default async function AdminShelvesPage() {
               <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <div>
                   <CardTitle>{shelf.title}</CardTitle>
-                  <p className="mt-2 text-sm text-slate-500">{shelf.description}</p>
+                  <p className="mt-2 text-sm text-neutral-muted">{shelf.description}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Badge>{shelf.status}</Badge>
@@ -52,7 +52,7 @@ export default async function AdminShelvesPage() {
                 </div>
               </CardHeader>
               <CardContent className="flex items-center justify-between gap-4">
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-neutral-muted">
                   {shelf.itemCount} app{shelf.itemCount === 1 ? "" : "s"} in shelf. Sort order {shelf.sortOrder}.
                 </p>
                 <Button asChild variant="secondary">
@@ -62,7 +62,7 @@ export default async function AdminShelvesPage() {
             </Card>
           ))}
           {shelves.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-6 text-sm text-slate-400">
+            <div className="rounded-2xl border border-dashed border-neutral-inverse/10 bg-brand-text/40 p-6 text-sm text-neutral-subtle">
               No editorial shelves exist yet.
             </div>
           ) : null}

@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-import { cotanaBrand } from "../../packages/config/src/brand";
+import { cotanaBrand, tailwindBrandColors, tailwindFontFamily } from "@cotana/config/brand";
 
 const config: Config = {
   content: [
@@ -11,18 +11,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        brand: cotanaBrand.color.brand,
-        trust: cotanaBrand.color.trust,
-        neutral: cotanaBrand.color.neutral
+        ...tailwindBrandColors
       },
-      fontFamily: {
-        heading: ["var(--font-ubuntu)", cotanaBrand.font.fallback],
-        body: ["var(--font-open-sans)", cotanaBrand.font.fallback],
-        sans: ["var(--font-open-sans)", cotanaBrand.font.fallback]
-      },
+      fontFamily: tailwindFontFamily,
       borderRadius: {
         control: cotanaBrand.radius.control,
         card: cotanaBrand.radius.card
+      },
+      boxShadow: {
+        panel: "var(--shadow-panel)",
+        raised: "var(--shadow-raised)"
       }
     }
   },

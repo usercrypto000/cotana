@@ -7,8 +7,10 @@ build
 coverage
 .vercel-bundles
 .env
-.env.local
 .env.development.local
 .env.test.local
 .env.production.local
 prisma/dev.db
+
+.vercel
+.env*.local

@@ -9,6 +9,7 @@ import {
   updateSignalJobStatus
 } from "@cotana/db";
 import { setCacheValue } from "@cotana/db/redis";
+import { logServerError, logServerEvent } from "@cotana/config/runtime";
 import { upsertAppEmbedding } from "@cotana/search";
 import { fetchDefiSignals, fetchLendingYieldSignals } from "@cotana/search/providers/defillama";
 import { fetchCovalentSignals } from "@cotana/search/providers/covalent";
@@ -61,6 +62,9 @@ async function withJobStatus<T>(key: string, handler: () => Promise<T>) {
     lastRunAt: now,
     lastError: null
   });
+  logServerEvent("info", "Background job started.", {
+    jobKey: key
+  });
 
   try {
     const result = await handler();
@@ -69,6 +73,10 @@ async function withJobStatus<T>(key: string, handler: () => Promise<T>) {
       lastRunAt: now,
       lastSuccessAt: new Date().toISOString(),
       lastError: null,
+      summary: typeof result === "string" ? result : "Completed successfully."
+    });
+    logServerEvent("info", "Background job completed.", {
+      jobKey: key,
       summary: typeof result === "string" ? result : "Completed successfully."
     });
     return result;
@@ -80,6 +88,9 @@ async function withJobStatus<T>(key: string, handler: () => Promise<T>) {
       lastRunAt: now,
       lastError: message,
       summary: message
+    });
+    logServerError("Background job failed.", error, {
+      jobKey: key
     });
 
     throw error;

@@ -73,7 +73,7 @@ export function StorePrivyProvider({
           appearance: {
             theme: "light",
             landingHeader: "Sign in to Cotana",
-            loginMessage: "Use email or a browser passkey. No wallet steps are shown.",
+            loginMessage: "Use email or a browser passkey.",
             walletChainType: "ethereum-only"
           },
           embeddedWallets: {

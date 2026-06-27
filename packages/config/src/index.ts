@@ -1,4 +1,9 @@
 import type { AppSummary, CategoryDefinition } from "@cotana/types";
+export * from "./brand";
+export * from "./deployment";
+export * from "./migrations";
+export * from "./registry";
+export * from "./runtime";
 
 export const storeCategories: CategoryDefinition[] = [
   { slug: "all", name: "All", sortOrder: 0 },
@@ -22,7 +27,10 @@ export const adminNavigation = [
   { href: "/apps/new", label: "Create App" },
   { href: "/shelves", label: "Shelves" },
   { href: "/discovery", label: "Discovery" },
+  { href: "/catalog-coverage", label: "Catalog Coverage" },
   { href: "/registry-quality", label: "Registry Quality" },
+  { href: "/launch-checklist", label: "Launch Checklist" },
+  { href: "/environment-health", label: "Env Health" },
   { href: "/reviews", label: "Flag Queue" },
   { href: "/signals", label: "Signal Jobs" }
 ];

@@ -57,7 +57,7 @@ export function DiscoveryConfigPanel({ entries }: { entries: ConfigEntry[] }) {
         <Card key={entry.key}>
           <CardHeader>
             <CardTitle>{entry.label}</CardTitle>
-            <p className="text-sm text-slate-500">{entry.key}</p>
+            <p className="text-sm text-neutral-muted">{entry.key}</p>
           </CardHeader>
           <CardContent className="space-y-4">
             <textarea
@@ -68,7 +68,7 @@ export function DiscoveryConfigPanel({ entries }: { entries: ConfigEntry[] }) {
                   [entry.key]: event.target.value
                 }))
               }
-              className="min-h-56 w-full rounded-2xl border bg-slate-950 px-4 py-3 font-mono text-sm text-slate-100"
+              className="min-h-56 w-full rounded-2xl border bg-brand-text px-4 py-3 font-mono text-sm text-neutral-inverse/88"
             />
             <Button onClick={() => void save(entry.key)} disabled={savingKey === entry.key}>
               {savingKey === entry.key ? "Saving..." : "Save config"}
@@ -76,7 +76,7 @@ export function DiscoveryConfigPanel({ entries }: { entries: ConfigEntry[] }) {
           </CardContent>
         </Card>
       ))}
-      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {error ? <p className="text-sm ui-copy-danger">{error}</p> : null}
     </div>
   );
 }

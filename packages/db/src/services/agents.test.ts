@@ -6,12 +6,16 @@ const mocks = vi.hoisted(() => ({
       findMany: vi.fn(),
       findFirst: vi.fn()
     },
+    category: {
+      findMany: vi.fn()
+    },
     configKV: {
       findUnique: vi.fn()
     },
     agentRegistryEvaluationLog: {
       create: vi.fn(),
-      findMany: vi.fn()
+      findMany: vi.fn(),
+      findUnique: vi.fn()
     },
     agentRegistryIntentTestRun: {
       create: vi.fn(),
@@ -25,12 +29,18 @@ vi.mock("../client", () => ({
 }));
 
 import {
+  compareLatestAgentRegistryIntentTestRuns,
+  classifyAgentSeedFixture,
+  getCatalogCoverageAudit,
+  getAgentRegistryHealthExport,
   getAgentRegistryManifest,
+  getAgentRegistryPublicReadinessMetadata,
   getAgentRegistryCompatibilityReport,
   getAgentCapabilityQualityDistribution,
   getAgentRegistryCapabilityManifest,
   getAgentRegistryQualitySummary,
   listAgentIntentTestCases,
+  listAgentRedTeamTestCases,
   listAgentRegistryEvaluationLogs,
   listAgentRegistryIntentTestRuns,
   recordAgentRegistryEvaluationLog,
@@ -133,6 +143,44 @@ describe("agent registry service", () => {
     expect(manifest?.capability.slug).toBe("compare-yield-options");
     expect(manifest?.usageBoundary.cotanaCanExecute).toBe(false);
     expect(manifest?.qualitySignals.schemaComplete).toBe(true);
+  });
+
+  it("can explain deprecated capabilities on direct manifest reads", async () => {
+    mocks.prisma.app.findFirst.mockResolvedValue({
+      ...appRecord,
+      agentCapabilities: [
+        {
+          ...appRecord.agentCapabilities[0],
+          status: "DEPRECATED",
+          deprecatedAt: new Date("2026-05-17T00:00:00.000Z"),
+          deprecationReason: "Use the v2 capability.",
+          replacementDocsUrl: "https://example.com/docs/v2"
+        }
+      ]
+    });
+
+    const manifest = await getAgentRegistryCapabilityManifest("harbor-yield", "compare-yield-options");
+
+    expect(manifest?.capability.status).toBe("DEPRECATED");
+    expect(manifest?.capability.deprecationReason).toBe("Use the v2 capability.");
+    expect(manifest?.capability.replacementDocsUrl).toBe("https://example.com/docs/v2");
+    expect(manifest?.qualityWarnings).toContain("deprecated");
+    expect(manifest?.qualityWarnings).toContain("read_only_only");
+    expect(mocks.prisma.app.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          slug: "harbor-yield",
+          agentCapabilities: {
+            some: {
+              slug: "compare-yield-options",
+              status: {
+                in: ["ACTIVE", "DEPRECATED"]
+              }
+            }
+          }
+        })
+      }),
+    );
   });
 
   it("searches by matched capability", async () => {
@@ -240,7 +288,39 @@ describe("agent registry service", () => {
     expect(report.totals.capabilityCount).toBe(1);
     expect(report.compatible.capabilityCount).toBe(1);
     expect(report.coverageRatio).toBe(1);
+    expect(report.compatibilityConfidence.grade).toBe("high");
     expect(report.guidance).toContain("discovery targets");
+  });
+
+  it("computes medium and low compatibility confidence deterministically", async () => {
+    mocks.prisma.app.findMany.mockResolvedValue([
+      {
+        ...appRecord,
+        agentCapabilities: [
+          {
+            ...appRecord.agentCapabilities[0],
+            inputSchemaJson: null,
+            outputSchemaJson: null,
+            safetyNotes: "",
+            reliabilityScore: 0.2
+          }
+        ]
+      }
+    ]);
+
+    const weakReport = await getAgentRegistryCompatibilityReport({
+      interactionModes: ["READ_ONLY"]
+    });
+    const emptyReport = await getAgentRegistryCompatibilityReport({
+      authTypes: ["MCP"]
+    });
+
+    expect(weakReport.compatibilityConfidence.grade).toBe("medium");
+    expect(weakReport.compatibilityConfidence.blockingGaps).toEqual(
+      expect.arrayContaining(["Schema coverage is below 80%.", "Safety-note coverage is below 80%."]),
+    );
+    expect(emptyReport.compatibilityConfidence.grade).toBe("low");
+    expect(emptyReport.compatibilityConfidence.blockingGaps).toContain("No compatible capabilities matched these filters.");
   });
 
   it("classifies capability quality signals", () => {
@@ -286,6 +366,27 @@ describe("agent registry service", () => {
     expect(testCases[0]?.id).toBe("yield");
   });
 
+  it("loads red-team registry query cases from config", async () => {
+    mocks.prisma.configKV.findUnique.mockResolvedValue({
+      valueJson: [
+        {
+          id: "red-empty",
+          suiteType: "red_team",
+          intent: "",
+          expectedEmptyResult: true
+        }
+      ]
+    });
+
+    const testCases = await listAgentRedTeamTestCases();
+
+    expect(testCases[0]).toMatchObject({
+      id: "red-empty",
+      suiteType: "red_team",
+      expectedEmptyResult: true
+    });
+  });
+
   it("records and lists agent registry evaluation logs", async () => {
     mocks.prisma.agentRegistryEvaluationLog.create.mockResolvedValue({});
     mocks.prisma.agentRegistryEvaluationLog.findMany.mockResolvedValue([{ id: "log-1" }]);
@@ -304,6 +405,9 @@ describe("agent registry service", () => {
         capabilitySlug: "compare-yield-options",
         categorySlug: "lending-yield",
         capabilityType: "comparison",
+        authType: "API_KEY",
+        interfaceType: "HTTP_API",
+        interactionMode: "READ_ONLY",
         readinessBucket: "ready",
         similarity: 0.8,
         score: 0.9,
@@ -315,8 +419,12 @@ describe("agent registry service", () => {
     });
     const logs = await listAgentRegistryEvaluationLogs({
       limit: 1,
+      query: "yield",
       categorySlug: "lending-yield",
       capabilityType: "comparison",
+      authType: "API_KEY",
+      interfaceType: "HTTP_API",
+      interactionMode: "READ_ONLY",
       readinessBucket: "ready"
     });
 
@@ -325,6 +433,9 @@ describe("agent registry service", () => {
         data: expect.objectContaining({
           topCategorySlug: "lending-yield",
           topCapabilityType: "comparison",
+          topAuthType: "API_KEY",
+          topInterfaceType: "HTTP_API",
+          topInteractionMode: "READ_ONLY",
           topReadinessBucket: "ready"
         })
       }),
@@ -334,6 +445,9 @@ describe("agent registry service", () => {
         where: expect.objectContaining({
           topCategorySlug: "lending-yield",
           topCapabilityType: "comparison",
+          topAuthType: "API_KEY",
+          topInterfaceType: "HTTP_API",
+          topInteractionMode: "READ_ONLY",
           topReadinessBucket: "ready"
         })
       }),
@@ -347,8 +461,10 @@ describe("agent registry service", () => {
 
     await recordAgentRegistryIntentTestRun({
       id: "yield",
+      testSetVersion: "seeded-1",
       intent: "find yield rates",
       categorySlug: "lending-yield",
+      expectedAppSlugs: ["harbor-yield"],
       expectedCapabilityTypes: ["comparison"],
       filters: {
         interactionModes: ["READ_ONLY"]
@@ -361,6 +477,7 @@ describe("agent registry service", () => {
       topCapabilitySlug: "compare-yield-options",
       topCapabilityType: "comparison",
       topScore: 0.9,
+      topQualityScore: 92,
       topMatchReason: "Semantic similarity 0.800.",
       reason: "Top capability matched the expected intent profile.",
       failureReason: null
@@ -371,14 +488,170 @@ describe("agent registry service", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           testCaseId: "yield",
+          testSetVersion: "seeded-1",
           query: "find yield rates",
+          expectedAppSlugsJson: ["harbor-yield"],
           topMatchedAppSlug: "harbor-yield",
           topMatchedCapabilitySlug: "compare-yield-options",
+          qualityScore: 92,
           passed: true,
           failureReason: null
         })
       }),
     );
     expect(runs[0]?.id).toBe("run-1");
+  });
+
+  it("compares latest intent test run history against the previous run", async () => {
+    mocks.prisma.agentRegistryIntentTestRun.findMany.mockResolvedValue([
+      {
+        testSetVersion: "seeded-2",
+        testCaseId: "yield",
+        query: "find yield rates",
+        filtersJson: {},
+        expectedCategorySlug: "lending-yield",
+        expectedAppSlugsJson: ["harbor-yield"],
+        expectedCapabilityTypesJson: ["comparison"],
+        expectedCapabilitySlugsJson: null,
+        topMatchedAppId: "app-2",
+        topMatchedAppSlug: "signal-bet",
+        topMatchedCategorySlug: "prediction-markets",
+        topMatchedCapabilityId: "cap-2",
+        topMatchedCapabilitySlug: "find-active-markets",
+        topMatchedCapabilityType: "search",
+        score: 0.7,
+        qualityScore: 82,
+        matchReason: "Matched wrong category.",
+        passed: false,
+        failureReason: "Top category prediction-markets did not match expected category lending-yield.",
+        ranAt: new Date("2026-05-17T10:00:00.000Z")
+      },
+      {
+        testSetVersion: "seeded-1",
+        testCaseId: "yield",
+        query: "find yield rates",
+        filtersJson: {},
+        expectedCategorySlug: "lending-yield",
+        expectedAppSlugsJson: ["harbor-yield"],
+        expectedCapabilityTypesJson: ["comparison"],
+        expectedCapabilitySlugsJson: null,
+        topMatchedAppId: "app-1",
+        topMatchedAppSlug: "harbor-yield",
+        topMatchedCategorySlug: "lending-yield",
+        topMatchedCapabilityId: "cap-1",
+        topMatchedCapabilitySlug: "compare-yield-options",
+        topMatchedCapabilityType: "comparison",
+        score: 0.9,
+        qualityScore: 92,
+        matchReason: "Matched.",
+        passed: true,
+        failureReason: null,
+        ranAt: new Date("2026-05-16T10:00:00.000Z")
+      }
+    ]);
+
+    const comparison = await compareLatestAgentRegistryIntentTestRuns();
+
+    expect(comparison.latestVersion).toBe("seeded-2");
+    expect(comparison.previousVersion).toBe("seeded-1");
+    expect(comparison.newlyFailing[0]?.id).toBe("yield");
+  });
+
+  it("classifies weak metadata fixtures as blocked or unsafe", () => {
+    const missingSchema = getAgentCapabilityReadinessBucket({
+      ...appRecord.agentCapabilities[0],
+      inputSchemaJson: null,
+      outputSchemaJson: null
+    });
+    const unsafe = getAgentCapabilityReadinessBucket({
+      ...appRecord.agentCapabilities[0],
+      interactionMode: "WRITE_ACTION"
+    });
+
+    expect(missingSchema).toBe("missing_schema");
+    expect(unsafe).toBe("unsafe_interaction_mode");
+    expect(
+      classifyAgentSeedFixture({
+        agentCapabilities: [
+          {
+            ...appRecord.agentCapabilities[0],
+            inputSchemaJson: null
+          }
+        ]
+      }),
+    ).toBe("weak");
+    expect(
+      classifyAgentSeedFixture({
+        agentListingStatus: "PAUSED",
+        agentCapabilities: [appRecord.agentCapabilities[0]]
+      }),
+    ).toBe("paused");
+  });
+
+  it("builds a catalog coverage audit with thin-area warnings", async () => {
+    mocks.prisma.category.findMany.mockResolvedValue([
+      {
+        id: "cat-1",
+        slug: "lending-yield",
+        name: "Lending & Yield",
+        sortOrder: 1,
+        apps: [
+          {
+            ...appRecord,
+            screenshots: [{ id: "shot-1" }],
+            reviews: [],
+            updates: [{ id: "update-1" }],
+            signalSnapshots: [],
+            agentCapabilities: [appRecord.agentCapabilities[0]]
+          }
+        ]
+      }
+    ]);
+
+    const audit = await getCatalogCoverageAudit();
+
+    expect(audit.humanCategories[0]).toMatchObject({
+      totalPublishedApps: 1,
+      appsWithScreenshots: 1,
+      appsWithUpdates: 1
+    });
+    expect(audit.agentCategories[0]).toMatchObject({
+      publishedRegistryListings: 1,
+      activeCapabilities: 1,
+      schemaCoverage: 1
+    });
+    expect(audit.warnings.some((warning) => warning.includes("fewer than 3 published human apps"))).toBe(true);
+    expect(audit.warnings.some((warning) => warning.includes("fewer than 2 agent-ready listings"))).toBe(true);
+  });
+
+  it("returns public-safe readiness metadata", async () => {
+    mocks.prisma.app.findMany.mockResolvedValue([appRecord]);
+
+    const readiness = await getAgentRegistryPublicReadinessMetadata();
+
+    expect(readiness).toMatchObject({
+      registryVersion: "2026-05-17",
+      schemaVersion: "2026-05-17",
+      publishedAppCount: 1,
+      activeCapabilityCount: 1,
+      docsUrl: "/agent-registry/docs",
+      policyUrl: "/api/agent-registry/policy"
+    });
+    expect(readiness.supportedCapabilityTypes).toContain("comparison");
+  });
+
+  it("exports compact registry health", async () => {
+    mocks.prisma.app.findMany.mockResolvedValue([appRecord]);
+
+    const health = await getAgentRegistryHealthExport();
+
+    expect(health).toMatchObject({
+      totalRegistryApps: 1,
+      publishedRegistryApps: 1,
+      activeCapabilities: 1
+    });
+    expect(health.gradeDistribution.excellent).toBe(1);
+    expect(health.readinessBucketDistribution.ready).toBe(1);
+    expect(health.authCoverage.API_KEY).toBe(1);
   });
 });

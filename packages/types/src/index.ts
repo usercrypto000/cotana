@@ -4,6 +4,62 @@ export type CategoryDefinition = {
   sortOrder: number;
 };
 
+export type AppVerificationStatus = "verified" | "reviewed" | "unreviewed" | "experimental";
+
+export type AppPublisherType = "team" | "individual" | "protocol" | "unknown";
+
+export type AppTrustMetadata = {
+  verificationStatus: AppVerificationStatus;
+  publisherName: string;
+  publisherType: AppPublisherType;
+  supportedChains: string[];
+  permissionScopes: string[];
+  paymentCapabilities: string[];
+  custodyModel: string;
+  externalRiskNotes: string;
+  lastReviewedAt: Date | null;
+  reviewSummary: string;
+};
+
+export const fallbackTrustMetadata: AppTrustMetadata = {
+  verificationStatus: "unreviewed",
+  publisherName: "Unknown publisher",
+  publisherType: "unknown",
+  supportedChains: ["Not specified"],
+  permissionScopes: ["Not specified"],
+  paymentCapabilities: ["None listed"],
+  custodyModel: "Not specified",
+  externalRiskNotes: "No external risk notes recorded.",
+  lastReviewedAt: null,
+  reviewSummary: "Cotana has not completed a full trust review for this app."
+};
+
+export function normalizeTrustMetadata(
+  metadata?: Partial<AppTrustMetadata> | null,
+  legacy?: {
+    verified?: boolean;
+    lastReviewedAt?: Date | null;
+    agentAudience?: AppAudience;
+  },
+): AppTrustMetadata {
+  const verificationStatus =
+    metadata?.verificationStatus ??
+    (legacy?.verified ? "verified" : legacy?.agentAudience === "AGENT" ? "experimental" : fallbackTrustMetadata.verificationStatus);
+
+  return {
+    verificationStatus,
+    publisherName: metadata?.publisherName?.trim() || fallbackTrustMetadata.publisherName,
+    publisherType: metadata?.publisherType ?? fallbackTrustMetadata.publisherType,
+    supportedChains: metadata?.supportedChains?.length ? metadata.supportedChains : fallbackTrustMetadata.supportedChains,
+    permissionScopes: metadata?.permissionScopes?.length ? metadata.permissionScopes : fallbackTrustMetadata.permissionScopes,
+    paymentCapabilities: metadata?.paymentCapabilities?.length ? metadata.paymentCapabilities : fallbackTrustMetadata.paymentCapabilities,
+    custodyModel: metadata?.custodyModel?.trim() || fallbackTrustMetadata.custodyModel,
+    externalRiskNotes: metadata?.externalRiskNotes?.trim() || fallbackTrustMetadata.externalRiskNotes,
+    lastReviewedAt: metadata?.lastReviewedAt ?? legacy?.lastReviewedAt ?? fallbackTrustMetadata.lastReviewedAt,
+    reviewSummary: metadata?.reviewSummary?.trim() || fallbackTrustMetadata.reviewSummary
+  };
+}
+
 export type AppSummary = {
   id: string;
   slug: string;
@@ -19,6 +75,7 @@ export type AppSummary = {
   rating: number;
   reviewCount: number;
   likeCount: number;
+  trustMetadata?: AppTrustMetadata;
 };
 
 export type AppAudience = "HUMAN" | "AGENT" | "HYBRID";
@@ -50,6 +107,13 @@ export type AgentCapabilitySummary = {
   status: AgentCapabilityStatus;
   reliabilityScore: number | null;
   latencyP50Ms: number | null;
+  manifestVersion: number;
+  updatedAt: Date;
+  lastReviewedAt: Date | null;
+  deprecatedAt: Date | null;
+  deprecationReason: string | null;
+  replacementCapabilityId: string | null;
+  replacementDocsUrl: string | null;
 };
 
 export type AgentCapabilityQualitySignals = {
@@ -64,6 +128,14 @@ export type AgentCapabilityQualitySignals = {
   qualityScore: number;
   qualityGrade: "excellent" | "good" | "needs_metadata" | "unsafe";
 };
+
+export type AgentManifestQualityWarning =
+  | "deprecated"
+  | "docs_missing"
+  | "schema_partial"
+  | "reliability_unknown"
+  | "human_handoff_required"
+  | "read_only_only";
 
 export type AgentRegistryReadinessBucket =
   | "ready"
@@ -88,6 +160,9 @@ export type AgentRegistryApp = {
   agentListingStatus: "PUBLISHED";
   agentSummary: string;
   agentDocsUrl: string | null;
+  manifestVersion: number;
+  updatedAt: Date;
+  lastReviewedAt: Date | null;
   category: Pick<CategoryDefinition, "slug" | "name">;
   capabilities: AgentCapabilitySummary[];
 };
@@ -96,6 +171,7 @@ export type AgentRegistryManifest = {
   version: string;
   purpose: "discovery";
   app: AgentRegistryApp;
+  qualityWarnings: AgentManifestQualityWarning[];
   trustBoundary: {
     cotanaRole: "DISCOVERY_ONLY";
     execution: "EXTERNAL_APP";
@@ -109,6 +185,7 @@ export type AgentCapabilityManifest = {
   app: Omit<AgentRegistryApp, "capabilities">;
   capability: AgentCapabilitySummary;
   qualitySignals: AgentCapabilityQualitySignals;
+  qualityWarnings: AgentManifestQualityWarning[];
   usageBoundary: {
     cotanaCanExecute: false;
     credentialHandling: "EXTERNAL_APP";
@@ -160,6 +237,13 @@ export type AgentRegistryCompatibilityReport = {
     capabilityCount: number;
   };
   coverageRatio: number;
+  compatibilityConfidence: {
+    score: number;
+    grade: "high" | "medium" | "low";
+    reasons: string[];
+    blockingGaps: string[];
+    recommendedFilterChanges: string[];
+  };
   guidance: string;
 };
 
@@ -178,8 +262,25 @@ export type AgentRegistryQualitySummary = {
 
 export type AgentCapabilityQualityDistribution = {
   totalCapabilities: number;
+  pausedCapabilityCount: number;
+  deprecatedCapabilityCount: number;
   gradeCounts: Record<AgentCapabilityQualitySignals["qualityGrade"], number>;
   readinessBucketCounts: Record<AgentRegistryReadinessBucket, number>;
+  capabilityTypeCounts: Record<string, number>;
+  authTypeCounts: Record<AgentAuthType, number>;
+  interfaceTypeCounts: Record<AgentInterfaceType, number>;
+  interactionModeCounts: Record<AgentInteractionMode, number>;
+  listingStatusCounts: Record<AgentListingStatus, number>;
+  nonReadOnlyCapabilities: Array<{
+    appId: string;
+    appSlug: string;
+    appName: string;
+    capabilityId: string;
+    capabilitySlug: string;
+    capabilityName: string;
+    interactionMode: AgentInteractionMode;
+    readinessBucket: AgentRegistryReadinessBucket;
+  }>;
   matrix: Array<{
     grade: AgentCapabilityQualitySignals["qualityGrade"];
     readinessBucket: AgentRegistryReadinessBucket;
@@ -214,6 +315,9 @@ export type AgentRegistrySearchEvaluation = {
         capabilitySlug: string;
         categorySlug: string;
         capabilityType: string;
+        authType: AgentAuthType;
+        interfaceType: AgentInterfaceType;
+        interactionMode: AgentInteractionMode;
         readinessBucket: AgentRegistryReadinessBucket;
         similarity: number;
         score: number;
@@ -228,13 +332,19 @@ export type AgentRegistrySearchEvaluation = {
 export type AgentIntentTestCase = {
   id: string;
   intent: string;
+  suiteType?: "seeded" | "red_team";
   categorySlug?: string | null;
+  expectedAppSlugs?: string[];
   expectedCapabilityTypes?: string[];
   expectedCapabilitySlugs?: string[];
+  expectedEmptyResult?: boolean;
+  expectedExclusionReason?: string;
+  expectedBlockedUnsafeMode?: boolean;
   filters?: AgentRegistrySearchFilters;
 };
 
 export type AgentIntentTestResult = AgentIntentTestCase & {
+  testSetVersion: string;
   passed: boolean;
   topAppId: string | null;
   topAppSlug: string | null;
@@ -243,9 +353,99 @@ export type AgentIntentTestResult = AgentIntentTestCase & {
   topCapabilitySlug: string | null;
   topCapabilityType: string | null;
   topScore: number | null;
+  topQualityScore: number | null;
   topMatchReason: string | null;
+  expectedEmptyResult?: boolean;
+  expectedExclusionReason?: string;
+  expectedBlockedUnsafeMode?: boolean;
   reason: string;
   failureReason: string | null;
+};
+
+export type AgentIntentTestRegressionSummary = {
+  latestVersion: string | null;
+  previousVersion: string | null;
+  latestRunCount: number;
+  previousRunCount: number;
+  newlyFailing: AgentIntentTestResult[];
+  newlyPassing: AgentIntentTestResult[];
+  unchangedFailures: AgentIntentTestResult[];
+};
+
+export type AgentRegistryHealthExport = {
+  totalRegistryApps: number;
+  publishedRegistryApps: number;
+  draftRegistryApps: number;
+  pausedRegistryApps: number;
+  activeCapabilities: number;
+  averageQualityScore: number;
+  gradeDistribution: AgentCapabilityQualityDistribution["gradeCounts"];
+  readinessBucketDistribution: AgentCapabilityQualityDistribution["readinessBucketCounts"];
+  blockedPublicationReasons: Array<{
+    issue: string;
+    count: number;
+  }>;
+  capabilityTypeCoverage: Record<string, number>;
+  authCoverage: Record<AgentAuthType, number>;
+  interfaceCoverage: Record<AgentInterfaceType, number>;
+  interactionCoverage: Record<AgentInteractionMode, number>;
+};
+
+export type AgentRegistryPublicReadinessMetadata = {
+  registryVersion: string;
+  schemaVersion: string;
+  publishedAppCount: number;
+  activeCapabilityCount: number;
+  supportedCapabilityTypes: string[];
+  supportedAuthTypes: AgentAuthType[];
+  supportedInterfaceTypes: AgentInterfaceType[];
+  supportedInteractionModes: AgentInteractionMode[];
+  docsUrl: string;
+  policyUrl: string;
+};
+
+export type CatalogCoverageAudit = {
+  generatedAt: Date;
+  humanCategories: Array<{
+    category: Pick<CategoryDefinition, "slug" | "name">;
+    totalPublishedApps: number;
+    totalDraftApps: number;
+    appsWithScreenshots: number;
+    appsWithReviews: number;
+    appsWithUpdates: number;
+    appsWithVerifiedBadge: number;
+    appsWithCommunityPickStatus: number;
+    appsWithSignalSnapshots: number;
+    warnings: string[];
+  }>;
+  agentCategories: Array<{
+    category: Pick<CategoryDefinition, "slug" | "name">;
+    totalRegistryApps: number;
+    publishedRegistryListings: number;
+    draftRegistryListings: number;
+    pausedRegistryListings: number;
+    activeCapabilities: number;
+    deprecatedCapabilities: number;
+    averageCapabilityQuality: number;
+    schemaCoverage: number;
+    docsCoverage: number;
+    safetyNotesCoverage: number;
+    readOnlyCoverage: number;
+    warnings: string[];
+  }>;
+  capabilityTypes: Array<{
+    capabilityType: string;
+    agentReadyListingCount: number;
+    activeCapabilities: number;
+    deprecatedCapabilities: number;
+    averageCapabilityQuality: number;
+    schemaCoverage: number;
+    docsCoverage: number;
+    safetyNotesCoverage: number;
+    readOnlyCoverage: number;
+    warnings: string[];
+  }>;
+  warnings: string[];
 };
 
 export type SearchCategoryHint =

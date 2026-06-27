@@ -40,6 +40,8 @@ type AppRecord = {
   agentSummary: string | null;
   agentDocsUrl: string | null;
   agentIntegrationNotes: string | null;
+  agentManifestVersion: number;
+  agentLastReviewedAt: Date | string | null;
   status: AppStatusValue;
   category: {
     id: string;
@@ -67,6 +69,12 @@ type AgentCapabilityFormRecord = {
   status: AgentCapabilityStatusValue;
   reliabilityScore?: number | null;
   latencyP50Ms?: number | null;
+  manifestVersion?: number;
+  lastReviewedAt?: Date | string | null;
+  deprecatedAt?: Date | string | null;
+  deprecationReason?: string | null;
+  replacementCapabilityId?: string | null;
+  replacementDocsUrl?: string | null;
 };
 
 type FormState = {
@@ -182,6 +190,15 @@ export function AdminAppForm({
   const [form, setForm] = useState<FormState>(() => buildInitialState(app));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const capabilityPreview = (() => {
+    try {
+      return parseAgentCapabilities(form.agentCapabilitiesJson);
+    } catch {
+      return [];
+    }
+  })();
+  const deprecatedCapabilities = capabilityPreview.filter((capability) => capability.status === "DEPRECATED");
+  const pausedCapabilities = capabilityPreview.filter((capability) => capability.status === "PAUSED");
 
   async function submit(status?: AppStatusValue) {
     setSaving(status ?? "SAVE");
@@ -287,52 +304,58 @@ export function AdminAppForm({
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle>{mode === "create" ? "Create app" : "Edit app"}</CardTitle>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-neutral-muted">
             Keep the public card minimal. Detailed copy, tags, and screenshots still feed discovery and ranking.
           </p>
         </div>
-        {app ? <Badge>{app.status}</Badge> : null}
+        <div className="flex flex-wrap justify-end gap-2">
+          {app ? <Badge>{app.status}</Badge> : null}
+          {app ? <Badge variant="agent">Manifest v{app.agentManifestVersion}</Badge> : null}
+          {app?.agentLastReviewedAt ? (
+            <Badge variant="secondary">Reviewed {new Date(app.agentLastReviewedAt).toLocaleDateString()}</Badge>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Name</span>
             <input
               value={form.name}
               onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             />
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Slug</span>
             <input
               value={form.slug}
               onChange={(event) => setForm((current) => ({ ...current, slug: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             />
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Website URL</span>
             <input
               value={form.websiteUrl}
               onChange={(event) => setForm((current) => ({ ...current, websiteUrl: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             />
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Logo URL</span>
             <input
               value={form.logoUrl}
               onChange={(event) => setForm((current) => ({ ...current, logoUrl: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             />
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Category</span>
             <select
               value={form.categoryId}
               onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             >
               <option value="">Select a category</option>
               {categories
@@ -344,7 +367,7 @@ export function AdminAppForm({
                 ))}
             </select>
           </label>
-          <label className="flex items-center gap-3 rounded-xl border p-4 text-sm text-slate-600">
+          <label className="flex items-center gap-3 rounded-xl border p-4 text-sm text-brand-text/72">
             <input
               type="checkbox"
               checked={form.verified}
@@ -355,7 +378,7 @@ export function AdminAppForm({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Audience</span>
             <select
               value={form.agentAudience}
@@ -367,7 +390,7 @@ export function AdminAppForm({
                     event.target.value === "HUMAN" ? "NOT_APPLICABLE" : current.agentListingStatus
                 }))
               }
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             >
               {appAudienceValues.map((value) => (
                 <option key={value} value={value}>
@@ -376,14 +399,14 @@ export function AdminAppForm({
               ))}
             </select>
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Agent registry status</span>
             <select
               value={form.agentListingStatus}
               onChange={(event) =>
                 setForm((current) => ({ ...current, agentListingStatus: event.target.value as AgentListingStatusValue }))
               }
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
             >
               {agentListingStatusValues.map((value) => (
                 <option key={value} value={value}>
@@ -392,99 +415,113 @@ export function AdminAppForm({
               ))}
             </select>
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Agent summary</span>
             <textarea
               value={form.agentSummary}
               onChange={(event) => setForm((current) => ({ ...current, agentSummary: event.target.value }))}
-              className="min-h-24 w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-950"
+              className="min-h-24 w-full rounded-xl border bg-neutral-panel px-4 py-3 text-sm text-brand-text"
               placeholder="What can an AI agent safely use this app for?"
             />
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Agent docs URL</span>
             <input
               value={form.agentDocsUrl}
               onChange={(event) => setForm((current) => ({ ...current, agentDocsUrl: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
+              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
               placeholder="https://docs.example.com/agents"
             />
           </label>
         </div>
 
-        <label className="space-y-2 text-sm text-slate-600">
+        <label className="space-y-2 text-sm text-brand-text/72">
           <span>Agent integration notes</span>
           <textarea
             value={form.agentIntegrationNotes}
             onChange={(event) => setForm((current) => ({ ...current, agentIntegrationNotes: event.target.value }))}
-            className="min-h-24 w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-950"
+            className="min-h-24 w-full rounded-xl border bg-neutral-panel px-4 py-3 text-sm text-brand-text"
             placeholder="Internal notes for registry review. This is not shown publicly."
           />
         </label>
 
-        <label className="space-y-2 text-sm text-slate-600">
+        <label className="space-y-2 text-sm text-brand-text/72">
           <span>Verified note</span>
           <textarea
             value={form.verifiedNote}
             onChange={(event) => setForm((current) => ({ ...current, verifiedNote: event.target.value }))}
-            className="min-h-24 w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-950"
+            className="min-h-24 w-full rounded-xl border bg-neutral-panel px-4 py-3 text-sm text-brand-text"
             placeholder="Internal note for why this app is verified."
           />
         </label>
 
-        <label className="space-y-2 text-sm text-slate-600">
+        <label className="space-y-2 text-sm text-brand-text/72">
           <span>Short description</span>
           <textarea
             value={form.shortDescription}
             onChange={(event) => setForm((current) => ({ ...current, shortDescription: event.target.value }))}
-            className="min-h-24 w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-950"
+            className="min-h-24 w-full rounded-xl border bg-neutral-panel px-4 py-3 text-sm text-brand-text"
           />
         </label>
 
-        <label className="space-y-2 text-sm text-slate-600">
+        <label className="space-y-2 text-sm text-brand-text/72">
           <span>Long description</span>
           <textarea
             value={form.longDescription}
             onChange={(event) => setForm((current) => ({ ...current, longDescription: event.target.value }))}
-            className="min-h-40 w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-950"
+            className="min-h-40 w-full rounded-xl border bg-neutral-panel px-4 py-3 text-sm text-brand-text"
           />
         </label>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Tags</span>
             <textarea
               value={form.tags}
               onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))}
-              className="min-h-28 w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-950"
+              className="min-h-28 w-full rounded-xl border bg-neutral-panel px-4 py-3 text-sm text-brand-text"
               placeholder="yield, savings, stablecoins"
             />
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-brand-text/72">
             <span>Screenshots</span>
             <textarea
               value={form.screenshots}
               onChange={(event) => setForm((current) => ({ ...current, screenshots: event.target.value }))}
-              className="min-h-28 w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-950"
+              className="min-h-28 w-full rounded-xl border bg-neutral-panel px-4 py-3 text-sm text-brand-text"
               placeholder="One image URL per line"
             />
           </label>
         </div>
 
-        <label className="space-y-2 text-sm text-slate-600">
+        <label className="space-y-2 text-sm text-brand-text/72">
           <span>Agent capabilities JSON</span>
           <textarea
             value={form.agentCapabilitiesJson}
             onChange={(event) => setForm((current) => ({ ...current, agentCapabilitiesJson: event.target.value }))}
-            className="min-h-72 w-full rounded-xl border bg-white px-4 py-3 font-mono text-xs text-slate-950"
+            className="min-h-72 w-full rounded-xl border bg-neutral-panel px-4 py-3 font-mono text-xs text-brand-text"
             placeholder={`Allowed auth types: ${agentAuthTypeValues.join(", ")}. Interface values: ${agentInterfaceTypeValues.join(", ")}. Interaction modes: ${agentInteractionModeValues.join(", ")}. Status values: ${agentCapabilityStatusValues.join(", ")}.`}
           />
         </label>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="agent">{capabilityPreview.length} capabilities</Badge>
+          <Badge variant={pausedCapabilities.length > 0 ? "warning" : "secondary"}>
+            {pausedCapabilities.length} paused
+          </Badge>
+          <Badge variant={deprecatedCapabilities.length > 0 ? "danger" : "secondary"}>
+            {deprecatedCapabilities.length} deprecated
+          </Badge>
+          {deprecatedCapabilities.map((capability) => (
+            <Badge key={capability.slug ?? capability.name} variant="danger">
+              {capability.slug ?? capability.name} deprecated
+            </Badge>
+          ))}
+        </div>
         <Button type="button" variant="outline" onClick={setAgentCapabilitiesToExample}>
           Reset agent example
         </Button>
 
-        {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+        {error ? <p className="text-sm ui-copy-danger">{error}</p> : null}
 
         <div className="flex flex-wrap gap-3">
           <Button onClick={() => void submitWithErrorBoundary(AppStatus.DRAFT)} disabled={Boolean(saving)}>

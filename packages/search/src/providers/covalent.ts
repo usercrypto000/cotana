@@ -19,9 +19,12 @@ export function isCovalentConfigured() {
 }
 
 export async function fetchCovalentSignals(
-  _category: CovalentCategory,
-  _apps: SignalRefreshApp[],
+  category: CovalentCategory,
+  apps: SignalRefreshApp[],
 ): Promise<CovalentSignalResult[]> {
+  void category;
+  void apps;
+
   if (!isCovalentConfigured()) {
     return [];
   }

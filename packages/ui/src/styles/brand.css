@@ -1,0 +1,128 @@
+:root {
+  color-scheme: light;
+}
+
+.cotana-store-dark {
+  --brand-surface: 222 47% 5%;
+  --brand-text: 210 40% 98%;
+  --neutral-surface: 222 37% 12%;
+  --neutral-panel: 222 42% 8%;
+  --neutral-border: 218 25% 18%;
+  --neutral-muted: 215 19% 74%;
+  --neutral-subtle: 216 13% 55%;
+  --neutral-inverse: 0 0% 100%;
+  --shadow-panel: 0 22px 70px hsl(222 47% 2% / 0.42);
+  --shadow-raised: 0 28px 90px hsl(221 83% 18% / 0.32);
+  color-scheme: dark;
+}
+
+* {
+  border-color: hsl(var(--neutral-border));
+}
+
+html {
+  background: hsl(var(--brand-surface));
+}
+
+body {
+  min-height: 100vh;
+  background: hsl(var(--brand-surface));
+  color: hsl(var(--brand-text));
+  font-family: var(--font-open-sans), var(--font-inter), system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-ubuntu), var(--font-inter), system-ui, sans-serif;
+}
+
+::selection {
+  background: hsl(var(--brand-primary) / 0.18);
+  color: hsl(var(--brand-text));
+}
+
+.ui-copy-muted {
+  color: hsl(var(--neutral-muted));
+}
+
+.ui-copy-subtle {
+  color: hsl(var(--neutral-subtle));
+}
+
+.ui-copy-danger {
+  color: hsl(var(--trust-danger));
+}
+
+.ui-panel-subtle {
+  border: 1px solid hsl(var(--neutral-border));
+  border-radius: var(--radius-card);
+  background: hsl(var(--neutral-surface));
+}
+
+.ui-panel-agent {
+  border: 1px solid hsl(var(--trust-agent) / 0.18);
+  border-radius: var(--radius-card);
+  background: hsl(var(--trust-agent-soft));
+}
+
+.ui-empty-state {
+  border: 1px dashed hsl(var(--neutral-border));
+  border-radius: var(--radius-card);
+  background: hsl(var(--neutral-panel));
+  color: hsl(var(--neutral-muted));
+}
+
+.cotana-store-dark .ui-empty-state {
+  background:
+    radial-gradient(circle at top left, hsl(var(--brand-primary) / 0.12), transparent 34rem),
+    hsl(var(--neutral-panel) / 0.86);
+}
+
+.cotana-store-shell {
+  background:
+    radial-gradient(circle at 12% 8%, hsl(var(--brand-primary) / 0.28), transparent 28rem),
+    radial-gradient(circle at 88% 10%, hsl(var(--trust-agent) / 0.18), transparent 24rem),
+    radial-gradient(circle at 44% 46%, hsl(var(--brand-accent) / 0.08), transparent 26rem),
+    hsl(var(--brand-surface));
+}
+
+.cotana-hero-panel {
+  background:
+    linear-gradient(135deg, hsl(var(--brand-primary) / 0.2), hsl(var(--trust-agent) / 0.12)),
+    hsl(var(--neutral-panel) / 0.72);
+  box-shadow: var(--shadow-panel);
+}
+
+.cotana-banner-blue {
+  background:
+    radial-gradient(circle at 88% 14%, hsl(var(--neutral-inverse) / 0.22), transparent 8rem),
+    linear-gradient(135deg, hsl(var(--brand-primary)), hsl(var(--brand-primary) / 0.5));
+}
+
+.cotana-banner-agent {
+  background:
+    radial-gradient(circle at 90% 18%, hsl(var(--neutral-inverse) / 0.18), transparent 8rem),
+    linear-gradient(135deg, hsl(var(--trust-agent)), hsl(var(--brand-primary) / 0.45));
+}
+
+.cotana-banner-trust {
+  background:
+    radial-gradient(circle at 85% 20%, hsl(var(--neutral-inverse) / 0.18), transparent 8rem),
+    linear-gradient(135deg, hsl(var(--brand-accent) / 0.92), hsl(var(--brand-primary) / 0.62));
+}
+
+.ui-metric-value {
+  font-family: var(--font-ubuntu), var(--font-inter), system-ui, sans-serif;
+  color: hsl(var(--brand-text));
+}
+
+.ui-code-panel {
+  border: 1px solid hsl(var(--neutral-border));
+  border-radius: var(--radius-card);
+  background: hsl(var(--brand-text));
+  color: hsl(var(--neutral-inverse) / 0.88);
+}

@@ -1,4 +1,5 @@
 import { listLibraryApps } from "@cotana/db";
+import type { AppSummary } from "@cotana/types";
 import { Card, CardContent, CardHeader, CardTitle, AppCard, SectionHeading } from "@cotana/ui";
 import { StoreHeader } from "../../components/store-header";
 import { getSessionUser } from "../../lib/session";
@@ -7,12 +8,12 @@ export const dynamic = "force-dynamic";
 
 export default async function LibraryPage() {
   const sessionUser = await getSessionUser();
-  const apps = sessionUser ? await listLibraryApps(sessionUser.id) : [];
+  const apps: AppSummary[] = sessionUser ? await listLibraryApps(sessionUser.id) : [];
 
   return (
     <main>
       <StoreHeader />
-      <section className="mx-auto max-w-7xl space-y-6 px-6 py-10">
+      <section className="mx-auto max-w-7xl space-y-4 px-4 py-7 sm:px-6 sm:py-8">
         <SectionHeading
           eyebrow="Private library"
           title="Saved apps"
@@ -23,14 +24,14 @@ export default async function LibraryPage() {
             <CardHeader>
               <CardTitle>Sign in to view your library</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-slate-500">
+              <CardContent>
+                <p className="text-[0.84rem] text-neutral-muted">
                 Saved apps appear here once you sign in and add them from an app detail page.
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-3.5 md:grid-cols-2 xl:grid-cols-4">
             {apps.map((app) => (
               <AppCard key={app.id} app={app} />
             ))}
@@ -40,7 +41,7 @@ export default async function LibraryPage() {
                   <CardTitle>No saved apps yet</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-[0.84rem] text-neutral-muted">
                     Browse the catalog and save apps to build your private shortlist.
                   </p>
                 </CardContent>

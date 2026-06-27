@@ -49,7 +49,7 @@ export function ReviewModerationActions({
           {pendingAction === "remove" ? "Removing..." : "Remove review"}
         </Button>
       </div>
-      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {error ? <p className="text-sm ui-copy-danger">{error}</p> : null}
     </div>
   );
 }

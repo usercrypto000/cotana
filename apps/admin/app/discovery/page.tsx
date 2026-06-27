@@ -69,7 +69,7 @@ export default async function DiscoveryPage() {
           <Card key={section.label}>
             <CardHeader>
               <CardTitle>{section.label}</CardTitle>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-neutral-muted">
                 {section.data.computedAt
                   ? `Computed ${new Date(section.data.computedAt).toLocaleString()}`
                   : "No snapshot yet."}
@@ -83,15 +83,15 @@ export default async function DiscoveryPage() {
                     : {};
 
                 return (
-                  <div key={`${section.label}-${row.appId}`} className="rounded-2xl border bg-slate-50 p-3">
+                  <div key={`${section.label}-${row.appId}`} className="rounded-2xl border bg-neutral-surface p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="font-medium text-slate-950">{row.appName}</p>
-                        <p className="text-xs text-slate-500">{row.categorySlug}</p>
+                        <p className="font-medium text-brand-text">{row.appName}</p>
+                        <p className="text-xs text-neutral-muted">{row.categorySlug}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-slate-950">#{row.rank}</p>
-                        <p className="text-xs text-slate-500">{row.score.toFixed(3)}</p>
+                        <p className="text-sm font-semibold text-brand-text">#{row.rank}</p>
+                        <p className="text-xs text-neutral-muted">{row.score.toFixed(3)}</p>
                       </div>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -104,7 +104,7 @@ export default async function DiscoveryPage() {
                 );
               })}
               {section.data.rows.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
+                <div className="rounded-2xl border border-dashed border-neutral-border bg-neutral-panel p-4 text-sm text-neutral-muted">
                   No {section.label.toLowerCase()} snapshot yet.
                 </div>
               ) : null}
@@ -133,26 +133,26 @@ export default async function DiscoveryPage() {
         <div className="grid gap-3 md:grid-cols-4">
           <Card>
             <CardContent className="p-4">
-              <p className="text-sm text-slate-500">Listings</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-950">{agentQualitySummary.totalListings}</p>
+              <p className="text-sm text-neutral-muted">Listings</p>
+              <p className="mt-1 text-2xl font-semibold text-brand-text">{agentQualitySummary.totalListings}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-sm text-slate-500">Ready</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-950">{agentQualitySummary.readyListings}</p>
+              <p className="text-sm text-neutral-muted">Ready</p>
+              <p className="mt-1 text-2xl font-semibold text-brand-text">{agentQualitySummary.readyListings}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-sm text-slate-500">Needs work</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-950">{agentQualitySummary.needsWorkListings}</p>
+              <p className="text-sm text-neutral-muted">Needs work</p>
+              <p className="mt-1 text-2xl font-semibold text-brand-text">{agentQualitySummary.needsWorkListings}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-sm text-slate-500">Avg readiness</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-950">
+              <p className="text-sm text-neutral-muted">Avg readiness</p>
+              <p className="mt-1 text-2xl font-semibold text-brand-text">
                 {agentQualitySummary.averageReadinessScore}/100
               </p>
             </CardContent>
@@ -176,8 +176,8 @@ export default async function DiscoveryPage() {
           {Object.entries(agentQualitySummary.statusCounts).map(([status, count]) => (
             <Card key={status}>
               <CardContent className="p-4">
-                <p className="text-sm capitalize text-slate-500">{status.replace(/_/g, " ")}</p>
-                <p className="mt-1 text-2xl font-semibold text-slate-950">{count}</p>
+                <p className="text-sm capitalize text-neutral-muted">{status.replace(/_/g, " ")}</p>
+                <p className="mt-1 text-2xl font-semibold text-brand-text">{count}</p>
               </CardContent>
             </Card>
           ))}
@@ -188,7 +188,7 @@ export default async function DiscoveryPage() {
               <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <div>
                   <CardTitle>{row.name}</CardTitle>
-                  <p className="text-sm text-slate-500">{row.category.name}</p>
+                  <p className="text-sm text-neutral-muted">{row.category.name}</p>
                 </div>
                 <Badge variant={row.ready ? "ready" : "warning"}>{row.ready ? "Ready" : "Needs work"}</Badge>
               </CardHeader>
@@ -208,20 +208,20 @@ export default async function DiscoveryPage() {
                   ) : null}
                 </div>
                 {row.issues.length > 0 ? (
-                  <ul className="space-y-2 text-sm text-slate-600">
+                  <ul className="space-y-2 text-sm text-brand-text/72">
                     {row.issues.map((issue) => (
                       <li key={`${row.appId}-${issue}`}>{issue}</li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-slate-500">No registry quality issues found.</p>
+                  <p className="text-sm text-neutral-muted">No registry quality issues found.</p>
                 )}
               </CardContent>
             </Card>
           ))}
           {agentQualityRows.length === 0 ? (
             <Card>
-              <CardContent className="p-6 text-sm text-slate-500">
+              <CardContent className="p-6 text-sm text-neutral-muted">
                 No agent or hybrid listings have been configured yet.
               </CardContent>
             </Card>
@@ -242,7 +242,7 @@ export default async function DiscoveryPage() {
               <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <div>
                   <CardTitle>{result.intent}</CardTitle>
-                  <p className="mt-1 text-sm text-slate-500">{result.reason}</p>
+                  <p className="mt-1 text-sm text-neutral-muted">{result.reason}</p>
                 </div>
                 <Badge variant={result.passed ? "ready" : "warning"}>{result.passed ? "Pass" : "Inspect"}</Badge>
               </CardHeader>
@@ -273,7 +273,7 @@ export default async function DiscoveryPage() {
               <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <div>
                   <CardTitle>{log.query}</CardTitle>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-neutral-muted">
                     {new Date(log.createdAt).toLocaleString()} · {log.resultCount} results · {log.candidateCount} candidates
                   </p>
                 </div>
@@ -281,7 +281,7 @@ export default async function DiscoveryPage() {
                   {log.blockingIssueCount} excluded
                 </Badge>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm text-slate-600">
+              <CardContent className="space-y-2 text-sm text-brand-text/72">
                 <p>{log.topMatchReason ?? "No top match recorded."}</p>
                 <div className="flex flex-wrap gap-2">
                   {typeof log.topSimilarity === "number" ? (
@@ -299,7 +299,7 @@ export default async function DiscoveryPage() {
           ))}
           {agentEvaluationLogs.length === 0 ? (
             <Card>
-              <CardContent className="p-6 text-sm text-slate-500">
+              <CardContent className="p-6 text-sm text-neutral-muted">
                 Agent search evaluation logs will appear after registry searches run.
               </CardContent>
             </Card>
@@ -327,11 +327,11 @@ export default async function DiscoveryPage() {
             <Card key={`${entry.category}-${entry.metric}`}>
               <CardHeader>
                 <CardTitle>{entry.metric}</CardTitle>
-                <p className="text-sm text-slate-500">{entry.category}</p>
+                <p className="text-sm text-neutral-muted">{entry.category}</p>
               </CardHeader>
               <CardContent className="space-y-2">
-                <p className="text-sm text-slate-600">{entry.count} snapshots stored</p>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-brand-text/72">{entry.count} snapshots stored</p>
+                <p className="text-sm text-neutral-muted">
                   {entry.lastObservedAt ? new Date(entry.lastObservedAt).toLocaleString() : "No snapshots yet"}
                 </p>
               </CardContent>

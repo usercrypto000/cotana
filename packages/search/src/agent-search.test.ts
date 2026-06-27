@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   listAgentRegistryApps: vi.fn(),
   getCacheValue: vi.fn(),
-  setCacheValue: vi.fn()
+  setCacheValue: vi.fn(),
+  recordAgentRegistryIntentTestRun: vi.fn(async () => undefined)
 }));
 
 vi.mock("@cotana/db", () => ({
@@ -39,7 +40,7 @@ vi.mock("@cotana/db", () => ({
   getAgentCapabilityReadinessBucket: () => "ready",
   listAgentRegistryApps: mocks.listAgentRegistryApps,
   prisma: {},
-  recordAgentRegistryIntentTestRun: vi.fn()
+  recordAgentRegistryIntentTestRun: mocks.recordAgentRegistryIntentTestRun
 }));
 
 vi.mock("@cotana/db/redis", () => ({
@@ -220,5 +221,52 @@ describe("agent semantic capability search", () => {
 
     expect(results[0]?.passed).toBe(false);
     expect(results[0]?.failureReason).toContain("did not match expected profile");
+  });
+
+  it("persists red-team query runs for empty and unsafe-mode expectations", async () => {
+    process.env.OPENAI_API_KEY = "";
+    mocks.getCacheValue.mockResolvedValue(null);
+    mocks.listAgentRegistryApps.mockResolvedValue([
+      {
+        ...registryApps[0],
+        capabilities: [
+          {
+            ...registryApps[0].capabilities[0],
+            id: "cap-trade",
+            slug: "build-trade-route",
+            name: "Build trade route",
+            description: "Builds a write-capable trading route.",
+            capabilityType: "routing",
+            interactionMode: "WRITE_ACTION" as const
+          }
+        ]
+      }
+    ]);
+
+    const results = await runAgentIntentTestSuite(
+      [
+        {
+          id: "red-unsafe",
+          suiteType: "red_team",
+          intent: "build a trade route",
+          expectedBlockedUnsafeMode: true,
+          expectedExclusionReason: "Interaction mode",
+          filters: {
+            interactionModes: ["READ_ONLY"]
+          }
+        }
+      ],
+      { testSetVersion: "red-team-1" },
+    );
+
+    expect(results[0]?.passed).toBe(true);
+    expect(results[0]?.suiteType).toBe("red_team");
+    expect(mocks.recordAgentRegistryIntentTestRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "red-unsafe",
+        testSetVersion: "red-team-1",
+        passed: true
+      }),
+    );
   });
 });

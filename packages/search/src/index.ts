@@ -186,7 +186,23 @@ const CATEGORY_HINT_RULES: Array<{
 ];
 
 function getEmbeddingModel() {
-  return process.env.OPENAI_EMBEDDING_MODEL ?? "text-embedding-3-large";
+  if (process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN) {
+    return process.env.AI_GATEWAY_EMBEDDING_MODEL ?? "openai/text-embedding-3-small";
+  }
+
+  return process.env.OPENAI_EMBEDDING_MODEL ?? "text-embedding-3-small";
+}
+
+function getEmbeddingApiKey() {
+  return process.env.AI_GATEWAY_API_KEY ?? process.env.VERCEL_OIDC_TOKEN ?? process.env.OPENAI_API_KEY ?? null;
+}
+
+function getEmbeddingBaseUrl() {
+  if (process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN) {
+    return process.env.AI_GATEWAY_BASE_URL ?? "https://ai-gateway.vercel.sh/v1";
+  }
+
+  return undefined;
 }
 
 function normalizeQuery(query: string) {
@@ -593,14 +609,15 @@ export async function embedText(text: string): Promise<number[]> {
 }
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = getEmbeddingApiKey();
 
   if (!apiKey) {
     return texts.map(fallbackEmbedText);
   }
 
   const client = new OpenAI({
-    apiKey
+    apiKey,
+    baseURL: getEmbeddingBaseUrl()
   });
 
   const response = await client.embeddings.create({
@@ -865,6 +882,9 @@ export async function searchAgentRegistryCapabilitiesWithEvaluation(
             capabilitySlug: topCapability.slug,
             categorySlug: results[0].app.category.slug,
             capabilityType: topCapability.capabilityType,
+            authType: topCapability.authType,
+            interfaceType: topCapability.interfaceType,
+            interactionMode: topCapability.interactionMode,
             readinessBucket: getAgentCapabilityReadinessBucket(topCapability),
             similarity: topCapability.similarity,
             score: topCapability.matchScore,
@@ -893,10 +913,16 @@ export async function searchAgentRegistryCapabilities(
   return results;
 }
 
-export async function runAgentIntentTestSuite(testCases: AgentIntentTestCase[]): Promise<AgentIntentTestResult[]> {
+export async function runAgentIntentTestSuite(
+  testCases: AgentIntentTestCase[],
+  options?: {
+    testSetVersion?: string;
+  },
+): Promise<AgentIntentTestResult[]> {
+  const testSetVersion = options?.testSetVersion ?? `seeded-${new Date().toISOString()}`;
   const results = await Promise.all(
     testCases.map(async (testCase) => {
-      const searchResults = await searchAgentRegistryCapabilities(testCase.intent, {
+      const { results: searchResults, evaluation } = await searchAgentRegistryCapabilitiesWithEvaluation(testCase.intent, {
         categorySlug: testCase.categorySlug,
         limit: 5,
         filters: testCase.filters
@@ -904,29 +930,57 @@ export async function runAgentIntentTestSuite(testCases: AgentIntentTestCase[]):
       const topResult = searchResults[0] ?? null;
       const topCapability = topResult?.matchedCapabilities[0] ?? null;
       const expectedTypes = testCase.expectedCapabilityTypes ?? [];
+      const expectedAppSlugs = testCase.expectedAppSlugs ?? [];
       const expectedCapabilitySlugs = testCase.expectedCapabilitySlugs ?? [];
       const categoryMatches = !testCase.categorySlug || topResult?.app.category.slug === testCase.categorySlug;
+      const appMatches = expectedAppSlugs.length === 0 || expectedAppSlugs.includes(topResult?.app.slug ?? "");
       const capabilityTypeMatches =
         expectedTypes.length === 0 || expectedTypes.includes(topCapability?.capabilityType ?? "");
       const capabilitySlugMatches =
         expectedCapabilitySlugs.length === 0 || expectedCapabilitySlugs.includes(topCapability?.slug ?? "");
-      const passed =
-        Boolean(topCapability) &&
-        categoryMatches &&
-        capabilityTypeMatches &&
-        capabilitySlugMatches;
+      const exclusionMatches =
+        !testCase.expectedExclusionReason ||
+        evaluation.excludedCandidates.some((candidate) =>
+          candidate.reason.toLowerCase().includes(testCase.expectedExclusionReason?.toLowerCase() ?? ""),
+        );
+      const unsafeModeBlocked =
+        !testCase.expectedBlockedUnsafeMode ||
+        evaluation.excludedCandidates.some((candidate) => candidate.reason.includes("Interaction mode"));
+      const passed = testCase.expectedBlockedUnsafeMode
+        ? searchResults.length === 0 && exclusionMatches && unsafeModeBlocked
+        : testCase.expectedEmptyResult
+          ? searchResults.length === 0 && exclusionMatches
+        : Boolean(topCapability) &&
+          categoryMatches &&
+          appMatches &&
+          capabilityTypeMatches &&
+          capabilitySlugMatches &&
+          exclusionMatches &&
+          unsafeModeBlocked;
       const failureReason = passed
         ? null
-        : !topCapability
+        : testCase.expectedEmptyResult && searchResults.length > 0
+          ? "Expected no registry result, but a capability matched."
+          : testCase.expectedExclusionReason && !exclusionMatches
+            ? `Expected exclusion reason containing ${testCase.expectedExclusionReason}.`
+            : testCase.expectedBlockedUnsafeMode && !unsafeModeBlocked
+              ? "Expected unsafe interaction mode to be blocked by compatibility filters."
+              : !topCapability
           ? "No capability matched this seeded intent."
           : !categoryMatches
             ? `Top category ${topResult?.app.category.slug ?? "none"} did not match expected category ${testCase.categorySlug}.`
-            : !capabilitySlugMatches
-              ? `Top capability ${topCapability.slug} did not match expected capability.`
-              : `Top capability type ${topCapability.capabilityType} did not match expected profile.`;
+            : !appMatches
+              ? `Top app ${topResult?.app.slug ?? "none"} did not match expected app.`
+              : !capabilitySlugMatches
+                ? `Top capability ${topCapability.slug} did not match expected capability.`
+                : `Top capability type ${topCapability.capabilityType} did not match expected profile.`;
+      const reason = passed
+        ? "Top capability matched the expected intent profile."
+        : (failureReason ?? "Seeded intent failed.");
 
       const result = {
         ...testCase,
+        testSetVersion,
         passed,
         topAppId: topResult?.app.id ?? null,
         topAppSlug: topResult?.app.slug ?? null,
@@ -935,10 +989,9 @@ export async function runAgentIntentTestSuite(testCases: AgentIntentTestCase[]):
         topCapabilitySlug: topCapability?.slug ?? null,
         topCapabilityType: topCapability?.capabilityType ?? null,
         topScore: topCapability?.matchScore ?? null,
+        topQualityScore: topCapability?.qualitySignals.qualityScore ?? null,
         topMatchReason: topCapability?.matchReason ?? null,
-        reason: passed
-          ? "Top capability matched the expected intent profile."
-          : failureReason,
+        reason,
         failureReason
       };
 

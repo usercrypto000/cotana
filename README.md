@@ -27,6 +27,8 @@ Implemented today:
 - agent capability taxonomy and compatibility reporting for outside agents
 - per-capability manifests, registry policy, and `llms.txt` for machine discovery
 - Phase 4 registry quality: capability quality scores, seeded agent intent tests, readiness buckets, public trust badges, and persisted search evaluation logs
+- Phase 4.5 registry QA foundations: admin evaluation-log inspection, intent test run history and regression comparison, trust trend helpers, capability distribution, weak metadata fixtures, and internal health export
+- Phase 4.6 registry contract stability: explicit public registry version metadata, manifest versions, registry change history, deprecation semantics, public machine-client docs, stronger schema contracts, and deterministic compatibility confidence
 - verified badges and computed community-pick badges
 - weekly historical signal snapshots plus discovery insight snapshots
 - Inngest jobs for embeddings, signals, snapshots, trending, rising, and community picks
@@ -103,6 +105,10 @@ Agents can inspect `/api/agent-registry/capabilities` to understand the live cap
 
 Phase 4 hardens registry quality without adding execution. Capability results now carry quality signals and a `0-100` quality score based on schema completeness, docs availability, endpoint presence, safety notes, auth friction, latency tier, reliability tier, and interaction mode. Agent searches produce evaluation logs with query, filters, matched capability, score, similarity, excluded candidates, and blocking issue count.
 
+Phase 4.5 deepens internal registry QA. Admins can filter evaluation logs by date, query, category, capability type, auth/interface/interaction mode, readiness bucket, matched app, and blocking issue count, then inspect a single log in detail. Seeded intent tests persist run versions, top results, scores, quality scores, pass/fail state, and failure reasons, with latest-vs-previous regression buckets. Internal helpers expose capability quality, trust signals, discovery scores, signal availability, and missing metadata trends. The registry health export is admin-only and remains separate from the public machine-readable registry.
+
+Phase 4.6 makes the public machine-readable registry safer to depend on. Major registry endpoints now share `schemaVersion`, `registryVersion`, `generatedAt`, discovery-only boundary metadata, and supported endpoint metadata from a single config constant. App and capability manifests expose manifest versions and review/deprecation metadata. Admin saves create registry-sensitive change logs for audience, listing status, compatibility fields, schemas, docs, safety notes, and reliability metadata. Deprecated capabilities are excluded from default search but remain explainable through direct manifest reads. Public docs live at `/agent-registry/docs`, and `/api/agent-registry/schema` now describes the main response contracts.
+
 The admin discovery page now includes operational readiness buckets, seeded intent tests, and recent registry evaluation logs. Public app detail pages show subtle machine-readable trust signals only inside the detail surface, not on public cards.
 
 Public endpoints:
@@ -176,13 +182,20 @@ The seed script now creates:
 - the fixed category taxonomy from the implementation brief
 - an admin user from `ADMIN_ALLOWLIST_EMAIL`
 - a broader launch-ready catalog across DeFi, Lending & Yield, Prediction Markets, Trading, Social, Gaming, Identity, Staking, and RWA
-- app tags, sample signal rows, app updates, and verified-note metadata
+- app tags, sample signal rows, screenshots, app updates, public reviews, likes, views, search clicks, and verified-note metadata
 - editorial shelves including `featured`, `best-for-beginners`, `prediction-markets-to-watch`, and `new-this-week`
+- stored trending, rising, and community-pick discovery snapshots recomputed from seeded activity
 - default ranking and discovery config rows in `ConfigKV`
+- optional weak agent metadata fixtures when `COTANA_SEED_WEAK_AGENT_FIXTURES=true`
+- optional launch catalog expansion across Payments, Wallets, Staking, RWA, Launchpads, and registry QA edge cases when `COTANA_SEED_LAUNCH_CATALOG=true`
 
 Run it with:
 
 - `pnpm db:seed`
+- `pnpm seed:local` for local setup
+- `COTANA_STAGING_SEED_CONFIRM=true pnpm seed:staging` for staging launch fixtures
+
+After seed, the homepage should show a populated spotlight shelf, trending apps, rising apps, and category rows. App detail pages should show screenshots, reviews, updates, similar apps, and trust states. Admins can verify this at `/launch-checklist` through the public seed visibility panel.
 
 ## Local setup
 
@@ -206,9 +219,16 @@ Store runs on [http://localhost:3000](http://localhost:3000). Admin runs on [htt
 - `pnpm lint`
 - `pnpm typecheck`
 - `pnpm test`
+- `pnpm test:smoke`
+- `pnpm test:e2e`
 - `pnpm db:generate`
 - `pnpm db:migrate`
+- `pnpm db:migrate:deploy`
 - `pnpm db:seed`
+- `pnpm catalog:import ./catalog.json`
+- `pnpm seed:local`
+- `COTANA_STAGING_SEED_CONFIRM=true pnpm seed:staging`
+- `pnpm seed:reset-local`
 
 ## Automated coverage
 
@@ -220,6 +240,9 @@ Vitest currently covers:
 - signal snapshot helper behavior
 - search sorting and similar-app reranking helpers
 - trust badge rendering
+- catalog coverage audit, public registry readiness metadata, manifest warnings, and registry red-team runs
+- environment validation, deployment health payloads, launch checklist aggregation, seed guards, and launch smoke routes
+- production deployment targets, migration preflight helpers, catalog import validation, and beta E2E command plumbing
 
 The test entrypoint is:
 
@@ -236,6 +259,37 @@ Current validation is green:
 
 The current build still emits a non-fatal Privy warning about the optional `@farcaster/mini-app-solana` dependency during Next builds in both apps.
 
+## Phase 4.8 staging launch readiness
+
+Staging readiness now includes:
+
+- non-throwing environment validation for database, Privy, Redis, PostHog, Inngest, OpenAI, URLs, registry URL, admin allowlist, provider keys, invalid URLs, invalid booleans/numbers, and local fallbacks
+- public-safe health endpoints at store `/api/health`, registry `/api/agent-registry/health`, and admin `/api/health`
+- admin-only diagnostics at `/environment-health`, `/launch-checklist`, `/api/admin/environment-health`, `/api/admin/jobs/health`, and `/api/admin/launch-checklist`
+- separate seed workflows: `pnpm seed:local`, `COTANA_STAGING_SEED_CONFIRM=true pnpm seed:staging`, and `pnpm seed:reset-local`
+- smoke checks through `pnpm test:smoke`
+
+## Phase 4.9 production preview
+
+Production preview uses GitHub repo `usercrypto000/cotana`, Vercel store project `cotana`, production domain `https://cotana.xyz`, and protected admin project `cotana-admin`. Current beta preview URLs are `https://cotana-d6jswv85k-usercrypto000s-projects.vercel.app` for store and `https://cotana-admin-ftoqcbq70-usercrypto000s-projects.vercel.app` for admin.
+
+Beta health supports four statuses:
+
+- `ok`
+- `ok_with_warnings`
+- `degraded`
+- `unhealthy`
+
+Vercel preview can return `ok_with_warnings` when the database is reachable and missing dependencies are optional for public route QA. Missing preview Redis, Privy, PostHog, Inngest, AI Gateway, or public URL envs appear as dependency warnings with next actions. Production promotion remains strict for those dependencies.
+
+Run beta URL checks with:
+
+```bash
+COTANA_E2E_STORE_URL=https://cotana-d6jswv85k-usercrypto000s-projects.vercel.app COTANA_E2E_ADMIN_URL=https://cotana-admin-ftoqcbq70-usercrypto000s-projects.vercel.app pnpm test:e2e
+```
+
+The command checks store routes, health, registry discovery, registry health, `harbor-yield`, search, `llms.txt`, 15 visible app records, and protected admin preview behavior.
+
 ## Docs
 
 - [docs/PRODUCT.md](/C:/Users/HP/cotana/docs/PRODUCT.md)
@@ -245,3 +299,7 @@ The current build still emits a non-fatal Privy warning about the optional `@far
 - [docs/ROADMAP.md](/C:/Users/HP/cotana/docs/ROADMAP.md)
 - [docs/DECISIONS.md](/C:/Users/HP/cotana/docs/DECISIONS.md)
 - [docs/OPERATIONS.md](/C:/Users/HP/cotana/docs/OPERATIONS.md)
+- [docs/BRAND_KIT.md](/C:/Users/HP/cotana/docs/BRAND_KIT.md)
+- [docs/DEPLOYMENT.md](/C:/Users/HP/cotana/docs/DEPLOYMENT.md)
+- [docs/BETA_QA.md](/C:/Users/HP/cotana/docs/BETA_QA.md)
+- [docs/IMPORTS.md](/C:/Users/HP/cotana/docs/IMPORTS.md)

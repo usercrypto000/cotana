@@ -1,4 +1,5 @@
 import { analyticsEvents, trackServerEvent } from "@cotana/analytics";
+import { buildRegistryVersionMetadata, cotanaRegistryContract } from "@cotana/config";
 import { getAgentRegistryManifest } from "@cotana/db";
 import { NextResponse } from "next/server";
 import { getRequestIdentity } from "../../../../lib/request";
@@ -24,5 +25,9 @@ export async function GET(request: Request, { params }: Params) {
     }
   });
 
-  return NextResponse.json(manifest);
+  return NextResponse.json({
+    ...manifest,
+    ...buildRegistryVersionMetadata(),
+    version: cotanaRegistryContract.registryVersion
+  });
 }

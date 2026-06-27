@@ -3,5 +3,6 @@ export * from "./components/app-card";
 export * from "./components/badge";
 export * from "./components/button";
 export * from "./components/card";
+export * from "./components/input";
 export * from "./components/section-heading";
-
+export * from "./components/trust-badge";

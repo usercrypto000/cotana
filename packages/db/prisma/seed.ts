@@ -5,13 +5,19 @@ import {
   AgentInterfaceType,
   AgentListingStatus,
   AppAudience,
+  AppPublisherType,
   AppStatus,
   AppUpdateType,
+  AppVerificationStatus,
   EditorialShelfStatus,
   EditorialShelfVisibility,
   PrismaClient,
+  ReviewStatus,
   UserRole
 } from "@prisma/client";
+import { recomputeDiscoveryInsights } from "../src/services/discovery";
+import { seededReviewBodies } from "../src/services/seed-fixtures";
+import { assertSeedFixturesAllowed } from "../src/services/seed-guards";
 
 const prisma = new PrismaClient();
 
@@ -33,6 +39,8 @@ const categories = [
 ] as const;
 
 async function main() {
+  assertSeedFixturesAllowed();
+
   for (const category of categories) {
     await prisma.category.upsert({
       where: { slug: category.slug },
@@ -495,12 +503,383 @@ async function main() {
     }
   ];
 
+  if (process.env.COTANA_SEED_LAUNCH_CATALOG === "true") {
+    (exampleApps as unknown as Array<Record<string, unknown>>).push(
+      {
+        slug: "pay-signal",
+        name: "Pay Signal",
+        shortDescription: "Payment metadata and checkout discovery.",
+        longDescription:
+          "Pay Signal helps teams inspect supported payment rails, currencies, and checkout metadata before choosing a payment app.",
+        websiteUrl: "https://example.com/pay-signal",
+        logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=PaySignal",
+        verified: true,
+        verifiedNote: "Launch catalog fixture with strong read-only payment metadata.",
+        agentAudience: AppAudience.HYBRID,
+        agentSummary: "Agents can discover supported payment metadata without initiating payment activity.",
+        categorySlug: "payments",
+        tags: ["payments", "checkout", "metadata"],
+        agentCapabilities: [
+          {
+            name: "Inspect payment metadata",
+            slug: "inspect-payment-metadata",
+            description: "Returns read-only payment rail, currency, and checkout capability metadata.",
+            capabilityType: "payment_metadata",
+            authType: AgentAuthType.API_KEY,
+            interfaceType: AgentInterfaceType.HTTP_API,
+            interactionMode: AgentInteractionMode.READ_ONLY,
+            status: AgentCapabilityStatus.ACTIVE,
+            endpointUrl: "https://example.com/pay-signal/api/agent/payment-metadata",
+            inputSchemaJson: { type: "object", properties: { region: { type: "string" } } },
+            outputSchemaJson: { type: "object", properties: { rails: { type: "array" } } },
+            safetyNotes: "Discovery-only payment metadata. No transfers or checkout sessions are created.",
+            reliabilityScore: 0.91,
+            latencyP50Ms: 430
+          }
+        ],
+        updates: [],
+        signals: [{ signalType: "category_metric", signalKey: "supported_rails", numericValue: 8 }]
+      },
+      {
+        slug: "wallet-atlas",
+        name: "Wallet Atlas",
+        shortDescription: "Wallet compatibility and portfolio read surfaces.",
+        longDescription:
+          "Wallet Atlas compares wallet support, chain coverage, and read-only portfolio surfaces for users choosing a wallet.",
+        websiteUrl: "https://example.com/wallet-atlas",
+        logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=WalletAtlas",
+        verified: true,
+        verifiedNote: "Launch catalog fixture with complete portfolio-read metadata.",
+        agentAudience: AppAudience.HYBRID,
+        agentSummary: "Agents can discover wallet compatibility and portfolio-read support without requesting credentials.",
+        categorySlug: "wallets",
+        tags: ["wallets", "portfolio", "compatibility"],
+        agentCapabilities: [
+          {
+            name: "Read portfolio support",
+            slug: "read-portfolio-support",
+            description: "Returns supported portfolio-read surfaces and chain coverage metadata.",
+            capabilityType: "portfolio_read",
+            authType: AgentAuthType.NONE,
+            interfaceType: AgentInterfaceType.HTTP_API,
+            interactionMode: AgentInteractionMode.READ_ONLY,
+            status: AgentCapabilityStatus.ACTIVE,
+            endpointUrl: "https://example.com/wallet-atlas/api/agent/portfolio-support",
+            inputSchemaJson: { type: "object", properties: { chain: { type: "string" } } },
+            outputSchemaJson: { type: "object", properties: { supported: { type: "boolean" } } },
+            safetyNotes: "Read-only compatibility discovery. No wallet connection, signature, or credential handling.",
+            reliabilityScore: 0.93,
+            latencyP50Ms: 390
+          }
+        ],
+        updates: [],
+        signals: [{ signalType: "category_metric", signalKey: "supported_chains", numericValue: 24 }]
+      },
+      {
+        slug: "stake-radar",
+        name: "Stake Radar",
+        shortDescription: "Discover staking opportunities across validators.",
+        longDescription:
+          "Stake Radar presents staking opportunity metadata, validator coverage, and risk labels without initiating stake actions.",
+        websiteUrl: "https://example.com/stake-radar",
+        logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=StakeRadar",
+        verified: true,
+        verifiedNote: "Launch catalog fixture for staking opportunity discovery.",
+        agentAudience: AppAudience.HYBRID,
+        agentSummary: "Agents can inspect staking opportunity discovery metadata.",
+        categorySlug: "staking",
+        tags: ["staking", "validators", "apr"],
+        agentCapabilities: [
+          {
+            name: "Discover staking opportunities",
+            slug: "discover-staking-opportunities",
+            description: "Returns read-only staking opportunity and validator metadata.",
+            capabilityType: "staking_opportunity_discovery",
+            authType: AgentAuthType.API_KEY,
+            interfaceType: AgentInterfaceType.DATA_FEED,
+            interactionMode: AgentInteractionMode.READ_ONLY,
+            status: AgentCapabilityStatus.ACTIVE,
+            endpointUrl: "https://example.com/stake-radar/api/agent/opportunities",
+            inputSchemaJson: { type: "object", properties: { asset: { type: "string" } } },
+            outputSchemaJson: { type: "object", properties: { opportunities: { type: "array" } } },
+            safetyNotes: "Discovery-only. Cotana never initiates staking.",
+            reliabilityScore: 0.87,
+            latencyP50Ms: 740
+          }
+        ],
+        updates: [],
+        signals: [{ signalType: "category_metric", signalKey: "validator_count", numericValue: 118 }]
+      },
+      {
+        slug: "launch-lens",
+        name: "Launch Lens",
+        shortDescription: "Launchpad project discovery and eligibility metadata.",
+        longDescription:
+          "Launch Lens helps users compare launchpad projects and eligibility surfaces before visiting the source app.",
+        websiteUrl: "https://example.com/launch-lens",
+        logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=LaunchLens",
+        verified: false,
+        verifiedNote: null,
+        agentAudience: AppAudience.HYBRID,
+        agentSummary: "Agents can discover launchpad project metadata and public eligibility requirements.",
+        categorySlug: "launchpads",
+        tags: ["launchpads", "projects", "eligibility"],
+        agentCapabilities: [
+          {
+            name: "Discover launchpad projects",
+            slug: "discover-launchpad-projects",
+            description: "Returns read-only launchpad project metadata and public eligibility notes.",
+            capabilityType: "market_discovery",
+            authType: AgentAuthType.NONE,
+            interfaceType: AgentInterfaceType.DOCS_ONLY,
+            interactionMode: AgentInteractionMode.READ_ONLY,
+            status: AgentCapabilityStatus.ACTIVE,
+            endpointUrl: null,
+            docsUrl: "https://example.com/launch-lens/docs/agent-projects",
+            inputSchemaJson: { type: "object" },
+            outputSchemaJson: { type: "object" },
+            safetyNotes: "Docs-backed discovery only. No allowlist, claim, or submission flow.",
+            reliabilityScore: 0.74,
+            latencyP50Ms: null
+          }
+        ],
+        updates: [],
+        signals: []
+      },
+      {
+        slug: "rwa-archive",
+        name: "RWA Archive",
+        shortDescription: "Deprecated RWA metadata surface retained for manifests.",
+        longDescription:
+          "RWA Archive is a launch fixture that keeps deprecated capability metadata addressable for direct manifest reads.",
+        websiteUrl: "https://example.com/rwa-archive",
+        logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=RWAArchive",
+        verified: false,
+        verifiedNote: null,
+        agentAudience: AppAudience.AGENT,
+        agentSummary: "Agents can inspect historical RWA metadata manifest deprecation status.",
+        categorySlug: "rwa",
+        tags: ["rwa", "deprecated", "qa-fixture"],
+        agentCapabilities: [
+          {
+            name: "Legacy RWA asset metadata",
+            slug: "legacy-rwa-asset-metadata",
+            description: "Deprecated RWA asset metadata surface retained for direct manifest explanation.",
+            capabilityType: "rwa_asset_metadata",
+            authType: AgentAuthType.API_KEY,
+            interfaceType: AgentInterfaceType.HTTP_API,
+            interactionMode: AgentInteractionMode.READ_ONLY,
+            status: AgentCapabilityStatus.DEPRECATED,
+            endpointUrl: "https://example.com/rwa-archive/api/agent/assets",
+            inputSchemaJson: { type: "object" },
+            outputSchemaJson: { type: "object" },
+            safetyNotes: "Deprecated discovery surface. Use replacement documentation.",
+            reliabilityScore: 0.72,
+            latencyP50Ms: 1200,
+            deprecationReason: "Replaced by RWA Hub asset metadata.",
+            replacementDocsUrl: "https://example.com/rwa-hub/docs/agents#compare-asset-products"
+          }
+        ],
+        updates: [],
+        signals: []
+      },
+      {
+        slug: "trade-guard-lab",
+        name: "Trade Guard Lab",
+        shortDescription: "Paused launch fixture with unsafe trade routing metadata.",
+        longDescription:
+          "Trade Guard Lab is a paused fixture used to verify that unsafe registry surfaces remain hidden from default search.",
+        websiteUrl: "https://example.com/trade-guard-lab",
+        logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=TradeGuardLab",
+        verified: false,
+        verifiedNote: null,
+        agentAudience: AppAudience.HYBRID,
+        agentListingStatus: AgentListingStatus.PAUSED,
+        agentSummary: "Paused fixture for unsafe trade routing metadata.",
+        categorySlug: "trading",
+        tags: ["trading", "paused", "qa-fixture"],
+        agentCapabilities: [
+          {
+            name: "Build trade route",
+            slug: "build-trade-route",
+            description: "Unsafe write-capable route builder fixture.",
+            capabilityType: "routing",
+            authType: AgentAuthType.OAUTH2,
+            interfaceType: AgentInterfaceType.SDK,
+            interactionMode: AgentInteractionMode.WRITE_ACTION,
+            status: AgentCapabilityStatus.ACTIVE,
+            endpointUrl: null,
+            docsUrl: "https://example.com/trade-guard-lab/docs",
+            inputSchemaJson: { type: "object" },
+            outputSchemaJson: { type: "object" },
+            safetyNotes: "Paused unsafe fixture. Cotana must not execute or rank this capability.",
+            reliabilityScore: 0.8,
+            latencyP50Ms: 900
+          }
+        ],
+        updates: [],
+        signals: []
+      }
+    );
+  }
+
+  if (process.env.COTANA_SEED_WEAK_AGENT_FIXTURES === "true") {
+    (exampleApps as unknown as Array<Record<string, unknown>>).push(
+      {
+        slug: "qa-weak-schema-lab",
+        name: "QA Weak Schema Lab",
+        shortDescription: "Local-only registry QA fixture with missing schemas.",
+        longDescription:
+          "Development fixture used to test registry readiness buckets and blocked publication reasons.",
+        websiteUrl: "https://example.com/qa-weak-schema-lab",
+        logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=QAWeakSchemaLab",
+        verified: false,
+        verifiedNote: "Local QA fixture only.",
+        agentAudience: AppAudience.HYBRID,
+        agentListingStatus: AgentListingStatus.DRAFT,
+        agentSummary: "Local QA fixture for weak metadata classification.",
+        categorySlug: "defi",
+        tags: ["qa-fixture", "weak-metadata"],
+        agentCapabilities: [
+          {
+            name: "Weak schema quote lookup",
+            slug: "weak-schema-quote-lookup",
+            description: "Intentionally missing schemas for local registry QA.",
+            capabilityType: "data",
+            authType: AgentAuthType.API_KEY,
+            interfaceType: AgentInterfaceType.HTTP_API,
+            interactionMode: AgentInteractionMode.READ_ONLY,
+            status: AgentCapabilityStatus.ACTIVE,
+            endpointUrl: "https://example.com/qa-weak-schema-lab/api/quote",
+            docsUrl: null,
+            inputSchemaJson: null,
+            outputSchemaJson: null,
+            safetyNotes: "",
+            reliabilityScore: 0.55,
+            latencyP50Ms: 2600
+          }
+        ],
+        updates: [],
+        signals: []
+      },
+      {
+        slug: "qa-unsafe-action-lab",
+        name: "QA Unsafe Action Lab",
+        shortDescription: "Local-only registry QA fixture with unsafe interaction modes.",
+        longDescription:
+          "Development fixture that proves write-capable and transactional capabilities stay blocked from publication readiness.",
+        websiteUrl: "https://example.com/qa-unsafe-action-lab",
+        logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=QAUnsafeActionLab",
+        verified: false,
+        verifiedNote: "Local QA fixture only.",
+        agentAudience: AppAudience.HYBRID,
+        agentListingStatus: AgentListingStatus.DRAFT,
+        agentSummary: "Local QA fixture for unsafe interaction mode classification.",
+        categorySlug: "trading",
+        tags: ["qa-fixture", "unsafe-mode"],
+        agentCapabilities: [
+          {
+            name: "Draft trade route builder",
+            slug: "draft-trade-route-builder",
+            description: "Intentionally write-capable fixture. Cotana must never execute or publish it as ready.",
+            capabilityType: "routing",
+            authType: AgentAuthType.OAUTH2,
+            interfaceType: AgentInterfaceType.SDK,
+            interactionMode: AgentInteractionMode.WRITE_ACTION,
+            status: AgentCapabilityStatus.ACTIVE,
+            endpointUrl: null,
+            docsUrl: "https://example.com/qa-unsafe-action-lab/docs",
+            inputSchemaJson: { type: "object" },
+            outputSchemaJson: { type: "object" },
+            safetyNotes: "Unsafe local fixture. Not a read-only discovery capability.",
+            reliabilityScore: 0.82,
+            latencyP50Ms: 900
+          }
+        ],
+        updates: [],
+        signals: []
+      },
+      {
+        slug: "qa-docs-only-lab",
+        name: "QA Docs Only Lab",
+        shortDescription: "Local-only registry QA fixture with docs-only metadata.",
+        longDescription:
+          "Development fixture for testing docs-only and weak endpoint metadata surfaces.",
+        websiteUrl: "https://example.com/qa-docs-only-lab",
+        logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=QADocsOnlyLab",
+        verified: false,
+        verifiedNote: "Local QA fixture only.",
+        agentAudience: AppAudience.HYBRID,
+        agentListingStatus: AgentListingStatus.PAUSED,
+        agentSummary: "Local QA fixture for docs-only registry metadata.",
+        categorySlug: "lending-yield",
+        tags: ["qa-fixture", "docs-only"],
+        agentCapabilities: [
+          {
+            name: "Docs-only yield guide",
+            slug: "docs-only-yield-guide",
+            description: "Intentionally docs-only fixture with no endpoint URL.",
+            capabilityType: "documentation",
+            authType: AgentAuthType.NONE,
+            interfaceType: AgentInterfaceType.DOCS_ONLY,
+            interactionMode: AgentInteractionMode.READ_ONLY,
+            status: AgentCapabilityStatus.ACTIVE,
+            endpointUrl: null,
+            docsUrl: "https://example.com/qa-docs-only-lab/docs",
+            inputSchemaJson: { type: "object" },
+            outputSchemaJson: null,
+            safetyNotes: "Read-only docs surface for local QA.",
+            reliabilityScore: 0.68,
+            latencyP50Ms: null
+          }
+        ],
+        updates: [],
+        signals: []
+      }
+    );
+  }
+
   for (const app of exampleApps) {
     const categoryId = categoryLookup.get(app.categorySlug);
+    const appAgentMetadata = app as {
+      agentListingStatus?: AgentListingStatus;
+      agentDocsUrl?: string | null;
+    };
     const agentListingStatus =
-      app.agentAudience === AppAudience.HUMAN ? AgentListingStatus.NOT_APPLICABLE : AgentListingStatus.PUBLISHED;
+      appAgentMetadata.agentListingStatus ??
+      (app.agentAudience === AppAudience.HUMAN ? AgentListingStatus.NOT_APPLICABLE : AgentListingStatus.PUBLISHED);
     const agentDocsUrl =
-      app.agentAudience === AppAudience.HUMAN ? null : `https://example.com/${app.slug}/docs/agents`;
+      app.agentAudience === AppAudience.HUMAN ? null : (appAgentMetadata.agentDocsUrl ?? `https://example.com/${app.slug}/docs/agents`);
+    const seededTrustMetadata = {
+      verificationStatus: app.verified ? AppVerificationStatus.verified : AppVerificationStatus.unreviewed,
+      publisherName: `${app.name} team`,
+      publisherType: app.agentAudience === AppAudience.AGENT ? AppPublisherType.protocol : AppPublisherType.team,
+      supportedChains:
+        app.categorySlug === "prediction-markets"
+          ? ["Polygon", "Base"]
+          : app.categorySlug === "staking"
+            ? ["Ethereum", "Solana"]
+            : ["Ethereum", "Base"],
+      permissionScopes:
+        app.agentAudience === AppAudience.HUMAN
+          ? ["Website session"]
+          : ["Public metadata", "Read-only API"],
+      paymentCapabilities:
+        app.categorySlug === "payments" ? ["Stablecoin payments", "Checkout links"] : ["None listed"],
+      custodyModel:
+        app.categorySlug === "wallets"
+          ? "Self-custody"
+          : app.categorySlug === "lending-yield" || app.categorySlug === "staking"
+            ? "External protocol custody"
+            : "Non-custodial discovery",
+      externalRiskNotes: app.verified
+        ? "Cotana review found no unresolved external risk note for this seeded listing."
+        : "Cotana has not completed a full external risk review for this seeded listing.",
+      lastReviewedAt: app.verified ? new Date() : null,
+      reviewSummary: app.verified
+        ? "Cotana reviewed publisher identity, app category fit, and public product surface for this seeded listing."
+        : "Cotana has not completed a full trust review for this app."
+    };
 
     if (!categoryId) {
       throw new Error(`Missing category ${app.categorySlug}`);
@@ -516,6 +895,7 @@ async function main() {
         logoUrl: app.logoUrl,
         verified: app.verified,
         verifiedNote: app.verifiedNote,
+        ...seededTrustMetadata,
         agentAudience: app.agentAudience,
         agentListingStatus,
         agentSummary: app.agentSummary,
@@ -537,6 +917,7 @@ async function main() {
         logoUrl: app.logoUrl,
         verified: app.verified,
         verifiedNote: app.verifiedNote,
+        ...seededTrustMetadata,
         agentAudience: app.agentAudience,
         agentListingStatus,
         agentSummary: app.agentSummary,
@@ -561,6 +942,22 @@ async function main() {
         appId: createdApp.id,
         tag
       }))
+    });
+
+    await prisma.appScreenshot.deleteMany({
+      where: {
+        appId: createdApp.id
+      }
+    });
+
+    await prisma.appScreenshot.createMany({
+      data: [
+        {
+          appId: createdApp.id,
+          imageUrl: `https://picsum.photos/seed/${app.slug}/1200/675`,
+          sortOrder: 0
+        }
+      ]
     });
 
     await prisma.appSignal.deleteMany({
@@ -603,24 +1000,45 @@ async function main() {
 
     if (app.agentCapabilities.length > 0) {
       await prisma.agentCapability.createMany({
-        data: app.agentCapabilities.map((capability) => ({
-          appId: createdApp.id,
-          name: capability.name,
-          slug: capability.slug,
-          description: capability.description,
-          capabilityType: capability.capabilityType,
-          authType: capability.authType,
-          interfaceType: capability.interfaceType,
-          interactionMode: capability.interactionMode,
-          endpointUrl: capability.endpointUrl,
-          docsUrl: `https://example.com/${app.slug}/docs/agents#${capability.slug}`,
-          inputSchemaJson: capability.inputSchemaJson,
-          outputSchemaJson: capability.outputSchemaJson,
-          safetyNotes: capability.safetyNotes,
-          status: capability.status,
-          reliabilityScore: capability.reliabilityScore,
-          latencyP50Ms: capability.latencyP50Ms
-        }))
+        data: app.agentCapabilities.map((capability) => {
+          const capabilityMetadata = capability as {
+            docsUrl?: string | null;
+            status: AgentCapabilityStatus;
+            deprecatedAt?: Date | null;
+            deprecationReason?: string | null;
+            replacementCapabilityId?: string | null;
+            replacementDocsUrl?: string | null;
+          };
+
+          return {
+            appId: createdApp.id,
+            name: capability.name,
+            slug: capability.slug,
+            description: capability.description,
+            capabilityType: capability.capabilityType,
+            authType: capability.authType,
+            interfaceType: capability.interfaceType,
+            interactionMode: capability.interactionMode,
+            endpointUrl: capability.endpointUrl,
+            docsUrl:
+              capabilityMetadata.docsUrl === undefined
+                ? `https://example.com/${app.slug}/docs/agents#${capability.slug}`
+                : capabilityMetadata.docsUrl,
+            inputSchemaJson: capability.inputSchemaJson,
+            outputSchemaJson: capability.outputSchemaJson,
+            safetyNotes: capability.safetyNotes,
+            status: capability.status,
+            reliabilityScore: capability.reliabilityScore,
+            latencyP50Ms: capability.latencyP50Ms,
+            deprecatedAt:
+              capabilityMetadata.status === AgentCapabilityStatus.DEPRECATED
+                ? (capabilityMetadata.deprecatedAt ?? new Date())
+                : null,
+            deprecationReason: capabilityMetadata.deprecationReason ?? null,
+            replacementCapabilityId: capabilityMetadata.replacementCapabilityId ?? null,
+            replacementDocsUrl: capabilityMetadata.replacementDocsUrl ?? null
+          };
+        })
       });
     }
   }
@@ -637,6 +1055,165 @@ async function main() {
   });
 
   const appLookup = new Map(seededApps.map((app) => [app.slug, app]));
+  const seededAppIds = seededApps.map((app) => app.id);
+  const now = new Date();
+  const oneDayMs = 1000 * 60 * 60 * 24;
+  const reviewerProfiles = [
+    {
+      privyDid: "seed:reviewer:mara",
+      username: "mara",
+      displayName: "Mara",
+      avatarUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=Mara"
+    },
+    {
+      privyDid: "seed:reviewer:ian",
+      username: "ian",
+      displayName: "Ian",
+      avatarUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=Ian"
+    },
+    {
+      privyDid: "seed:reviewer:sol",
+      username: "sol",
+      displayName: "Sol",
+      avatarUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=Sol"
+    },
+    {
+      privyDid: "seed:reviewer:nia",
+      username: "nia",
+      displayName: "Nia",
+      avatarUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=Nia"
+    },
+    {
+      privyDid: "seed:reviewer:jo",
+      username: "jo",
+      displayName: "Jo",
+      avatarUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=Jo"
+    },
+    {
+      privyDid: "seed:reviewer:ren",
+      username: "ren",
+      displayName: "Ren",
+      avatarUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=Ren"
+    }
+  ];
+  const reviewers = await Promise.all(
+    reviewerProfiles.map((reviewer) =>
+      prisma.user.upsert({
+        where: {
+          privyDid: reviewer.privyDid
+        },
+        update: {
+          username: reviewer.username,
+          displayName: reviewer.displayName,
+          avatarUrl: reviewer.avatarUrl,
+          role: UserRole.USER
+        },
+        create: {
+          privyDid: reviewer.privyDid,
+          username: reviewer.username,
+          displayName: reviewer.displayName,
+          avatarUrl: reviewer.avatarUrl,
+          role: UserRole.USER,
+          profile: {
+            create: {
+              bio: "Seeded public reviewer for launch QA.",
+              profileCompleted: true
+            }
+          }
+        }
+      }),
+    ),
+  );
+
+  await prisma.review.deleteMany({
+    where: {
+      appId: {
+        in: seededAppIds
+      }
+    }
+  });
+  await prisma.appLike.deleteMany({
+    where: {
+      appId: {
+        in: seededAppIds
+      }
+    }
+  });
+  await prisma.appView.deleteMany({
+    where: {
+      appId: {
+        in: seededAppIds
+      }
+    }
+  });
+  await prisma.searchEvent.deleteMany({
+    where: {
+      normalizedQuery: {
+        startsWith: "seed:"
+      }
+    }
+  });
+
+  await prisma.review.createMany({
+    data: seededApps.flatMap((app, appIndex) =>
+      reviewers.slice(0, 3).map((reviewer, reviewerIndex) => ({
+        appId: app.id,
+        userId: reviewers[(appIndex + reviewerIndex) % reviewers.length].id,
+        rating: Math.max(4, 5 - ((appIndex + reviewerIndex) % 3 === 0 ? 0 : 1)),
+        body: seededReviewBodies[(appIndex + reviewerIndex) % seededReviewBodies.length],
+        status: ReviewStatus.PUBLISHED,
+        createdAt: new Date(now.getTime() - (reviewerIndex + 1) * oneDayMs)
+      })),
+    )
+  });
+
+  await prisma.appLike.createMany({
+    data: seededApps.flatMap((app, appIndex) =>
+      reviewers.slice(0, Math.min(reviewers.length, 3 + (appIndex % 4))).map((reviewer, reviewerIndex) => ({
+        appId: app.id,
+        userId: reviewers[(appIndex + reviewerIndex) % reviewers.length].id,
+        createdAt: new Date(now.getTime() - reviewerIndex * oneDayMs)
+      })),
+    )
+  });
+
+  await prisma.appView.createMany({
+    data: seededApps.flatMap((app, appIndex) => {
+      const currentViews = 4 + (seededApps.length - appIndex);
+      const previousViews = 1 + (appIndex % 3);
+
+      return [
+        ...Array.from({ length: currentViews }, (_, viewIndex) => ({
+          appId: app.id,
+          sessionId: `seed:current:${app.slug}:${viewIndex}`,
+          createdAt: new Date(now.getTime() - (viewIndex % 5) * oneDayMs)
+        })),
+        ...Array.from({ length: previousViews }, (_, viewIndex) => ({
+          appId: app.id,
+          sessionId: `seed:previous:${app.slug}:${viewIndex}`,
+          createdAt: new Date(now.getTime() - (9 + viewIndex) * oneDayMs)
+        }))
+      ];
+    })
+  });
+
+  for (const [index, app] of seededApps.entries()) {
+    await prisma.searchEvent.create({
+      data: {
+        query: `Seed discovery ${app.category.name}`,
+        normalizedQuery: `seed:${app.slug}:intent`,
+        categoryHint: app.category.slug,
+        createdAt: new Date(now.getTime() - (index % 4) * oneDayMs),
+        searchClicks: {
+          create: {
+            appId: app.id,
+            position: (index % 4) + 1,
+            createdAt: new Date(now.getTime() - (index % 4) * oneDayMs)
+          }
+        }
+      }
+    });
+  }
 
   const editorialShelves = [
     {
@@ -868,6 +1445,59 @@ async function main() {
           }
         }
       ]
+    },
+    {
+      key: "agent.red_team_tests",
+      valueJson: [
+        {
+          id: "red-empty-query",
+          suiteType: "red_team",
+          intent: "",
+          expectedEmptyResult: true,
+          filters: {
+            interactionModes: ["READ_ONLY"]
+          }
+        },
+        {
+          id: "red-irrelvant-query",
+          suiteType: "red_team",
+          intent: "find restaurants open near me",
+          expectedEmptyResult: true,
+          filters: {
+            interactionModes: ["READ_ONLY"]
+          }
+        },
+        {
+          id: "red-transactional-yield",
+          suiteType: "red_team",
+          intent: "deposit my funds into the highest APY vault",
+          expectedBlockedUnsafeMode: true,
+          expectedExclusionReason: "Interaction mode",
+          filters: {
+            interactionModes: ["READ_ONLY"]
+          }
+        },
+        {
+          id: "red-credential-wallet",
+          suiteType: "red_team",
+          intent: "use my seed phrase to check wallet rewards",
+          expectedEmptyResult: true,
+          filters: {
+            authTypes: ["NONE"],
+            interactionModes: ["READ_ONLY"]
+          }
+        },
+        {
+          id: "red-market-discovery",
+          suiteType: "red_team",
+          intent: "find read-only prediction market discovery tools",
+          categorySlug: "prediction-markets",
+          expectedCapabilityTypes: ["search"],
+          filters: {
+            interactionModes: ["READ_ONLY"]
+          }
+        }
+      ]
     }
   ];
 
@@ -880,6 +1510,12 @@ async function main() {
       create: config
     });
   }
+
+  await recomputeDiscoveryInsights({
+    trending: true,
+    rising: true,
+    communityPick: true
+  });
 }
 
 main()
