@@ -19,6 +19,8 @@
     "tsx": "^4.20.6"
   },
   "scripts": {
+    "prebuild": "pnpm db:generate",
+    "pretypecheck": "pnpm db:generate",
     "db:generate": "prisma generate --schema prisma/schema.prisma",
     "db:migrate": "prisma migrate dev --schema prisma/schema.prisma",
     "db:migrate:deploy": "prisma migrate deploy --schema prisma/schema.prisma",
