@@ -1,0 +1,25 @@
+[  169280ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/:0
+[  185548ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_3434a8a7348d1203dd74a2ac32dae02a/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:25630
+[  188319ms] PrismaClientInitializationError: 
+Invalid `prisma.category.findMany()` invocation:
+
+
+error: Environment variable not found: DATABASE_URL.
+  -->  schema.prisma:7
+   | 
+ 6 |   provider  = "postgresql"
+ 7 |   url       = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at Function.all (<anonymous>:1:21)
+    at StoreHomePage (about://React/Server/webpack-internal:///(rsc)/./app/page.tsx?7:195:68)
+    at resolveErrorDev (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_3434a8a7348d1203dd74a2ac32dae02a/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2396:46)
+    at processFullStringRow (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_3434a8a7348d1203dd74a2ac32dae02a/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2882:23)
+    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_3434a8a7348d1203dd74a2ac32dae02a/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2825:7)
+    at processBinaryChunk (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_3434a8a7348d1203dd74a2ac32dae02a/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:3028:15)
+    at progress (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_3434a8a7348d1203dd74a2ac32dae02a/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:3294:13)
+[  188443ms] [WARNING] ../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba/node_modules/@privy-io/react-auth/dist/esm/index-YDEix4mU.mjs
+Module not found: Can't resolve '@farcaster/mini-app-solana' in 'C:\Users\HP\cotana\node_modules\.pnpm\@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba\node_modules\@privy-io\react-auth\dist\esm' @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_3434a8a7348d1203dd74a2ac32dae02a/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:241
+[  188556ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/favicon.ico:0
+[  192323ms] [WARNING] The resource http://localhost:3000/_next/static/css/app/layout.css?v=1782037481975 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3000/:0

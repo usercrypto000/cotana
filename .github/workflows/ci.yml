@@ -17,8 +17,13 @@ jobs:
           version: 10.28.2
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile=false
-      - run: pnpm lint
+      - run: pnpm db:generate
       - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm test:smoke
+      - run: pnpm lint
+      - run: pnpm build
+      - run: pnpm test:e2e

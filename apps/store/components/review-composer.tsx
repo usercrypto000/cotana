@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@cotana/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Select, Textarea } from "@cotana/ui";
 
 type ReviewEligibilityState = {
   allowed: boolean;
@@ -72,10 +72,10 @@ export function ReviewComposer({
         <CardTitle>Write a review</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!canReview ? <p className="text-sm text-slate-500">Sign in to review this app.</p> : null}
+        {!canReview ? <p className="text-sm text-neutral-muted">Sign in to review this app.</p> : null}
         {canReview && eligibility && !eligibility.allowed ? (
-          <div className="space-y-2 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">
-            <p className="font-medium">You are not eligible to post a review yet.</p>
+          <div className="space-y-2 rounded-card bg-trust-warning-soft p-4 text-sm text-trust-warning-ink">
+            <p className="font-heading font-medium">You are not eligible to post a review yet.</p>
             {eligibility.reasons.map((reason) => (
               <p key={reason}>{reason}</p>
             ))}
@@ -85,12 +85,11 @@ export function ReviewComposer({
           </div>
         ) : null}
         <div className="grid gap-4 sm:grid-cols-[140px_1fr]">
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-neutral-muted">
             <span>Rating</span>
-            <select
+            <Select
               value={rating}
               onChange={(event) => setRating(event.target.value)}
-              className="h-11 w-full rounded-xl border bg-white px-4 text-sm text-slate-950"
               disabled={!canReview || !eligibility?.allowed || pending}
             >
               {[5, 4, 3, 2, 1].map((value) => (
@@ -98,20 +97,20 @@ export function ReviewComposer({
                   {value} star{value === 1 ? "" : "s"}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
-          <label className="space-y-2 text-sm text-slate-600">
+          <label className="space-y-2 text-sm text-neutral-muted">
             <span>Review</span>
-            <textarea
+            <Textarea
               value={body}
               onChange={(event) => setBody(event.target.value)}
-              className="min-h-36 w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-950"
+              className="min-h-36"
               placeholder="Share what worked, what felt clear, and where the experience could improve."
               disabled={!canReview || !eligibility?.allowed || pending}
             />
           </label>
         </div>
-        {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+        {error ? <p className="text-sm ui-copy-danger">{error}</p> : null}
         <Button onClick={() => void submitReview()} disabled={!canReview || !eligibility?.allowed || pending}>
           {pending ? "Publishing..." : "Publish review"}
         </Button>

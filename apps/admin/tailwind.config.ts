@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { cotanaBrand, tailwindBrandColors, tailwindFontFamily } from "@cotana/config/brand";
 
 const config: Config = {
   content: [
@@ -9,8 +10,17 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ["var(--font-ibm-plex-sans)", "system-ui", "sans-serif"]
+      colors: {
+        ...tailwindBrandColors
+      },
+      fontFamily: tailwindFontFamily,
+      borderRadius: {
+        control: cotanaBrand.radius.control,
+        card: cotanaBrand.radius.card
+      },
+      boxShadow: {
+        panel: "var(--shadow-panel)",
+        raised: "var(--shadow-raised)"
       }
     }
   },

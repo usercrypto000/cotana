@@ -34,7 +34,7 @@ export default async function ReviewsPage() {
             <CardTitle>Queue is empty</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-slate-500">No flagged reviews need moderation right now.</p>
+            <p className="text-sm text-neutral-muted">No flagged reviews need moderation right now.</p>
           </CardContent>
         </Card>
       ) : (
@@ -44,7 +44,7 @@ export default async function ReviewsPage() {
               <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <div>
                   <CardTitle>{review.app.name}</CardTitle>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-2 text-sm text-neutral-muted">
                     Reviewer: {review.user.displayName ?? review.user.email ?? "Unknown user"}
                   </p>
                 </div>
@@ -54,11 +54,11 @@ export default async function ReviewsPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">{review.body}</p>
+                <p className="rounded-2xl bg-neutral-surface p-4 text-sm leading-6 text-brand-text/80">{review.body}</p>
                 <div className="grid gap-2">
                   {review.flags.map((flag) => (
-                    <div key={flag.id} className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600">
-                      <p className="font-medium text-slate-900">
+                    <div key={flag.id} className="rounded-2xl border border-neutral-border p-4 text-sm text-brand-text/72">
+                      <p className="font-medium text-brand-text">
                         {flag.reporterUser.displayName ?? flag.reporterUser.email ?? "Anonymous reporter"}
                       </p>
                       <p className="mt-1">{flag.reason}</p>

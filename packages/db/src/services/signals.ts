@@ -44,6 +44,35 @@ export async function listAppsForSignalCategory(categorySlug: string) {
   });
 }
 
+// TODO: HARDENED FOR VERCEL PRODUCTION DEPLOYMENT
+export async function listAppsForSignalCategoryPaginated(categorySlug: string, cursorId?: string, limit = 10) {
+  return prisma.app.findMany({
+    where: {
+      status: AppStatus.PUBLISHED,
+      category: {
+        slug: categorySlug
+      }
+    },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      category: {
+        select: {
+          slug: true,
+          name: true,
+          sortOrder: true
+        }
+      }
+    },
+    orderBy: {
+      id: "asc" // ID is stable for cursor pagination
+    },
+    take: limit,
+    ...(cursorId ? { skip: 1, cursor: { id: cursorId } } : {})
+  });
+}
+
 export async function listLatestNumericSignals(appIds?: string[]) {
   const rows = await prisma.appSignal.findMany({
     where: {
@@ -161,6 +190,29 @@ export async function storeWeeklySignalSnapshots(observedAt = new Date()) {
   });
 
   return snapshotRows.length;
+}
+
+export async function listAppSignalSnapshots(
+  appId: string,
+  options?: {
+    metric?: string;
+    limit?: number;
+  },
+) {
+  return prisma.appSignalSnapshot.findMany({
+    where: {
+      appId,
+      ...(options?.metric
+        ? {
+            metric: options.metric
+          }
+        : {})
+    },
+    orderBy: {
+      observedAt: "desc"
+    },
+    take: options?.limit ?? 26
+  });
 }
 
 export async function updateSignalJobStatus(

@@ -1,0 +1,6 @@
+[    3586ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://auth.privy.io/api/v1/analytics_events:0
+[    3593ms] [LOG] Unable to submit event. This is not an issue. @ http://localhost:3000/_next/static/chunks/ce380935-bb1b5c3049e8f9cb.js:181
+[    3742ms] [ERROR] Framing 'https://auth.privy.io/' violates the following Content Security Policy directive: "frame-ancestors 'self' https://www.cotana.xyz https://cotana.xyz https://auth.privy.io". The request has been blocked.
+ @ :0
+[   46695ms] [WARNING] Privy iframe failed to load:  Error: Exceeded max attempts before resolving function
+    at http://localhost:3000/_next/static/chunks/8783-7e6b42b34cfa5345.js:57:242777 @ http://localhost:3000/_next/static/chunks/ce380935-bb1b5c3049e8f9cb.js:181

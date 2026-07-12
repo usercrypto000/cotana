@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans } from "next/font/google";
+import type { CSSProperties } from "react";
+import { brandCssVariables } from "@cotana/config";
 import { AdminPrivyProvider } from "../components/admin-privy-provider";
 import "./globals.css";
 
-const ibmPlexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-ibm-plex-sans"
-});
+const fontVariables = {
+  "--font-ubuntu": "'Ubuntu'",
+  "--font-open-sans": "'Open Sans'",
+  "--font-inter": "'Inter'"
+};
 
 export const metadata: Metadata = {
   title: "Cotana Admin",
@@ -20,8 +21,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={ibmPlexSans.variable}>
-      <body className="font-sans antialiased">
+    <html
+      lang="en"
+      style={{ ...brandCssVariables, ...fontVariables } as CSSProperties}
+    >
+      <body className="font-body antialiased">
         <AdminPrivyProvider>{children}</AdminPrivyProvider>
       </body>
     </html>

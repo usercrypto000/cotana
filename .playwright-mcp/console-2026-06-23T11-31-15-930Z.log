@@ -1,0 +1,136 @@
+[  141603ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3001/search:0
+[  167944ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:25630
+[  184433ms] PrismaClientInitializationError: 
+Invalid `prisma.category.findMany()` invocation:
+
+
+error: Environment variable not found: DATABASE_URL.
+  -->  schema.prisma:7
+   | 
+ 6 |   provider  = "postgresql"
+ 7 |   url       = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at Function.all (<anonymous>:1:21)
+    at SearchPage (about://React/Server/webpack-internal:///(rsc)/./app/search/page.tsx?7:24:40)
+    at resolveErrorDev (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2396:46)
+    at processFullStringRow (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2882:23)
+    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2825:7)
+    at processBinaryChunk (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:3028:15)
+    at progress (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:3294:13)
+[  184999ms] [WARNING] The resource http://localhost:3001/_next/static/css/app/layout.css?v=1782214414144 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3001/search:0
+[  192073ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/favicon.ico:0
+[  192083ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/_next/static/chunks/_app-pages-browser_node_modules_pnpm_next_15_5_14__opentelemetry_340532da0f0cb441b9af874893e9-1513e2.js:0
+[  195396ms] ChunkLoadError: Loading chunk _app-pages-browser_node_modules_pnpm_next_15_5_14__opentelemetry_340532da0f0cb441b9af874893e9-1513e2 failed.
+(error: http://localhost:3001/_next/static/chunks/_app-pages-browser_node_modules_pnpm_next_15_5_14__opentelemetry_340532da0f0cb441b9af874893e9-1513e2.js)
+    at __webpack_require__.f.j (http://localhost:3001/_next/static/chunks/webpack.js:855:29)
+    at http://localhost:3001/_next/static/chunks/webpack.js:150:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (http://localhost:3001/_next/static/chunks/webpack.js:149:67)
+    at fn.e (http://localhost:3001/_next/static/chunks/webpack.js:386:50)
+    at eval (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/client/dev/hot-reloader/app/use-websocket.js:78:29)
+    at Object.react_stack_bottom_frame (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:23669:20)
+    at runWithFiberInDEV (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:872:30)
+    at commitHookEffectListMount (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:12345:29)
+    at commitHookPassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:12466:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14387:13)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14514:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14514:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14514:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14514:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14514:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14514:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14380:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14390:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14380:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14380:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14380:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14514:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14380:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14380:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14514:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14514:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14390:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14380:11)
+    at recursivelyTraversePassiveMountEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14360:11)
+    at commitPassiveMountOnFiber (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14399:11)
+    at flushPassiveEffects (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16338:9)
+[  205458ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:196
+[  205459ms] [WARNING] The resource http://localhost:3001/_next/static/css/app/layout.css?v=1782214414144 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3001/search:0
+[  346539ms] [WARNING] ../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba/node_modules/@privy-io/react-auth/dist/esm/index-YDEix4mU.mjs
+Module not found: Can't resolve '@farcaster/mini-app-solana' in 'C:\Users\HP\cotana\node_modules\.pnpm\@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba\node_modules\@privy-io\react-auth\dist\esm'
+
+Import trace for requested module:
+../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba/node_modules/@privy-io/react-auth/dist/esm/index-YDEix4mU.mjs
+../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba/node_modules/@privy-io/react-auth/dist/esm/index.mjs
+./components/store-privy-provider.tsx @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:241
+[  346783ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/_next/static/webpack/d3b17bf9ec991605.webpack.hot-update.json:0
+[  346789ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:113
+[  372221ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:196
+[  384126ms] [WARNING] ../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba/node_modules/@privy-io/react-auth/dist/esm/index-YDEix4mU.mjs
+Module not found: Can't resolve '@farcaster/mini-app-solana' in 'C:\Users\HP\cotana\node_modules\.pnpm\@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba\node_modules\@privy-io\react-auth\dist\esm'
+
+Import trace for requested module:
+../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba/node_modules/@privy-io/react-auth/dist/esm/index-YDEix4mU.mjs
+../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba/node_modules/@privy-io/react-auth/dist/esm/index.mjs
+./components/store-privy-provider.tsx @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:241
+[  388648ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/_next/static/webpack/d3b17bf9ec991605.webpack.hot-update.json:0
+[  388652ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:113
+[  391797ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3001/search:0
+[  403029ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:25630
+[  405768ms] PrismaClientInitializationError: 
+Invalid `prisma.category.findMany()` invocation:
+
+
+Can't reach database server at `ep-silent-sun-ahwo2olv-pooler.c-3.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-silent-sun-ahwo2olv-pooler.c-3.us-east-1.aws.neon.tech:5432`.
+    at Function.all (<anonymous>:1:21)
+    at SearchPage (about://React/Server/webpack-internal:///(rsc)/./app/search/page.tsx?7:24:40)
+    at resolveErrorDev (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2396:46)
+    at processFullStringRow (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2882:23)
+    at processFullBinaryRow (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:2825:7)
+    at processBinaryChunk (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:3028:15)
+    at progress (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-client.browser.development.js:3294:13)
+[  405854ms] [WARNING] ../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba/node_modules/@privy-io/react-auth/dist/esm/index-YDEix4mU.mjs
+Module not found: Can't resolve '@farcaster/mini-app-solana' in 'C:\Users\HP\cotana\node_modules\.pnpm\@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba\node_modules\@privy-io\react-auth\dist\esm' @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:241
+[  409147ms] [WARNING] The resource http://localhost:3001/_next/static/css/app/layout.css?v=1782214664260 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3001/search:0
+[  418326ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:196
+[  430542ms] [WARNING] ../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba/node_modules/@privy-io/react-auth/dist/esm/index-YDEix4mU.mjs
+Module not found: Can't resolve '@farcaster/mini-app-solana' in 'C:\Users\HP\cotana\node_modules\.pnpm\@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba\node_modules\@privy-io\react-auth\dist\esm'
+
+Import trace for requested module:
+../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba/node_modules/@privy-io/react-auth/dist/esm/index-YDEix4mU.mjs
+../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba/node_modules/@privy-io/react-auth/dist/esm/index.mjs
+./components/store-privy-provider.tsx @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:241
+[  432634ms] [WARNING] The resource http://localhost:3001/_next/static/css/app/layout.css?v=1782214664260 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3001/search:0
+[  436282ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:111
+[  457569ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:25630
+[  470771ms] [WARNING] ../../node_modules/.pnpm/@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba/node_modules/@privy-io/react-auth/dist/esm/index-YDEix4mU.mjs
+Module not found: Can't resolve '@farcaster/mini-app-solana' in 'C:\Users\HP\cotana\node_modules\.pnpm\@privy-io+react-auth@3.18.0_051015d4c69c2718a1030a21ad015eba\node_modules\@privy-io\react-auth\dist\esm' @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.14_@opentelemetry_340532da0f0cb441b9af874893e94eda/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:241

@@ -91,7 +91,11 @@ async function prepareTarget(target) {
   const rewrittenRootManifest = replaceWorkspaceReferences(rootManifest, (packageName) => `file:./packages/${packageName}`);
 
   delete rewrittenRootManifest.packageManager;
-  rewrittenRootManifest.postinstall = "prisma generate --schema ./packages/db/prisma/schema.prisma";
+  rewrittenRootManifest.scripts = {
+    ...rewrittenRootManifest.scripts,
+    postinstall: "prisma generate --schema ./packages/db/prisma/schema.prisma",
+    build: "prisma generate --schema ./packages/db/prisma/schema.prisma && next build"
+  };
   rewrittenRootManifest.engines = {
     node: "24.x"
   };
@@ -102,6 +106,10 @@ async function prepareTarget(target) {
 
   if (!rewrittenRootManifest.devDependencies.prisma) {
     rewrittenRootManifest.devDependencies.prisma = "^6.17.1";
+  }
+
+  if (!rewrittenRootManifest.devDependencies.typescript) {
+    rewrittenRootManifest.devDependencies.typescript = "^5.9.3";
   }
 
   await writeJson(path.join(destinationRoot, "package.json"), rewrittenRootManifest);

@@ -1,11 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig = {
-  experimental: {
-    nodeMiddleware: true
-  } as NextConfig["experimental"] & {
-    nodeMiddleware: boolean;
-  },
   transpilePackages: [
     "@cotana/analytics",
     "@cotana/auth",

@@ -1,5 +1,10 @@
-import { AppStatus, ReviewStatus } from "@prisma/client";
-import type { AppSummary } from "@cotana/types";
+import {
+  AppStatus,
+  Prisma,
+  ReviewStatus
+} from "@prisma/client";
+import type { AppSummary, AppTrustMetadata } from "@cotana/types";
+import { normalizeTrustMetadata } from "@cotana/types";
 import { incrementCounter } from "../redis";
 import { prisma } from "../client";
 
@@ -12,6 +17,8 @@ type LikeStats = {
   likeCount: number;
 };
 
+export type CategoryRecord = Prisma.CategoryGetPayload<Record<string, never>>;
+
 export type AdminAppInput = {
   slug?: string;
   name: string;
@@ -20,6 +27,8 @@ export type AdminAppInput = {
   websiteUrl: string;
   logoUrl: string;
   verified: boolean;
+  verifiedNote?: string | null;
+  trustMetadata?: Partial<AppTrustMetadata> | null;
   categoryId: string;
   tags: string[];
   screenshots: string[];
@@ -34,6 +43,9 @@ export type AdminAppRecord = {
   websiteUrl: string;
   logoUrl: string;
   verified: boolean;
+  verifiedNote: string | null;
+  trustMetadata: AppTrustMetadata;
+  isCommunityPick: boolean;
   status: AppStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -49,6 +61,7 @@ export type AdminAppRecord = {
     imageUrl: string;
     sortOrder: number;
   }[];
+  agentCapabilities: AgentCapabilitySummary[];
   rating: number;
   reviewCount: number;
   likeCount: number;
@@ -63,6 +76,8 @@ export type AppDetailRecord = {
   websiteUrl: string;
   logoUrl: string;
   verified: boolean;
+  trustMetadata: AppTrustMetadata;
+  isCommunityPick: boolean;
   createdAt: Date;
   publishedAt: Date | null;
   category: {
@@ -76,6 +91,7 @@ export type AppDetailRecord = {
     imageUrl: string;
     sortOrder: number;
   }[];
+  agentCapabilities: AgentCapabilitySummary[];
   rating: number;
   reviewCount: number;
   likeCount: number;
@@ -102,6 +118,17 @@ type PublishedAppInclude = {
   websiteUrl: string;
   logoUrl: string;
   verified: boolean;
+  verificationStatus?: AppTrustMetadata["verificationStatus"] | null;
+  publisherName?: string | null;
+  publisherType?: AppTrustMetadata["publisherType"] | null;
+  supportedChains?: string[] | null;
+  permissionScopes?: string[] | null;
+  paymentCapabilities?: string[] | null;
+  custodyModel?: string | null;
+  externalRiskNotes?: string | null;
+  lastReviewedAt?: Date | null;
+  reviewSummary?: string | null;
+  isCommunityPick: boolean;
   createdAt: Date;
   publishedAt: Date | null;
   category: {
@@ -150,6 +177,41 @@ function normalizeTags(tags: string[]) {
 
 function normalizeScreenshots(screenshots: string[]) {
   return [...new Set(screenshots.map((url) => url.trim()).filter(Boolean))];
+}
+
+
+
+function toTrustMetadata(app: {
+  verified?: boolean;
+  verificationStatus?: AppTrustMetadata["verificationStatus"] | null;
+  publisherName?: string | null;
+  publisherType?: AppTrustMetadata["publisherType"] | null;
+  supportedChains?: string[] | null;
+  permissionScopes?: string[] | null;
+  paymentCapabilities?: string[] | null;
+  custodyModel?: string | null;
+  externalRiskNotes?: string | null;
+  lastReviewedAt?: Date | null;
+  reviewSummary?: string | null;
+}) {
+  return normalizeTrustMetadata(
+    {
+      verificationStatus: app.verificationStatus ?? undefined,
+      publisherName: app.publisherName ?? undefined,
+      publisherType: app.publisherType ?? undefined,
+      supportedChains: app.supportedChains ?? undefined,
+      permissionScopes: app.permissionScopes ?? undefined,
+      paymentCapabilities: app.paymentCapabilities ?? undefined,
+      custodyModel: app.custodyModel ?? undefined,
+      externalRiskNotes: app.externalRiskNotes ?? undefined,
+      lastReviewedAt: app.lastReviewedAt ?? undefined,
+      reviewSummary: app.reviewSummary ?? undefined
+    },
+    {
+      verified: app.verified,
+      lastReviewedAt: app.lastReviewedAt
+    },
+  );
 }
 
 async function getReviewStats(appIds: string[]) {
@@ -220,8 +282,20 @@ function toSummary(
     name: string;
     logoUrl: string;
     verified: boolean;
+    verificationStatus?: AppTrustMetadata["verificationStatus"] | null;
+    publisherName?: string | null;
+    publisherType?: AppTrustMetadata["publisherType"] | null;
+    supportedChains?: string[] | null;
+    permissionScopes?: string[] | null;
+    paymentCapabilities?: string[] | null;
+    custodyModel?: string | null;
+    externalRiskNotes?: string | null;
+    lastReviewedAt?: Date | null;
+    reviewSummary?: string | null;
+    isCommunityPick: boolean;
     shortDescription: string;
     longDescription: string;
+    publishedAt: Date | null;
     category: {
       slug: string;
       name: string;
@@ -237,12 +311,15 @@ function toSummary(
     name: app.name,
     logoUrl: app.logoUrl,
     verified: app.verified,
+    isCommunityPick: app.isCommunityPick,
     shortDescription: app.shortDescription,
     longDescription: app.longDescription,
+    publishedAt: app.publishedAt,
     category: app.category,
     rating: reviewStats?.rating ?? 0,
     reviewCount: reviewStats?.reviewCount ?? 0,
-    likeCount: likeStats?.likeCount ?? 0
+    likeCount: likeStats?.likeCount ?? 0,
+    trustMetadata: toTrustMetadata(app)
   };
 }
 
@@ -256,6 +333,18 @@ async function enrichAdminApps(
     websiteUrl: string;
     logoUrl: string;
     verified: boolean;
+    verifiedNote: string | null;
+    verificationStatus?: AppTrustMetadata["verificationStatus"] | null;
+    publisherName?: string | null;
+    publisherType?: AppTrustMetadata["publisherType"] | null;
+    supportedChains?: string[] | null;
+    permissionScopes?: string[] | null;
+    paymentCapabilities?: string[] | null;
+    custodyModel?: string | null;
+    externalRiskNotes?: string | null;
+    lastReviewedAt?: Date | null;
+    reviewSummary?: string | null;
+    isCommunityPick: boolean;
     status: AppStatus;
     createdAt: Date;
     updatedAt: Date;
@@ -273,6 +362,7 @@ async function enrichAdminApps(
       imageUrl: string;
       sortOrder: number;
     }[];
+    agentCapabilities: AgentCapabilitySummary[];
   }>,
 ) {
   const appIds = apps.map((app) => app.id);
@@ -288,6 +378,9 @@ async function enrichAdminApps(
     websiteUrl: app.websiteUrl,
     logoUrl: app.logoUrl,
     verified: app.verified,
+    verifiedNote: app.verifiedNote,
+    trustMetadata: toTrustMetadata(app),
+    isCommunityPick: app.isCommunityPick,
     status: app.status,
     createdAt: app.createdAt,
     updatedAt: app.updatedAt,
@@ -295,13 +388,14 @@ async function enrichAdminApps(
     category: app.category,
     tags: app.tags.map((tag) => tag.tag),
     screenshots: app.screenshots,
+    agentCapabilities: app.agentCapabilities.map(toAgentCapabilitySummary),
     rating: reviewStats.get(app.id)?.rating ?? 0,
     reviewCount: reviewStats.get(app.id)?.reviewCount ?? 0,
     likeCount: likeStats.get(app.id)?.likeCount ?? 0
   }));
 }
 
-export async function listCategories() {
+export async function listCategories(): Promise<CategoryRecord[]> {
   return prisma.category.findMany({
     orderBy: {
       sortOrder: "asc"
@@ -390,6 +484,30 @@ async function replaceTagsAndScreenshots(appId: string, input: AdminAppInput) {
   }
 }
 
+function toJsonValue(value: unknown) {
+  return value === undefined ? Prisma.JsonNull : (JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue);
+}
+
+function trustMetadataData(input: AdminAppInput) {
+  return {
+    verificationStatus: input.trustMetadata?.verificationStatus ?? (input.verified ? "verified" : "unreviewed"),
+    publisherName: input.trustMetadata?.publisherName?.trim() || null,
+    publisherType: input.trustMetadata?.publisherType ?? "unknown",
+    supportedChains: input.trustMetadata?.supportedChains ?? [],
+    permissionScopes: input.trustMetadata?.permissionScopes ?? [],
+    paymentCapabilities: input.trustMetadata?.paymentCapabilities ?? [],
+    custodyModel: input.trustMetadata?.custodyModel?.trim() || null,
+    externalRiskNotes: input.trustMetadata?.externalRiskNotes?.trim() || null,
+    lastReviewedAt: input.trustMetadata?.lastReviewedAt ?? null,
+    reviewSummary: input.trustMetadata?.reviewSummary?.trim() || null
+  };
+}
+
+function valuesEqual(left: unknown, right: unknown) {
+  return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+}
+
+
 export async function createAdminApp(input: AdminAppInput, createdByUserId: string) {
   const app = await prisma.app.create({
     data: {
@@ -400,6 +518,7 @@ export async function createAdminApp(input: AdminAppInput, createdByUserId: stri
       websiteUrl: input.websiteUrl.trim(),
       logoUrl: input.logoUrl.trim(),
       verified: input.verified,
+      verifiedNote: input.verifiedNote?.trim() || null,
       categoryId: input.categoryId,
       createdByUserId
     }
@@ -409,7 +528,17 @@ export async function createAdminApp(input: AdminAppInput, createdByUserId: stri
   return getAdminAppById(app.id);
 }
 
-export async function updateAdminApp(id: string, input: AdminAppInput) {
+export async function updateAdminApp(id: string, input: AdminAppInput, updatedByUserId?: string | null) {
+  const previous = await prisma.app.findUnique({
+    where: {
+      id
+    }
+  });
+
+  if (!previous) {
+    return null;
+  }
+
   try {
     await prisma.app.update({
       where: { id },
@@ -421,6 +550,8 @@ export async function updateAdminApp(id: string, input: AdminAppInput) {
         websiteUrl: input.websiteUrl.trim(),
         logoUrl: input.logoUrl.trim(),
         verified: input.verified,
+        verifiedNote: input.verifiedNote?.trim() || null,
+        ...trustMetadataData(input),
         categoryId: input.categoryId
       }
     });
@@ -448,7 +579,7 @@ export async function setAdminAppStatus(id: string, status: AppStatus) {
   return getAdminAppById(id);
 }
 
-export async function listPublishedApps(categorySlug?: string) {
+export async function listPublishedApps(categorySlug?: string): Promise<AppSummary[]> {
   const apps = await prisma.app.findMany({
     where: {
       status: AppStatus.PUBLISHED,
@@ -480,6 +611,50 @@ export async function listPublishedApps(categorySlug?: string) {
   return apps.map((app) => toSummary(app, reviewStats.get(app.id), likeStats.get(app.id)));
 }
 
+export async function searchAppsByHumanIntent(embedding: number[]) {
+  const vectorString = `[${embedding.map((value) => Number(value.toFixed(8))).join(",")}]`;
+
+  const rows = await prisma.$queryRawUnsafe<any[]>(
+    `
+    SELECT 
+      a.id,
+      a.name,
+      a."shortDescription",
+      a."longDescription",
+      a."isCommunityPick",
+      a."logoUrl",
+      a.slug,
+      a.verified,
+      c.slug as "categorySlug",
+      c.name as "categoryName",
+      1 - (ae.embedding <=> $1::vector) as similarity
+    FROM "App" a
+    JOIN "AppEmbedding" ae ON a.id = ae."appId"
+    JOIN "Category" c ON a."categoryId" = c.id
+    WHERE a.status = 'PUBLISHED'
+    ORDER BY ae.embedding <=> $1::vector ASC
+    LIMIT 10;
+    `,
+    vectorString
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    shortDescription: row.shortDescription,
+    longDescription: row.longDescription,
+    isCommunityPick: row.isCommunityPick,
+    logoUrl: row.logoUrl,
+    slug: row.slug,
+    verified: row.verified,
+    similarity: row.similarity,
+    category: {
+      slug: row.categorySlug,
+      name: row.categoryName
+    }
+  }));
+}
+
 function toAppDetailRecord(
   app: PublishedAppInclude,
   reviewStats: ReviewStats | undefined,
@@ -494,6 +669,8 @@ function toAppDetailRecord(
     websiteUrl: app.websiteUrl,
     logoUrl: app.logoUrl,
     verified: app.verified,
+    trustMetadata: toTrustMetadata(app),
+    isCommunityPick: app.isCommunityPick,
     createdAt: app.createdAt,
     publishedAt: app.publishedAt,
     category: app.category,
@@ -517,7 +694,7 @@ function toAppDetailRecord(
 async function getPublishedApp(
   where: { id?: string; slug?: string },
   currentUserId?: string | null,
-) {
+): Promise<AppDetailRecord | null> {
   const app = await prisma.app.findFirst({
     where: {
       ...where,
@@ -586,15 +763,15 @@ async function getPublishedApp(
   return toAppDetailRecord(app, reviewStats.get(app.id), likeStats.get(app.id));
 }
 
-export async function getPublishedAppBySlug(slug: string, currentUserId?: string | null) {
+export async function getPublishedAppBySlug(slug: string, currentUserId?: string | null): Promise<AppDetailRecord | null> {
   return getPublishedApp({ slug }, currentUserId);
 }
 
-export async function getPublishedAppById(id: string, currentUserId?: string | null) {
+export async function getPublishedAppById(id: string, currentUserId?: string | null): Promise<AppDetailRecord | null> {
   return getPublishedApp({ id }, currentUserId);
 }
 
-export async function listLibraryApps(userId: string) {
+export async function listLibraryApps(userId: string): Promise<AppSummary[]> {
   const libraryItems = await prisma.appLibraryItem.findMany({
     where: {
       userId,

@@ -10,7 +10,7 @@ function EnabledAuthControls() {
 
   if (!ready) {
     return (
-      <Button variant="secondary" disabled>
+      <Button variant="secondary" className="h-8" disabled>
         Loading
       </Button>
     );
@@ -18,13 +18,13 @@ function EnabledAuthControls() {
 
   if (authenticated) {
     return (
-      <Button variant="secondary" onClick={() => void logout()}>
+      <Button variant="secondary" className="h-8" onClick={() => void logout()}>
         Sign out
       </Button>
     );
   }
 
-  return <Button onClick={() => void login()}>Sign in</Button>;
+  return <Button className="h-8" onClick={() => void login()}>Sign in</Button>;
 }
 
 export function StoreAuthControls() {
@@ -32,8 +32,8 @@ export function StoreAuthControls() {
 
   if (!authEnabled) {
     return (
-      <Button variant="secondary" disabled>
-        Auth not configured
+      <Button variant="outline" className="h-8" disabled title="Authentication is not configured for this environment">
+        Sign in
       </Button>
     );
   }

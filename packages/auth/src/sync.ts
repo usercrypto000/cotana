@@ -1,16 +1,34 @@
 import { logServerError, requirePrivyServerEnv } from "@cotana/config/runtime";
-import { UserRole, prisma } from "@cotana/db";
-import { type LinkedAccount, type User as PrivyUser, verifyIdentityToken } from "@privy-io/node";
+import { prisma } from "@cotana/db";
+import { type LinkedAccount, PrivyClient, type User as PrivyUser } from "@privy-io/node";
 import { isAllowedAdminEmail } from "./allowlist";
 import type { SessionUser } from "./types";
+
+const UserRole = {
+  USER: "USER",
+  ADMIN: "ADMIN"
+} as const;
+
+type DatabaseUserRole = (typeof UserRole)[keyof typeof UserRole];
 
 function getPrivyAppId() {
   const env = requirePrivyServerEnv();
   return env.PRIVY_APP_ID ?? env.NEXT_PUBLIC_PRIVY_APP_ID ?? null;
 }
 
-function getPrivyVerificationKey() {
-  return requirePrivyServerEnv().PRIVY_VERIFICATION_KEY ?? null;
+function getPrivyClient() {
+  const env = requirePrivyServerEnv();
+  const appId = env.PRIVY_APP_ID ?? env.NEXT_PUBLIC_PRIVY_APP_ID;
+
+  if (!appId || !env.PRIVY_APP_SECRET) {
+    throw new Error("Privy server auth is not configured. Set PRIVY_APP_ID/NEXT_PUBLIC_PRIVY_APP_ID and PRIVY_APP_SECRET.");
+  }
+
+  return new PrivyClient({
+    appId,
+    appSecret: env.PRIVY_APP_SECRET,
+    jwtVerificationKey: env.PRIVY_VERIFICATION_KEY
+  });
 }
 
 function sanitizeIdentityToken(identityToken: string) {
@@ -84,7 +102,7 @@ function getAvatarUrl(linkedAccounts: LinkedAccount[], displayName: string, emai
   return `https://api.dicebear.com/9.x/glass/svg?seed=${seed}`;
 }
 
-function getRole(existingRole: UserRole | undefined, email: string | null) {
+function getRole(existingRole: DatabaseUserRole | undefined, email: string | null): DatabaseUserRole {
   if (existingRole && existingRole !== UserRole.USER) {
     return existingRole;
   }
@@ -97,7 +115,7 @@ function toSessionUser(user: {
   email: string | null;
   displayName: string | null;
   avatarUrl: string | null;
-  role: UserRole;
+  role: DatabaseUserRole;
 }): SessionUser {
   return {
     id: user.id,
@@ -110,16 +128,13 @@ function toSessionUser(user: {
 
 export async function verifyPrivyIdentityToken(identityToken: string) {
   const appId = getPrivyAppId();
-  const verificationKey = getPrivyVerificationKey();
 
-  if (!appId || !verificationKey) {
-    throw new Error("Privy server auth is not configured. Set PRIVY_APP_ID/NEXT_PUBLIC_PRIVY_APP_ID and PRIVY_VERIFICATION_KEY.");
+  if (!appId) {
+    throw new Error("Privy server auth is not configured. Set PRIVY_APP_ID or NEXT_PUBLIC_PRIVY_APP_ID.");
   }
 
-  return verifyIdentityToken({
-    identity_token: sanitizeIdentityToken(identityToken),
-    app_id: appId,
-    verification_key: verificationKey
+  return getPrivyClient().users().get({
+    id_token: sanitizeIdentityToken(identityToken)
   });
 }
 

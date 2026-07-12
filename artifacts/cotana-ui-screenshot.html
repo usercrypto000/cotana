@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cotana UI Screenshot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Ubuntu:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue: #2563EB;
+      --green: #84CC16;
+      --violet: #8B5CF6;
+      --surface: #FAFAF7;
+      --text: #0B0F14;
+      --muted: #65717f;
+      --border: #e3e6df;
+      --panel: rgba(255,255,255,0.78);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(37,99,235,0.20), transparent 32%),
+        radial-gradient(circle at 88% 22%, rgba(139,92,246,0.14), transparent 28%),
+        linear-gradient(145deg, #FAFAF7 0%, #f2f7ff 52%, #FAFAF7 100%);
+      color: var(--text);
+      font-family: "Open Sans", Inter, system-ui, sans-serif;
+      width: 1600px;
+      min-height: 1000px;
+      overflow: hidden;
+    }
+    .frame {
+      padding: 54px 72px;
+      position: relative;
+    }
+    .orb {
+      position: absolute;
+      border: 1px solid rgba(139,92,246,0.22);
+      border-radius: 999px;
+      right: -160px;
+      top: 120px;
+      width: 520px;
+      height: 520px;
+    }
+    .orb:before, .orb:after {
+      content: "";
+      position: absolute;
+      border-radius: inherit;
+      border: 1px solid rgba(37,99,235,0.18);
+      inset: 70px;
+    }
+    .orb:after { inset: 150px; border-color: rgba(132,204,22,0.22); }
+    header {
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6px;
+      position: relative;
+      z-index: 2;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: Ubuntu, Inter, sans-serif;
+      font-weight: 700;
+      font-size: 30px;
+      letter-spacing: -0.03em;
+    }
+    .mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 15px;
+      background: conic-gradient(from 210deg, var(--blue), var(--violet), var(--green), var(--blue));
+      box-shadow: 0 14px 28px rgba(37,99,235,0.24);
+    }
+    nav {
+      display: flex;
+      gap: 24px;
+      font-family: Ubuntu, Inter, sans-serif;
+      font-size: 15px;
+      color: #233044;
+    }
+    .signin {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.72);
+      padding: 11px 18px;
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(11,15,20,0.06);
+    }
+    .hero {
+      margin-top: 48px;
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 34px;
+      align-items: stretch;
+      position: relative;
+      z-index: 2;
+    }
+    .hero-card {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(18px);
+      border-radius: 34px;
+      padding: 52px;
+      box-shadow: 0 28px 70px rgba(11,15,20,0.10);
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      background: rgba(37,99,235,0.10);
+      color: #1746ad;
+      padding: 9px 14px;
+      font-family: Ubuntu, Inter, sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    h1 {
+      margin: 26px 0 18px;
+      font-family: Ubuntu, Inter, sans-serif;
+      font-size: 64px;
+      line-height: 0.96;
+      letter-spacing: -0.06em;
+      max-width: 750px;
+    }
+    .lead {
+      font-size: 22px;
+      line-height: 1.55;
+      color: var(--muted);
+      max-width: 690px;
+      margin: 0 0 32px;
+    }
+    .search {
+      height: 66px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 8px 8px 8px 22px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: #fff;
+      box-shadow: 0 16px 42px rgba(37,99,235,0.10);
+      max-width: 700px;
+    }
+    .placeholder { display: flex; align-items: center; color: #6f7a89; font-size: 17px; }
+    .button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 17px;
+      padding: 0 24px;
+      background: var(--blue);
+      color: white;
+      font-family: Ubuntu, Inter, sans-serif;
+      font-weight: 700;
+      box-shadow: 0 14px 28px rgba(37,99,235,0.24);
+    }
+    .side-card {
+      border-radius: 34px;
+      padding: 34px;
+      color: white;
+      background:
+        linear-gradient(155deg, rgba(37,99,235,0.98), rgba(17,74,190,0.96) 58%, rgba(139,92,246,0.88));
+      box-shadow: 0 30px 70px rgba(37,99,235,0.24);
+      min-height: 420px;
+      position: relative;
+      overflow: hidden;
+    }
+    .side-card:after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      right: -80px;
+      bottom: -80px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+    }
+    .side-title { font-family: Ubuntu, Inter, sans-serif; font-size: 17px; text-transform: uppercase; letter-spacing: .12em; opacity: .76; }
+    .prompt { margin-top: 26px; display: grid; gap: 16px; position: relative; z-index: 1; }
+    .prompt div { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); border-radius: 22px; padding: 20px; font-size: 18px; line-height: 1.35; }
+    .sections {
+      margin-top: 36px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      position: relative;
+      z-index: 2;
+    }
+    .app-card {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.84);
+      border-radius: 28px;
+      padding: 24px;
+      min-height: 224px;
+      box-shadow: 0 20px 50px rgba(11,15,20,0.08);
+    }
+    .app-top { display: flex; align-items: center; gap: 14px; }
+    .app-logo {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-family: Ubuntu, Inter, sans-serif;
+      font-weight: 700;
+      font-size: 24px;
+    }
+    .l1 { background: linear-gradient(135deg, #2563EB, #60a5fa); }
+    .l2 { background: linear-gradient(135deg, #8B5CF6, #2563EB); }
+    .l3 { background: linear-gradient(135deg, #84CC16, #2563EB); }
+    .name-row { display: flex; align-items: center; gap: 8px; font-family: Ubuntu, Inter, sans-serif; font-weight: 700; font-size: 21px; letter-spacing: -0.02em; }
+    .check { width: 18px; height: 18px; border-radius: 50%; background: var(--green); color: white; font-size: 12px; display: grid; place-items: center; }
+    .category { margin-top: 6px; display: inline-flex; padding: 6px 10px; border-radius: 999px; background: rgba(37,99,235,0.09); color: #1d4fc3; font-size: 12px; font-weight: 700; }
+    .desc { margin: 20px 0 18px; color: var(--muted); font-size: 17px; line-height: 1.45; }
+    .meta { display: flex; justify-content: space-between; align-items: center; color: #394557; font-size: 14px; }
+    .stars { color: #0B0F14; font-weight: 700; }
+    .agent-pill { display: inline-flex; align-items: center; gap: 7px; color: #5b38c7; font-weight: 700; }
+    .agent-pill:before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--violet); }
+    .footer-note {
+      margin-top: 30px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      color: #4d5968;
+      font-size: 15px;
+      position: relative;
+      z-index: 2;
+    }
+    .rule { height: 1px; flex: 1; background: linear-gradient(90deg, rgba(37,99,235,0.3), transparent); }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="orb"></div>
+    <header>
+      <div class="logo"><div class="mark"></div>Cotana</div>
+      <nav>
+        <span>Explore</span>
+        <span>Categories</span>
+        <span>Agent registry</span>
+        <span class="signin">Sign in</span>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="hero-card">
+        <span class="eyebrow"><span class="dot"></span> Discovery marketplace</span>
+        <h1>Find the right app with consumer-native discovery.</h1>
+        <p class="lead">Cotana helps people browse apps and helps AI agents discover machine-readable capabilities without taking control.</p>
+        <div class="search">
+          <div class="placeholder">Search for yield apps, market data, safer routes...</div>
+          <div class="button">Search</div>
+        </div>
+      </div>
+      <div class="side-card">
+        <div class="side-title">Popular intents</div>
+        <div class="prompt">
+          <div>Best yield apps for stablecoin strategies</div>
+          <div>Prediction markets with reliable odds data</div>
+          <div>Read-only protocol stats for agents</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sections">
+      <article class="app-card">
+        <div class="app-top">
+          <div class="app-logo l1">H</div>
+          <div>
+            <div class="name-row">Harbor Yield <span class="check">✓</span></div>
+            <span class="category">Lending & Yield</span>
+          </div>
+        </div>
+        <p class="desc">Stablecoin yield strategies...</p>
+        <div class="meta"><span class="stars">4.8 ★</span><span class="agent-pill">Agent-ready</span></div>
+      </article>
+      <article class="app-card">
+        <div class="app-top">
+          <div class="app-logo l2">S</div>
+          <div>
+            <div class="name-row">Signal Bet <span class="check">✓</span></div>
+            <span class="category">Prediction Markets</span>
+          </div>
+        </div>
+        <p class="desc">Real-world market odds...</p>
+        <div class="meta"><span class="stars">4.6 ★</span><span class="agent-pill">Schema available</span></div>
+      </article>
+      <article class="app-card">
+        <div class="app-top">
+          <div class="app-logo l3">F</div>
+          <div>
+            <div class="name-row">Fjord DeFi <span class="check">✓</span></div>
+            <span class="category">DeFi</span>
+          </div>
+        </div>
+        <p class="desc">Discover liquid opportunities...</p>
+        <div class="meta"><span class="stars">4.7 ★</span><span class="agent-pill">Read-only</span></div>
+      </article>
+    </section>
+    <div class="footer-note"><strong>Discovery, not control.</strong><div class="rule"></div><span>Humans search for apps. Agents search for capabilities.</span></div>
+  </div>
+</body>
+</html>

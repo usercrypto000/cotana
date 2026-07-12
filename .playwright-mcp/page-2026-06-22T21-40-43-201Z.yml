@@ -1,0 +1,645 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Cotana home" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - text: C
+        - generic [ref=e7]:
+          - link "Cotana" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - paragraph [ref=e9]: Apps by intent, not protocol noise.
+      - navigation "Primary categories" [ref=e10]:
+        - link "All" [ref=e11] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e12]: All
+        - link "DeFi" [ref=e13] [cursor=pointer]:
+          - /url: /category/defi
+          - generic [ref=e14]: DeFi
+        - link "Lending & Yield" [ref=e15] [cursor=pointer]:
+          - /url: /category/lending-yield
+          - generic [ref=e16]: Lending & Yield
+        - link "Trading" [ref=e17] [cursor=pointer]:
+          - /url: /category/trading
+          - generic [ref=e18]: Trading
+        - link "Prediction Markets" [ref=e19] [cursor=pointer]:
+          - /url: /category/prediction-markets
+          - generic [ref=e20]: Prediction Markets
+        - link "Payments" [ref=e21] [cursor=pointer]:
+          - /url: /category/payments
+          - generic [ref=e22]: Payments
+      - generic [ref=e23]:
+        - link "Search" [ref=e24] [cursor=pointer]:
+          - /url: /search
+        - link "My Library" [ref=e25] [cursor=pointer]:
+          - /url: /library
+        - link "Profile" [ref=e26] [cursor=pointer]:
+          - /url: /profile
+        - button "Loading" [disabled]
+    - generic [ref=e27]:
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - generic [ref=e30]: Curated crypto app discovery
+          - generic [ref=e31]:
+            - heading "Discover the best crypto apps." [level=1] [ref=e32]
+            - paragraph [ref=e33]: Find apps by what you want to do, not by chain, protocol, or dashboard noise.
+          - generic [ref=e34]:
+            - link "Try intent search" [ref=e35] [cursor=pointer]:
+              - /url: /search
+            - link "Explore apps" [ref=e36] [cursor=pointer]:
+              - /url: "#apps"
+        - generic [ref=e37]:
+          - text: Search by intent
+          - generic [ref=e38]:
+            - textbox "Search by intent" [ref=e39]:
+              - /placeholder: earn yield on stablecoins
+            - button "Search" [ref=e40] [cursor=pointer]
+          - generic [ref=e41]:
+            - link "Earn yield" [ref=e42] [cursor=pointer]:
+              - /url: /search?q=earn%20yield%20on%20stablecoins
+            - link "Trade" [ref=e43] [cursor=pointer]:
+              - /url: /search?q=trade%20perps
+            - link "Borrow" [ref=e44] [cursor=pointer]:
+              - /url: /search?q=borrow%20against%20crypto
+            - link "Payments" [ref=e45] [cursor=pointer]:
+              - /url: /search?q=send%20payments
+            - link "Prediction markets" [ref=e46] [cursor=pointer]:
+              - /url: /search?q=find%20prediction%20markets
+            - link "Beginner friendly" [ref=e47] [cursor=pointer]:
+              - /url: /search?q=beginner%20friendly%20crypto%20apps
+      - region "Featured discovery collections" [ref=e48]:
+        - link "Featured Best apps for beginners Start with trusted tools that keep the first session simple. UN AA HY PE Browse" [ref=e49] [cursor=pointer]:
+          - /url: /search?q=beginner%20friendly%20crypto%20apps
+          - generic [ref=e50]:
+            - generic [ref=e51]:
+              - paragraph [ref=e52]: Featured
+              - heading "Best apps for beginners" [level=2] [ref=e53]
+              - paragraph [ref=e54]: Start with trusted tools that keep the first session simple.
+            - generic [ref=e55]:
+              - generic [ref=e56]:
+                - generic [ref=e57]: UN
+                - generic [ref=e58]: AA
+                - generic [ref=e59]: HY
+                - generic [ref=e60]: PE
+              - generic [ref=e61]: Browse
+        - link "Featured Stablecoin yield picks Compare lending and yield apps without raw protocol noise. AA PE MO Browse" [ref=e62] [cursor=pointer]:
+          - /url: /search?q=earn%20yield%20on%20stablecoins
+          - generic [ref=e63]:
+            - generic [ref=e64]:
+              - paragraph [ref=e65]: Featured
+              - heading "Stablecoin yield picks" [level=2] [ref=e66]
+              - paragraph [ref=e67]: Compare lending and yield apps without raw protocol noise.
+            - generic [ref=e68]:
+              - generic [ref=e69]:
+                - generic [ref=e70]: AA
+                - generic [ref=e71]: PE
+                - generic [ref=e72]: MO
+              - generic [ref=e73]: Browse
+        - link "Featured Prediction markets to watch Find markets people are actively using and reviewing. PO HY PE PO Browse" [ref=e74] [cursor=pointer]:
+          - /url: /search?q=find%20prediction%20markets
+          - generic [ref=e75]:
+            - generic [ref=e76]:
+              - paragraph [ref=e77]: Featured
+              - heading "Prediction markets to watch" [level=2] [ref=e78]
+              - paragraph [ref=e79]: Find markets people are actively using and reviewing.
+            - generic [ref=e80]:
+              - generic [ref=e81]:
+                - generic [ref=e82]: PO
+                - generic [ref=e83]: HY
+                - generic [ref=e84]: PE
+                - generic [ref=e85]: PO
+              - generic [ref=e86]: Browse
+      - navigation "Store categories" [ref=e87]:
+        - link "All" [ref=e88] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e89]: All
+        - link "DeFi" [ref=e90] [cursor=pointer]:
+          - /url: /category/defi
+          - generic [ref=e91]: DeFi
+        - link "Lending & Yield" [ref=e92] [cursor=pointer]:
+          - /url: /category/lending-yield
+          - generic [ref=e93]: Lending & Yield
+        - link "Trading" [ref=e94] [cursor=pointer]:
+          - /url: /category/trading
+          - generic [ref=e95]: Trading
+        - link "Prediction Markets" [ref=e96] [cursor=pointer]:
+          - /url: /category/prediction-markets
+          - generic [ref=e97]: Prediction Markets
+        - link "Social" [ref=e98] [cursor=pointer]:
+          - /url: /category/social
+          - generic [ref=e99]: Social
+        - link "Wallets" [ref=e100] [cursor=pointer]:
+          - /url: /category/wallets
+          - generic [ref=e101]: Wallets
+      - generic [ref=e102]:
+        - generic [ref=e103]:
+          - generic [ref=e104]:
+            - paragraph [ref=e105]: Curated picks
+            - heading "A strong starter shelf" [level=2] [ref=e106]
+            - paragraph [ref=e107]: Demo listings keep Cotana useful while the launch catalog is still filling in.
+          - generic [ref=e108]:
+            - link "U Uniswap Verified Swap tokens with trusted liquidity DeFi 4.8" [ref=e109] [cursor=pointer]:
+              - /url: /apps/uniswap?ref=starter&position=1
+              - generic [ref=e111]:
+                - generic [ref=e112]:
+                  - generic [ref=e114]: U
+                  - generic [ref=e115]:
+                    - generic [ref=e116]:
+                      - heading "Uniswap" [level=3] [ref=e117]
+                      - img "Verified" [ref=e118]
+                    - paragraph [ref=e121]: Swap tokens with trusted liquidity
+                - generic [ref=e122]:
+                  - generic [ref=e123]: DeFi
+                  - generic [ref=e124]:
+                    - img [ref=e125]
+                    - generic [ref=e127]: "4.8"
+            - link "A Aave Verified Borrow and lend crypto assets Lending & Yield 4.7" [ref=e128] [cursor=pointer]:
+              - /url: /apps/aave?ref=starter&position=2
+              - generic [ref=e130]:
+                - generic [ref=e131]:
+                  - generic [ref=e133]: A
+                  - generic [ref=e134]:
+                    - generic [ref=e135]:
+                      - heading "Aave" [level=3] [ref=e136]
+                      - img "Verified" [ref=e137]
+                    - paragraph [ref=e140]: Borrow and lend crypto assets
+                - generic [ref=e141]:
+                  - generic [ref=e142]: Lending & Yield
+                  - generic [ref=e143]:
+                    - img [ref=e144]
+                    - generic [ref=e146]: "4.7"
+            - link "H Hyperliquid Verified Trade perps with deep liquidity Trading 4.8" [ref=e147] [cursor=pointer]:
+              - /url: /apps/hyperliquid?ref=starter&position=3
+              - generic [ref=e149]:
+                - generic [ref=e150]:
+                  - generic [ref=e152]: H
+                  - generic [ref=e153]:
+                    - generic [ref=e154]:
+                      - heading "Hyperliquid" [level=3] [ref=e155]
+                      - img "Verified" [ref=e156]
+                    - paragraph [ref=e159]: Trade perps with deep liquidity
+                - generic [ref=e160]:
+                  - generic [ref=e161]: Trading
+                  - generic [ref=e162]:
+                    - img [ref=e163]
+                    - generic [ref=e165]: "4.8"
+            - link "P Pendle Verified Explore fixed yield strategies Lending & Yield 4.6" [ref=e166] [cursor=pointer]:
+              - /url: /apps/pendle?ref=starter&position=4
+              - generic [ref=e168]:
+                - generic [ref=e169]:
+                  - generic [ref=e171]: P
+                  - generic [ref=e172]:
+                    - generic [ref=e173]:
+                      - heading "Pendle" [level=3] [ref=e174]
+                      - img "Verified" [ref=e175]
+                    - paragraph [ref=e178]: Explore fixed yield strategies
+                - generic [ref=e179]:
+                  - generic [ref=e180]: Lending & Yield
+                  - generic [ref=e181]:
+                    - img [ref=e182]
+                    - generic [ref=e184]: "4.6"
+            - link "P Polymarket Verified Follow real-world prediction markets Prediction Markets 4.7" [ref=e185] [cursor=pointer]:
+              - /url: /apps/polymarket?ref=starter&position=5
+              - generic [ref=e187]:
+                - generic [ref=e188]:
+                  - generic [ref=e190]: P
+                  - generic [ref=e191]:
+                    - generic [ref=e192]:
+                      - heading "Polymarket" [level=3] [ref=e193]
+                      - img "Verified" [ref=e194]
+                    - paragraph [ref=e197]: Follow real-world prediction markets
+                - generic [ref=e198]:
+                  - generic [ref=e199]: Prediction Markets
+                  - generic [ref=e200]:
+                    - img [ref=e201]
+                    - generic [ref=e203]: "4.7"
+            - link "J Jupiter Verified Find efficient swap routes Trading 4.7" [ref=e204] [cursor=pointer]:
+              - /url: /apps/jupiter?ref=starter&position=6
+              - generic [ref=e206]:
+                - generic [ref=e207]:
+                  - generic [ref=e209]: J
+                  - generic [ref=e210]:
+                    - generic [ref=e211]:
+                      - heading "Jupiter" [level=3] [ref=e212]
+                      - img "Verified" [ref=e213]
+                    - paragraph [ref=e216]: Find efficient swap routes
+                - generic [ref=e217]:
+                  - generic [ref=e218]: Trading
+                  - generic [ref=e219]:
+                    - img [ref=e220]
+                    - generic [ref=e222]: "4.7"
+            - link "M Morpho Verified Discover curated lending markets Lending & Yield 4.5" [ref=e223] [cursor=pointer]:
+              - /url: /apps/morpho?ref=starter&position=7
+              - generic [ref=e225]:
+                - generic [ref=e226]:
+                  - generic [ref=e228]: M
+                  - generic [ref=e229]:
+                    - generic [ref=e230]:
+                      - heading "Morpho" [level=3] [ref=e231]
+                      - img "Verified" [ref=e232]
+                    - paragraph [ref=e235]: Discover curated lending markets
+                - generic [ref=e236]:
+                  - generic [ref=e237]: Lending & Yield
+                  - generic [ref=e238]:
+                    - img [ref=e239]
+                    - generic [ref=e241]: "4.5"
+            - link "S Safe Verified Manage shared account security Wallets 4.6" [ref=e242] [cursor=pointer]:
+              - /url: /apps/safe?ref=starter&position=8
+              - generic [ref=e244]:
+                - generic [ref=e245]:
+                  - generic [ref=e247]: S
+                  - generic [ref=e248]:
+                    - generic [ref=e249]:
+                      - heading "Safe" [level=3] [ref=e250]
+                      - img "Verified" [ref=e251]
+                    - paragraph [ref=e254]: Manage shared account security
+                - generic [ref=e255]:
+                  - generic [ref=e256]: Wallets
+                  - generic [ref=e257]:
+                    - img [ref=e258]
+                    - generic [ref=e260]: "4.6"
+        - generic [ref=e261]:
+          - generic [ref=e262]:
+            - paragraph [ref=e263]: Trending
+            - heading "Apps people are checking out" [level=2] [ref=e264]
+            - paragraph [ref=e265]: A fast read on the apps drawing the most attention right now.
+          - generic [ref=e266]:
+            - link "U Uniswap Verified Swap tokens with trusted liquidity DeFi 4.8" [ref=e267] [cursor=pointer]:
+              - /url: /apps/uniswap?ref=trending&position=1
+              - generic [ref=e269]:
+                - generic [ref=e270]:
+                  - generic [ref=e272]: U
+                  - generic [ref=e273]:
+                    - generic [ref=e274]:
+                      - heading "Uniswap" [level=3] [ref=e275]
+                      - img "Verified" [ref=e276]
+                    - paragraph [ref=e279]: Swap tokens with trusted liquidity
+                - generic [ref=e280]:
+                  - generic [ref=e281]: DeFi
+                  - generic [ref=e282]:
+                    - img [ref=e283]
+                    - generic [ref=e285]: "4.8"
+            - link "A Aave Verified Borrow and lend crypto assets Lending & Yield 4.7" [ref=e286] [cursor=pointer]:
+              - /url: /apps/aave?ref=trending&position=2
+              - generic [ref=e288]:
+                - generic [ref=e289]:
+                  - generic [ref=e291]: A
+                  - generic [ref=e292]:
+                    - generic [ref=e293]:
+                      - heading "Aave" [level=3] [ref=e294]
+                      - img "Verified" [ref=e295]
+                    - paragraph [ref=e298]: Borrow and lend crypto assets
+                - generic [ref=e299]:
+                  - generic [ref=e300]: Lending & Yield
+                  - generic [ref=e301]:
+                    - img [ref=e302]
+                    - generic [ref=e304]: "4.7"
+            - link "H Hyperliquid Verified Trade perps with deep liquidity Trading 4.8" [ref=e305] [cursor=pointer]:
+              - /url: /apps/hyperliquid?ref=trending&position=3
+              - generic [ref=e307]:
+                - generic [ref=e308]:
+                  - generic [ref=e310]: H
+                  - generic [ref=e311]:
+                    - generic [ref=e312]:
+                      - heading "Hyperliquid" [level=3] [ref=e313]
+                      - img "Verified" [ref=e314]
+                    - paragraph [ref=e317]: Trade perps with deep liquidity
+                - generic [ref=e318]:
+                  - generic [ref=e319]: Trading
+                  - generic [ref=e320]:
+                    - img [ref=e321]
+                    - generic [ref=e323]: "4.8"
+            - link "P Pendle Verified Explore fixed yield strategies Lending & Yield 4.6" [ref=e324] [cursor=pointer]:
+              - /url: /apps/pendle?ref=trending&position=4
+              - generic [ref=e326]:
+                - generic [ref=e327]:
+                  - generic [ref=e329]: P
+                  - generic [ref=e330]:
+                    - generic [ref=e331]:
+                      - heading "Pendle" [level=3] [ref=e332]
+                      - img "Verified" [ref=e333]
+                    - paragraph [ref=e336]: Explore fixed yield strategies
+                - generic [ref=e337]:
+                  - generic [ref=e338]: Lending & Yield
+                  - generic [ref=e339]:
+                    - img [ref=e340]
+                    - generic [ref=e342]: "4.6"
+            - link "P Polymarket Verified Follow real-world prediction markets Prediction Markets 4.7" [ref=e343] [cursor=pointer]:
+              - /url: /apps/polymarket?ref=trending&position=5
+              - generic [ref=e345]:
+                - generic [ref=e346]:
+                  - generic [ref=e348]: P
+                  - generic [ref=e349]:
+                    - generic [ref=e350]:
+                      - heading "Polymarket" [level=3] [ref=e351]
+                      - img "Verified" [ref=e352]
+                    - paragraph [ref=e355]: Follow real-world prediction markets
+                - generic [ref=e356]:
+                  - generic [ref=e357]: Prediction Markets
+                  - generic [ref=e358]:
+                    - img [ref=e359]
+                    - generic [ref=e361]: "4.7"
+            - link "J Jupiter Verified Find efficient swap routes Trading 4.7" [ref=e362] [cursor=pointer]:
+              - /url: /apps/jupiter?ref=trending&position=6
+              - generic [ref=e364]:
+                - generic [ref=e365]:
+                  - generic [ref=e367]: J
+                  - generic [ref=e368]:
+                    - generic [ref=e369]:
+                      - heading "Jupiter" [level=3] [ref=e370]
+                      - img "Verified" [ref=e371]
+                    - paragraph [ref=e374]: Find efficient swap routes
+                - generic [ref=e375]:
+                  - generic [ref=e376]: Trading
+                  - generic [ref=e377]:
+                    - img [ref=e378]
+                    - generic [ref=e380]: "4.7"
+            - link "M Morpho Verified Discover curated lending markets Lending & Yield 4.5" [ref=e381] [cursor=pointer]:
+              - /url: /apps/morpho?ref=trending&position=7
+              - generic [ref=e383]:
+                - generic [ref=e384]:
+                  - generic [ref=e386]: M
+                  - generic [ref=e387]:
+                    - generic [ref=e388]:
+                      - heading "Morpho" [level=3] [ref=e389]
+                      - img "Verified" [ref=e390]
+                    - paragraph [ref=e393]: Discover curated lending markets
+                - generic [ref=e394]:
+                  - generic [ref=e395]: Lending & Yield
+                  - generic [ref=e396]:
+                    - img [ref=e397]
+                    - generic [ref=e399]: "4.5"
+            - link "S Safe Verified Manage shared account security Wallets 4.6" [ref=e400] [cursor=pointer]:
+              - /url: /apps/safe?ref=trending&position=8
+              - generic [ref=e402]:
+                - generic [ref=e403]:
+                  - generic [ref=e405]: S
+                  - generic [ref=e406]:
+                    - generic [ref=e407]:
+                      - heading "Safe" [level=3] [ref=e408]
+                      - img "Verified" [ref=e409]
+                    - paragraph [ref=e412]: Manage shared account security
+                - generic [ref=e413]:
+                  - generic [ref=e414]: Wallets
+                  - generic [ref=e415]:
+                    - img [ref=e416]
+                    - generic [ref=e418]: "4.6"
+        - generic [ref=e419]:
+          - generic [ref=e420]:
+            - paragraph [ref=e421]: Rising
+            - heading "Apps gaining momentum" [level=2] [ref=e422]
+            - paragraph [ref=e423]: Useful apps can surface before they become obvious.
+          - generic [ref=e424]:
+            - link "P Pendle Verified Explore fixed yield strategies Lending & Yield 4.6" [ref=e425] [cursor=pointer]:
+              - /url: /apps/pendle?ref=rising&position=1
+              - generic [ref=e427]:
+                - generic [ref=e428]:
+                  - generic [ref=e430]: P
+                  - generic [ref=e431]:
+                    - generic [ref=e432]:
+                      - heading "Pendle" [level=3] [ref=e433]
+                      - img "Verified" [ref=e434]
+                    - paragraph [ref=e437]: Explore fixed yield strategies
+                - generic [ref=e438]:
+                  - generic [ref=e439]: Lending & Yield
+                  - generic [ref=e440]:
+                    - img [ref=e441]
+                    - generic [ref=e443]: "4.6"
+            - link "M Morpho Verified Discover curated lending markets Lending & Yield 4.5" [ref=e444] [cursor=pointer]:
+              - /url: /apps/morpho?ref=rising&position=2
+              - generic [ref=e446]:
+                - generic [ref=e447]:
+                  - generic [ref=e449]: M
+                  - generic [ref=e450]:
+                    - generic [ref=e451]:
+                      - heading "Morpho" [level=3] [ref=e452]
+                      - img "Verified" [ref=e453]
+                    - paragraph [ref=e456]: Discover curated lending markets
+                - generic [ref=e457]:
+                  - generic [ref=e458]: Lending & Yield
+                  - generic [ref=e459]:
+                    - img [ref=e460]
+                    - generic [ref=e462]: "4.5"
+            - link "C CowSwap Verified Swap with protected execution Trading 4.5" [ref=e463] [cursor=pointer]:
+              - /url: /apps/cowswap?ref=rising&position=3
+              - generic [ref=e465]:
+                - generic [ref=e466]:
+                  - generic [ref=e468]: C
+                  - generic [ref=e469]:
+                    - generic [ref=e470]:
+                      - heading "CowSwap" [level=3] [ref=e471]
+                      - img "Verified" [ref=e472]
+                    - paragraph [ref=e475]: Swap with protected execution
+                - generic [ref=e476]:
+                  - generic [ref=e477]: Trading
+                  - generic [ref=e478]:
+                    - img [ref=e479]
+                    - generic [ref=e481]: "4.5"
+            - link "J Jupiter Verified Find efficient swap routes Trading 4.7" [ref=e482] [cursor=pointer]:
+              - /url: /apps/jupiter?ref=rising&position=4
+              - generic [ref=e484]:
+                - generic [ref=e485]:
+                  - generic [ref=e487]: J
+                  - generic [ref=e488]:
+                    - generic [ref=e489]:
+                      - heading "Jupiter" [level=3] [ref=e490]
+                      - img "Verified" [ref=e491]
+                    - paragraph [ref=e494]: Find efficient swap routes
+                - generic [ref=e495]:
+                  - generic [ref=e496]: Trading
+                  - generic [ref=e497]:
+                    - img [ref=e498]
+                    - generic [ref=e500]: "4.7"
+            - link "F Farcaster Verified Join crypto-native social spaces Social 4.4" [ref=e501] [cursor=pointer]:
+              - /url: /apps/farcaster?ref=rising&position=5
+              - generic [ref=e503]:
+                - generic [ref=e504]:
+                  - generic [ref=e506]: F
+                  - generic [ref=e507]:
+                    - generic [ref=e508]:
+                      - heading "Farcaster" [level=3] [ref=e509]
+                      - img "Verified" [ref=e510]
+                    - paragraph [ref=e513]: Join crypto-native social spaces
+                - generic [ref=e514]:
+                  - generic [ref=e515]: Social
+                  - generic [ref=e516]:
+                    - img [ref=e517]
+                    - generic [ref=e519]: "4.4"
+            - link "A Aave Verified Borrow and lend crypto assets Lending & Yield 4.7" [ref=e520] [cursor=pointer]:
+              - /url: /apps/aave?ref=rising&position=6
+              - generic [ref=e522]:
+                - generic [ref=e523]:
+                  - generic [ref=e525]: A
+                  - generic [ref=e526]:
+                    - generic [ref=e527]:
+                      - heading "Aave" [level=3] [ref=e528]
+                      - img "Verified" [ref=e529]
+                    - paragraph [ref=e532]: Borrow and lend crypto assets
+                - generic [ref=e533]:
+                  - generic [ref=e534]: Lending & Yield
+                  - generic [ref=e535]:
+                    - img [ref=e536]
+                    - generic [ref=e538]: "4.7"
+        - generic [ref=e539]:
+          - generic [ref=e540]:
+            - paragraph [ref=e541]: DeFi
+            - heading "DeFi apps" [level=2] [ref=e542]
+            - paragraph [ref=e543]: Browse polished public listings without raw registry fields or signal metrics.
+          - link "U Uniswap Verified Swap tokens with trusted liquidity DeFi 4.8" [ref=e545] [cursor=pointer]:
+            - /url: /apps/uniswap
+            - generic [ref=e547]:
+              - generic [ref=e548]:
+                - generic [ref=e550]: U
+                - generic [ref=e551]:
+                  - generic [ref=e552]:
+                    - heading "Uniswap" [level=3] [ref=e553]
+                    - img "Verified" [ref=e554]
+                  - paragraph [ref=e557]: Swap tokens with trusted liquidity
+              - generic [ref=e558]:
+                - generic [ref=e559]: DeFi
+                - generic [ref=e560]:
+                  - img [ref=e561]
+                  - generic [ref=e563]: "4.8"
+        - generic [ref=e564]:
+          - generic [ref=e565]:
+            - paragraph [ref=e566]: Lending & Yield
+            - heading "Lending & Yield apps" [level=2] [ref=e567]
+            - paragraph [ref=e568]: Browse polished public listings without raw registry fields or signal metrics.
+          - generic [ref=e569]:
+            - link "A Aave Verified Borrow and lend crypto assets Lending & Yield 4.7" [ref=e570] [cursor=pointer]:
+              - /url: /apps/aave
+              - generic [ref=e572]:
+                - generic [ref=e573]:
+                  - generic [ref=e575]: A
+                  - generic [ref=e576]:
+                    - generic [ref=e577]:
+                      - heading "Aave" [level=3] [ref=e578]
+                      - img "Verified" [ref=e579]
+                    - paragraph [ref=e582]: Borrow and lend crypto assets
+                - generic [ref=e583]:
+                  - generic [ref=e584]: Lending & Yield
+                  - generic [ref=e585]:
+                    - img [ref=e586]
+                    - generic [ref=e588]: "4.7"
+            - link "P Pendle Verified Explore fixed yield strategies Lending & Yield 4.6" [ref=e589] [cursor=pointer]:
+              - /url: /apps/pendle
+              - generic [ref=e591]:
+                - generic [ref=e592]:
+                  - generic [ref=e594]: P
+                  - generic [ref=e595]:
+                    - generic [ref=e596]:
+                      - heading "Pendle" [level=3] [ref=e597]
+                      - img "Verified" [ref=e598]
+                    - paragraph [ref=e601]: Explore fixed yield strategies
+                - generic [ref=e602]:
+                  - generic [ref=e603]: Lending & Yield
+                  - generic [ref=e604]:
+                    - img [ref=e605]
+                    - generic [ref=e607]: "4.6"
+            - link "M Morpho Verified Discover curated lending markets Lending & Yield 4.5" [ref=e608] [cursor=pointer]:
+              - /url: /apps/morpho
+              - generic [ref=e610]:
+                - generic [ref=e611]:
+                  - generic [ref=e613]: M
+                  - generic [ref=e614]:
+                    - generic [ref=e615]:
+                      - heading "Morpho" [level=3] [ref=e616]
+                      - img "Verified" [ref=e617]
+                    - paragraph [ref=e620]: Discover curated lending markets
+                - generic [ref=e621]:
+                  - generic [ref=e622]: Lending & Yield
+                  - generic [ref=e623]:
+                    - img [ref=e624]
+                    - generic [ref=e626]: "4.5"
+        - generic [ref=e627]:
+          - generic [ref=e628]:
+            - paragraph [ref=e629]: Trading
+            - heading "Trading apps" [level=2] [ref=e630]
+            - paragraph [ref=e631]: Browse polished public listings without raw registry fields or signal metrics.
+          - generic [ref=e632]:
+            - link "H Hyperliquid Verified Trade perps with deep liquidity Trading 4.8" [ref=e633] [cursor=pointer]:
+              - /url: /apps/hyperliquid
+              - generic [ref=e635]:
+                - generic [ref=e636]:
+                  - generic [ref=e638]: H
+                  - generic [ref=e639]:
+                    - generic [ref=e640]:
+                      - heading "Hyperliquid" [level=3] [ref=e641]
+                      - img "Verified" [ref=e642]
+                    - paragraph [ref=e645]: Trade perps with deep liquidity
+                - generic [ref=e646]:
+                  - generic [ref=e647]: Trading
+                  - generic [ref=e648]:
+                    - img [ref=e649]
+                    - generic [ref=e651]: "4.8"
+            - link "J Jupiter Verified Find efficient swap routes Trading 4.7" [ref=e652] [cursor=pointer]:
+              - /url: /apps/jupiter
+              - generic [ref=e654]:
+                - generic [ref=e655]:
+                  - generic [ref=e657]: J
+                  - generic [ref=e658]:
+                    - generic [ref=e659]:
+                      - heading "Jupiter" [level=3] [ref=e660]
+                      - img "Verified" [ref=e661]
+                    - paragraph [ref=e664]: Find efficient swap routes
+                - generic [ref=e665]:
+                  - generic [ref=e666]: Trading
+                  - generic [ref=e667]:
+                    - img [ref=e668]
+                    - generic [ref=e670]: "4.7"
+            - link "C CowSwap Verified Swap with protected execution Trading 4.5" [ref=e671] [cursor=pointer]:
+              - /url: /apps/cowswap
+              - generic [ref=e673]:
+                - generic [ref=e674]:
+                  - generic [ref=e676]: C
+                  - generic [ref=e677]:
+                    - generic [ref=e678]:
+                      - heading "CowSwap" [level=3] [ref=e679]
+                      - img "Verified" [ref=e680]
+                    - paragraph [ref=e683]: Swap with protected execution
+                - generic [ref=e684]:
+                  - generic [ref=e685]: Trading
+                  - generic [ref=e686]:
+                    - img [ref=e687]
+                    - generic [ref=e689]: "4.5"
+        - generic [ref=e690]:
+          - generic [ref=e691]:
+            - paragraph [ref=e692]: Prediction Markets
+            - heading "Prediction Markets apps" [level=2] [ref=e693]
+            - paragraph [ref=e694]: Browse polished public listings without raw registry fields or signal metrics.
+          - link "P Polymarket Verified Follow real-world prediction markets Prediction Markets 4.7" [ref=e696] [cursor=pointer]:
+            - /url: /apps/polymarket
+            - generic [ref=e698]:
+              - generic [ref=e699]:
+                - generic [ref=e701]: P
+                - generic [ref=e702]:
+                  - generic [ref=e703]:
+                    - heading "Polymarket" [level=3] [ref=e704]
+                    - img "Verified" [ref=e705]
+                  - paragraph [ref=e708]: Follow real-world prediction markets
+              - generic [ref=e709]:
+                - generic [ref=e710]: Prediction Markets
+                - generic [ref=e711]:
+                  - img [ref=e712]
+                  - generic [ref=e714]: "4.7"
+        - generic [ref=e715]:
+          - generic [ref=e716]:
+            - paragraph [ref=e717]: Social
+            - heading "Social apps" [level=2] [ref=e718]
+            - paragraph [ref=e719]: Browse polished public listings without raw registry fields or signal metrics.
+          - link "F Farcaster Verified Join crypto-native social spaces Social 4.4" [ref=e721] [cursor=pointer]:
+            - /url: /apps/farcaster
+            - generic [ref=e723]:
+              - generic [ref=e724]:
+                - generic [ref=e726]: F
+                - generic [ref=e727]:
+                  - generic [ref=e728]:
+                    - heading "Farcaster" [level=3] [ref=e729]
+                    - img "Verified" [ref=e730]
+                  - paragraph [ref=e733]: Join crypto-native social spaces
+              - generic [ref=e734]:
+                - generic [ref=e735]: Social
+                - generic [ref=e736]:
+                  - img [ref=e737]
+                  - generic [ref=e739]: "4.4"
+  - alert [ref=e740]

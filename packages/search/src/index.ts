@@ -1,12 +1,28 @@
-import { AppStatus, ReviewStatus, prisma } from "@cotana/db";
-import { getCounterValue } from "@cotana/db/redis";
-import type { AppSummary, CandidateScoreInput, CategorySignalMap, SearchCategoryHint } from "@cotana/types";
+import {
+  AppStatus,
+  ReviewStatus,
+  prisma
+} from "@cotana/db";
+import { getCacheValue, getCounterValue, setCacheValue } from "@cotana/db/redis";
+import type {
+  AppSummary,
+  CandidateScoreInput,
+  CategorySignalMap,
+  SearchCategoryHint,
+  SearchSort
+} from "@cotana/types";
 import OpenAI from "openai";
+import { embed } from "ai";
+import { google } from "@ai-sdk/google";
 import { z } from "zod";
+import { boostSimilarCandidates } from "./similar";
+import { sortSearchCandidateList } from "./sort";
 
 const EMBEDDING_DIMENSIONS = 1536;
 const PAGE_VELOCITY_WINDOW_DAYS = 7;
 const DEFAULT_RETRIEVAL_LIMIT = 24;
+const SEARCH_CACHE_TTL_SECONDS = 60 * 5;
+const SIMILAR_APPS_CACHE_TTL_SECONDS = 60 * 15;
 
 const configSchema = z.object({
   similarityWeight: z.number().min(0),
@@ -48,6 +64,11 @@ export type SearchCandidate = {
 type CandidateRow = {
   appId: string;
   similarity: number;
+};
+
+type DiscoveryScoreRow = {
+  appId: string;
+  score: number;
 };
 
 const DEFAULT_RANKING_CONFIG: RankingConfig = {
@@ -143,7 +164,23 @@ const CATEGORY_HINT_RULES: Array<{
 ];
 
 function getEmbeddingModel() {
-  return process.env.OPENAI_EMBEDDING_MODEL ?? "text-embedding-3-large";
+  if (process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN) {
+    return process.env.AI_GATEWAY_EMBEDDING_MODEL ?? "openai/text-embedding-3-small";
+  }
+
+  return process.env.OPENAI_EMBEDDING_MODEL ?? "text-embedding-3-small";
+}
+
+function getEmbeddingApiKey() {
+  return process.env.AI_GATEWAY_API_KEY ?? process.env.VERCEL_OIDC_TOKEN ?? process.env.OPENAI_API_KEY ?? null;
+}
+
+function getEmbeddingBaseUrl() {
+  if (process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN) {
+    return process.env.AI_GATEWAY_BASE_URL ?? "https://ai-gateway.vercel.sh/v1";
+  }
+
+  return undefined;
 }
 
 function normalizeQuery(query: string) {
@@ -190,6 +227,27 @@ function fallbackEmbedText(text: string) {
 
 function serializeVector(vector: number[]) {
   return `[${vector.map((value) => Number(value.toFixed(8))).join(",")}]`;
+}
+
+function cosineSimilarity(left: number[], right: number[]) {
+  const length = Math.min(left.length, right.length);
+  let dotProduct = 0;
+  let leftMagnitude = 0;
+  let rightMagnitude = 0;
+
+  for (let index = 0; index < length; index += 1) {
+    const leftValue = left[index] ?? 0;
+    const rightValue = right[index] ?? 0;
+    dotProduct += leftValue * rightValue;
+    leftMagnitude += leftValue ** 2;
+    rightMagnitude += rightValue ** 2;
+  }
+
+  if (leftMagnitude === 0 || rightMagnitude === 0) {
+    return 0;
+  }
+
+  return dotProduct / (Math.sqrt(leftMagnitude) * Math.sqrt(rightMagnitude));
 }
 
 function inferCategoryHint(query: string): SearchCategoryHint {
@@ -416,8 +474,10 @@ async function buildCandidateSummaries(rows: CandidateRow[]) {
         name: app.name,
         logoUrl: app.logoUrl,
         verified: app.verified,
+        isCommunityPick: app.isCommunityPick,
         shortDescription: app.shortDescription,
         longDescription: app.longDescription,
+        publishedAt: app.publishedAt,
         category: app.category,
         rating: reviewStats.get(app.id)?.averageRating ?? 0,
         reviewCount: reviewStats.get(app.id)?.reviewCount ?? 0,
@@ -435,7 +495,55 @@ async function buildCandidateSummaries(rows: CandidateRow[]) {
     .sort((left, right) => (orderMap.get(right.app.id) ?? 0) - (orderMap.get(left.app.id) ?? 0));
 }
 
-export function buildAppEmbeddingText(app: Pick<EmbeddableApp, "name" | "shortDescription" | "longDescription" | "category" | "tags">) {
+async function loadTrendingScoreMap(categorySlug?: string) {
+  const latest = await prisma.discoveryInsightSnapshot.findFirst({
+    where: {
+      kind: "TRENDING",
+      categorySlug: categorySlug ?? null
+    },
+    orderBy: {
+      computedAt: "desc"
+    },
+    select: {
+      computedAt: true
+    }
+  });
+
+  if (!latest) {
+    return new Map<string, number>();
+  }
+
+  const rows = await prisma.discoveryInsightSnapshot.findMany({
+    where: {
+      kind: "TRENDING",
+      categorySlug: categorySlug ?? null,
+      computedAt: latest.computedAt
+    },
+    select: {
+      appId: true,
+      score: true
+    }
+  });
+
+  return new Map(rows.map((row: DiscoveryScoreRow) => [row.appId, row.score]));
+}
+
+async function sortCandidates(candidates: SearchCandidate[], sort: SearchSort, categorySlug?: string) {
+  const normalizedCategorySlug = categorySlug && categorySlug !== "all" ? categorySlug : undefined;
+  const trendingScores = sort === "trending" ? await loadTrendingScoreMap(normalizedCategorySlug) : undefined;
+  return sortSearchCandidateList(candidates, sort, trendingScores);
+}
+
+export function buildAppEmbeddingText(
+  app: Pick<
+    EmbeddableApp,
+    | "name"
+    | "shortDescription"
+    | "longDescription"
+    | "category"
+    | "tags"
+  >,
+) {
   return [
     `Name: ${app.name}`,
     `Short description: ${app.shortDescription}`,
@@ -448,24 +556,45 @@ export function buildAppEmbeddingText(app: Pick<EmbeddableApp, "name" | "shortDe
 }
 
 export async function embedText(text: string): Promise<number[]> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const embeddings = await embedTexts([text]);
+  return embeddings[0] ?? fallbackEmbedText(text);
+}
+
+export async function embedTexts(texts: string[]): Promise<number[][]> {
+  const apiKey = getEmbeddingApiKey();
 
   if (!apiKey) {
-    return fallbackEmbedText(text);
+    return texts.map(fallbackEmbedText);
   }
 
   const client = new OpenAI({
-    apiKey
+    apiKey,
+    baseURL: getEmbeddingBaseUrl()
   });
 
   const response = await client.embeddings.create({
     model: getEmbeddingModel(),
-    input: text,
+    input: texts,
     dimensions: EMBEDDING_DIMENSIONS
   });
 
-  return response.data[0]?.embedding ?? fallbackEmbedText(text);
+  return texts.map((text, index) => response.data[index]?.embedding ?? fallbackEmbedText(text));
 }
+
+export async function generateHumanSearchVector(query: string): Promise<number[]> {
+  if (!process.env.GOOGLE_API_KEY) {
+    throw new Error("GOOGLE_API_KEY environment variable is missing.");
+  }
+
+  const { embedding } = await embed({
+    model: google("models/gemini-embedding-001"),
+    value: query,
+  });
+
+  return embedding;
+}
+
+
 
 export async function upsertAppEmbedding(appId: string) {
   const app = await getEmbeddableApp(appId);
@@ -626,15 +755,33 @@ export async function searchApps(
   options?: {
     limit?: number;
     categorySlug?: string;
+    sort?: SearchSort;
   },
 ) {
   const normalizedQuery = normalizeQuery(query);
+  const sort = options?.sort ?? "relevance";
 
   if (!normalizedQuery) {
     return {
       query: normalizedQuery,
       categoryHint: options?.categorySlug && options.categorySlug !== "all" ? (options.categorySlug as SearchCategoryHint) : null,
+      sort,
       results: [] as SearchCandidate[]
+    };
+  }
+
+  const cacheKey = `search:results:${normalizedQuery}:${options?.categorySlug ?? "all"}:${sort}`;
+  const cached = await getCacheValue<{
+    categoryHint: SearchCategoryHint;
+    results: SearchCandidate[];
+  }>(cacheKey);
+
+  if (cached) {
+    return {
+      query: normalizedQuery,
+      categoryHint: cached.categoryHint,
+      sort,
+      results: cached.results
     };
   }
 
@@ -649,15 +796,53 @@ export async function searchApps(
     categorySlug: options?.categorySlug
   });
   const reranked = await rerankCandidates(candidates, categoryHint);
+  const sorted = await sortCandidates(reranked, sort, options?.categorySlug);
+
+  await setCacheValue(
+    cacheKey,
+    {
+      categoryHint,
+      results: sorted
+    },
+    SEARCH_CACHE_TTL_SECONDS,
+  );
 
   return {
     query: normalizedQuery,
     categoryHint,
-    results: reranked
+    sort,
+    results: sorted
   };
 }
 
-export async function getSimilarApps(appId: string) {
+export async function getSimilarApps(
+  appId: string,
+  options?: {
+    limit?: number;
+    categorySlug?: string;
+    boostSameCategory?: boolean;
+  },
+) {
+  const cacheKey = `similar-apps:${appId}:${options?.categorySlug ?? "auto"}:${options?.limit ?? 4}:${options?.boostSameCategory === false ? "off" : "on"}`;
+  const cached = await getCacheValue<AppSummary[]>(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const sourceApp = await prisma.app.findUnique({
+    where: {
+      id: appId
+    },
+    include: {
+      category: true
+    }
+  });
+
+  if (!sourceApp) {
+    return [];
+  }
+
   const embeddingRow = (await prisma.$queryRawUnsafe(
     `
       SELECT "appId", "embedding"::text AS "embedding"
@@ -695,14 +880,24 @@ export async function getSimilarApps(appId: string) {
         1 - (ae."embedding" <=> $1::vector) AS "similarity"
       FROM "AppEmbedding" ae
       INNER JOIN "App" a ON a."id" = ae."appId"
+      INNER JOIN "Category" c ON c."id" = a."categoryId"
       WHERE a."status" = 'PUBLISHED' AND ae."appId" <> $2
+      ${options?.categorySlug ? `AND c."slug" = '${options.categorySlug.replace(/'/g, "''")}'` : ""}
       ORDER BY ae."embedding" <=> $1::vector ASC
-      LIMIT 4
+      LIMIT $3
     `,
     vector,
     appId,
+    Math.max(options?.limit ?? 4, 8),
   )) as CandidateRow[];
 
   const candidates = await buildCandidateSummaries(rows);
-  return candidates.map((candidate) => candidate.app);
+  const reranked = await rerankCandidates(
+    boostSimilarCandidates(candidates, sourceApp.category.slug, options?.boostSameCategory ?? true),
+    sourceApp.category.slug as SearchCategoryHint,
+  );
+  const result = reranked.slice(0, options?.limit ?? 4).map((candidate) => candidate.app);
+
+  await setCacheValue(cacheKey, result, SIMILAR_APPS_CACHE_TTL_SECONDS);
+  return result;
 }

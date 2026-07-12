@@ -48,7 +48,7 @@ export function SignalJobControls({
       <Button onClick={() => void runJob()} disabled={pending}>
         {pending ? "Running..." : "Run now"}
       </Button>
-      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {error ? <p className="text-sm ui-copy-danger">{error}</p> : null}
     </div>
   );
 }

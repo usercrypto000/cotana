@@ -1,0 +1,9 @@
+[     767ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/category/defi:0
+[    1602ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/category/defi:0
+[    1603ms] [ERROR] Error checking Cross-Origin-Opener-Policy: HTTP error! status: 404 @ http://localhost:3000/_next/static/chunks/8783-7e6b42b34cfa5345.js:299
+[    1722ms] [ERROR] Framing 'https://auth.privy.io/' violates the following Content Security Policy directive: "frame-ancestors 'self' https://www.cotana.xyz https://cotana.xyz https://auth.privy.io". The request has been blocked.
+ @ :0
+[    2129ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/category/defi:0
+[    2129ms] [ERROR] Error checking Cross-Origin-Opener-Policy: HTTP error! status: 404 @ http://localhost:3000/_next/static/chunks/6513.8eff6214b03003ba.js:2
+[   44984ms] [WARNING] Privy iframe failed to load:  Error: Exceeded max attempts before resolving function
+    at http://localhost:3000/_next/static/chunks/8783-7e6b42b34cfa5345.js:57:242777 @ http://localhost:3000/_next/static/chunks/ce380935-bb1b5c3049e8f9cb.js:181
