@@ -15,13 +15,13 @@ const getOptimizedUrl = () => {
   return url;
 };
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
+export const prisma = globalForPrisma.prisma ?? new PrismaClient(getOptimizedUrl() ? {
   datasources: {
     db: {
       url: getOptimizedUrl()
     }
   }
-});
+} : undefined);
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
