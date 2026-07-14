@@ -1,4 +1,4 @@
-import { DiscoveryInsightKind, Prisma, ReviewStatus } from "@prisma/client";
+import { DiscoveryInsightKind, ReviewStatus } from "@prisma/client";
 import { z } from "zod";
 import type { AppSummary, AppTrustMetadata, DiscoveryScoreInputs } from "@cotana/types";
 import { normalizeTrustMetadata } from "@cotana/types";
@@ -72,8 +72,7 @@ type PublishedAppRecord = {
   externalRiskNotes?: string | null;
   lastReviewedAt?: Date | null;
   reviewSummary?: string | null;
-  agentAudience: "HUMAN" | "AGENT" | "HYBRID";
-  communityPick: boolean;
+  isCommunityPick: boolean;
   shortDescription: string;
   longDescription: string;
   publishedAt: Date | null;
@@ -125,10 +124,6 @@ type DiscoveryCachePayload = {
   rows: DiscoveryAppResult[];
 };
 
-function toMonthKey(date = new Date()) {
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
-}
-
 function buildDiscoveryCacheKey(kind: DiscoveryKind, categorySlug?: string | null) {
   return `discovery:${kind.toLowerCase()}:${categorySlug ?? "global"}`;
 }
@@ -147,8 +142,7 @@ function toSummary(
     name: app.name,
     logoUrl: app.logoUrl,
     verified: app.verified,
-    agentAudience: app.agentAudience,
-    communityPick: app.communityPick,
+    isCommunityPick: app.isCommunityPick,
     shortDescription: app.shortDescription,
     longDescription: app.longDescription,
     publishedAt: app.publishedAt,
@@ -171,8 +165,7 @@ function toSummary(
       },
       {
         verified: app.verified,
-        lastReviewedAt: app.lastReviewedAt,
-        agentAudience: app.agentAudience
+        lastReviewedAt: app.lastReviewedAt
       },
     )
   };
@@ -957,14 +950,10 @@ export async function recomputeDiscoveryInsights(options?: {
     communityRows = rankRows("COMMUNITY_PICK", rows, weights);
     await persistSnapshots("COMMUNITY_PICK", communityRows, null, windowStart, windowEnd, computedAt);
 
-    const monthKey = toMonthKey(computedAt);
+
     await prisma.app.updateMany({
       data: {
-        communityPick: false,
-        communityPickMonth: monthKey,
-        communityPickReason: Prisma.JsonNull,
-        communityPickUpdatedAt: computedAt
-      }
+        isCommunityPick: false }
     });
 
     for (const row of communityRows) {
@@ -973,15 +962,7 @@ export async function recomputeDiscoveryInsights(options?: {
           id: row.app.id
         },
         data: {
-          communityPick: true,
-          communityPickMonth: monthKey,
-          communityPickReason: {
-            score: row.score,
-            inputs: row.inputs,
-            normalized: row.normalized
-          },
-          communityPickUpdatedAt: computedAt
-        }
+          isCommunityPick: true }
       });
     }
   }

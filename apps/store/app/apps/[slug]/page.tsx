@@ -6,7 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  getAgentCapabilityQualitySignals,
   getEmptyStateMessage,
   getPublishedAppBySlug,
   getReviewEligibility,
@@ -15,7 +14,7 @@ import {
   trackAppView,
   type AppDetailRecord
 } from "@cotana/db";
-import { AppCard, Badge, Card, CardContent, CardHeader, CardTitle, SectionHeading, TrustBadge } from "@cotana/ui";
+import { AppCard, Badge, Card, CardContent, CardHeader, CardTitle, SectionHeading } from "@cotana/ui";
 import { AppTrustBadges } from "../../../components/app-trust-badges";
 import { AppDetailActions } from "../../../components/app-detail-actions";
 import { ReviewComposer } from "../../../components/review-composer";
@@ -124,11 +123,6 @@ function toDemoAppDetail(slug: string): AppDetailRecord | null {
     ...app,
     websiteUrl: app.websiteUrl ?? "https://example.com",
     logoUrl: app.logoUrl,
-    agentListingStatus: "NOT_APPLICABLE",
-    agentSummary: null,
-    agentDocsUrl: null,
-    agentManifestVersion: 1,
-    agentLastReviewedAt: null,
     createdAt: app.publishedAt ?? new Date("2026-01-01T00:00:00.000Z"),
     category: {
       id: `demo-category-${app.category.slug}`,
@@ -136,12 +130,10 @@ function toDemoAppDetail(slug: string): AppDetailRecord | null {
       name: app.category.name
     },
     trustMetadata: normalizeTrustMetadata(app.trustMetadata, {
-      verified: app.verified,
-      agentAudience: app.agentAudience
+      verified: app.verified
     }),
     tags: [app.category.name],
     screenshots: [],
-    agentCapabilities: [],
     likedByCurrentUser: false,
     savedByCurrentUser: false,
     reviews: []
@@ -267,8 +259,7 @@ export default async function AppDetailPage({ params, searchParams }: AppDetailP
         [[], []] as [AppSummary[], Awaited<ReturnType<typeof listAppUpdates>>]
       );
   const trustMetadata = normalizeTrustMetadata(app.trustMetadata, {
-    verified: app.verified,
-    agentAudience: app.agentAudience
+    verified: app.verified
   });
 
   if (updates.length > 0) {
@@ -303,7 +294,7 @@ export default async function AppDetailPage({ params, searchParams }: AppDetailP
     });
   }
 
-  if (app.communityPick) {
+  if (app.isCommunityPick) {
     void trackServerEvent({
       event: analyticsEvents.communityPickBadgeSeen,
       distinctId: sessionUser?.id ?? app.id,
@@ -337,38 +328,12 @@ export default async function AppDetailPage({ params, searchParams }: AppDetailP
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
                   <h1 className="font-heading text-[1.45rem] font-semibold tracking-tight text-brand-text sm:text-[1.55rem]">{app.name}</h1>
-                  <AppTrustBadges verified={app.verified} communityPick={app.communityPick} />
+                  <AppTrustBadges verified={app.verified} communityPick={app.isCommunityPick} />
                 </div>
                 <p className="text-[0.84rem] leading-[1.6] text-neutral-muted">{app.shortDescription}</p>
               </div>
             </div>
             <p className="max-w-3xl text-[0.84rem] leading-[1.68] text-neutral-muted">{app.longDescription}</p>
-            {app.agentListingStatus === "PUBLISHED" ? (
-              <div className="ui-panel-agent p-3.5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <TrustBadge tone="agent">Machine-readable</TrustBadge>
-                  <span className="font-heading text-[0.82rem] font-medium text-trust-agent-ink">
-                    {app.agentAudience === "HYBRID" ? "Built for people and AI agents" : "Built for AI agents"}
-                  </span>
-                </div>
-                <div className="mt-2.5 flex flex-wrap gap-1.5">
-                  <Badge variant="secondary">Discovery only</Badge>
-                  {app.agentCapabilities.some((capability) => capability.interactionMode === "READ_ONLY") ? (
-                    <TrustBadge tone="ready">Read-only capability</TrustBadge>
-                  ) : null}
-                  {app.agentCapabilities.some((capability) => getAgentCapabilityQualitySignals(capability).schemaComplete) ? (
-                    <TrustBadge tone="ready">Schema available</TrustBadge>
-                  ) : null}
-                  {app.agentCapabilities.some((capability) => getAgentCapabilityQualitySignals(capability).safetyNotesPresent) ? (
-                    <TrustBadge tone="ready">Safety notes available</TrustBadge>
-                  ) : null}
-                  {app.agentCapabilities.some((capability) => getAgentCapabilityQualitySignals(capability).docsAvailable) ? (
-                    <TrustBadge tone="ready">Docs available</TrustBadge>
-                  ) : null}
-                </div>
-                {app.agentSummary ? <p className="mt-2.5 text-[0.84rem] leading-[1.6] text-trust-agent-ink/76">{app.agentSummary}</p> : null}
-              </div>
-            ) : null}
             <AppDetailActions
               appId={app.id}
               initiallyLiked={app.likedByCurrentUser}
@@ -428,90 +393,6 @@ export default async function AppDetailPage({ params, searchParams }: AppDetailP
           </div>
         </div>
         <TrustProfile trustMetadata={trustMetadata} />
-        {app.agentListingStatus === "PUBLISHED" ? (
-          <section className="space-y-3.5">
-            <SectionHeading
-              eyebrow="Agent access"
-              title="Capabilities"
-              description="Machine-readable capabilities for assistants, workflows, and automated discovery."
-            />
-            {app.agentCapabilities.length === 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>No active capabilities yet</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-[0.84rem] text-neutral-muted">
-                    Agent access has been marked for this app, but active capabilities are still being configured.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-3.5 md:grid-cols-2">
-                {app.agentCapabilities.map((capability) => (
-                  <Card key={capability.id}>
-                    <CardHeader>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <CardTitle>{capability.name}</CardTitle>
-                        <Badge variant="secondary">{capability.capabilityType}</Badge>
-                        <TrustBadge tone="agent">{capability.authType}</TrustBadge>
-                        <Badge variant="secondary">{capability.interfaceType}</Badge>
-                        <Badge variant="secondary">{capability.interactionMode}</Badge>
-                        <TrustBadge tone={getAgentCapabilityQualitySignals(capability).qualityScore >= 80 ? "ready" : "warning"}>
-                          {getAgentCapabilityQualitySignals(capability).qualityScore}/100 quality
-                        </TrustBadge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2.5">
-                      <p className="text-[0.84rem] leading-[1.6] text-brand-text/80">{capability.description}</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {getAgentCapabilityQualitySignals(capability).schemaComplete ? (
-                          <TrustBadge tone="ready">Schema available</TrustBadge>
-                        ) : null}
-                        {getAgentCapabilityQualitySignals(capability).safetyNotesPresent ? (
-                          <TrustBadge tone="ready">Safety notes</TrustBadge>
-                        ) : null}
-                        {getAgentCapabilityQualitySignals(capability).docsAvailable ? (
-                          <TrustBadge tone="ready">Docs</TrustBadge>
-                        ) : null}
-                        {getAgentCapabilityQualitySignals(capability).interactionSafety === "read_only" ? (
-                          <TrustBadge tone="ready">Read-only</TrustBadge>
-                        ) : null}
-                      </div>
-                      <div className="grid gap-1.5 text-xs text-neutral-muted">
-                        {typeof capability.reliabilityScore === "number" ? (
-                          <span>Reliability: {Math.round(capability.reliabilityScore * 100)}%</span>
-                        ) : null}
-                        {typeof capability.latencyP50Ms === "number" ? (
-                          <span>Median response: {capability.latencyP50Ms}ms</span>
-                        ) : null}
-                        {capability.safetyNotes ? <span>{capability.safetyNotes}</span> : null}
-                        {capability.docsUrl ? (
-                          <Link href={capability.docsUrl} className="text-brand-primary underline underline-offset-4">
-                            Capability docs
-                          </Link>
-                        ) : null}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-            <div className="flex flex-wrap gap-3">
-              {app.agentDocsUrl ? (
-                <Link href={app.agentDocsUrl} className="text-[0.84rem] font-medium text-brand-primary underline underline-offset-4">
-                  Agent docs
-                </Link>
-              ) : null}
-              <Link
-                href={`/api/agent-registry/${app.slug}`}
-                className="text-[0.84rem] font-medium text-brand-primary underline underline-offset-4"
-              >
-                View discovery manifest
-              </Link>
-            </div>
-          </section>
-        ) : null}
         <section className="space-y-3.5">
           <SectionHeading
             eyebrow="Updates"

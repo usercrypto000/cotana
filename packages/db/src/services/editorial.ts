@@ -53,8 +53,7 @@ export type EditorialShelfRecord = {
       externalRiskNotes?: string | null;
       lastReviewedAt?: Date | null;
       reviewSummary?: string | null;
-      agentAudience: "HUMAN" | "AGENT" | "HYBRID";
-      communityPick: boolean;
+      isCommunityPick: boolean;
       publishedAt: Date | null;
       status: AppStatus;
       category: {
@@ -108,8 +107,7 @@ type EditorialShelfWithRelations = Awaited<ReturnType<typeof prisma.editorialShe
       externalRiskNotes?: string | null;
       lastReviewedAt?: Date | null;
       reviewSummary?: string | null;
-      agentAudience: "HUMAN" | "AGENT" | "HYBRID";
-      communityPick: boolean;
+      isCommunityPick: boolean;
       publishedAt: Date | null;
       status: AppStatus;
       category: {
@@ -241,8 +239,7 @@ function toAppSummary(
     externalRiskNotes?: string | null;
     lastReviewedAt?: Date | null;
     reviewSummary?: string | null;
-    agentAudience: "HUMAN" | "AGENT" | "HYBRID";
-    communityPick: boolean;
+    isCommunityPick: boolean;
     shortDescription: string;
     longDescription: string;
     publishedAt: Date | null;
@@ -261,8 +258,7 @@ function toAppSummary(
     name: app.name,
     logoUrl: app.logoUrl,
     verified: app.verified,
-    agentAudience: app.agentAudience,
-    communityPick: app.communityPick,
+    isCommunityPick: app.isCommunityPick,
     shortDescription: app.shortDescription,
     longDescription: app.longDescription,
     publishedAt: app.publishedAt,
@@ -286,7 +282,6 @@ function toAppSummary(
       {
         verified: app.verified,
         lastReviewedAt: app.lastReviewedAt,
-        agentAudience: app.agentAudience
       },
     )
   };
@@ -316,8 +311,7 @@ function toEditorialShelfRecord(shelf: EditorialShelfWithRelations): EditorialSh
         longDescription: item.app.longDescription,
         logoUrl: item.app.logoUrl,
         verified: item.app.verified,
-        agentAudience: item.app.agentAudience,
-        communityPick: item.app.communityPick,
+        isCommunityPick: item.app.isCommunityPick,
         publishedAt: item.app.publishedAt,
         status: item.app.status,
         category: item.app.category

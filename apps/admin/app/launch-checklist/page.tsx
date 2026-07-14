@@ -91,12 +91,6 @@ export default async function LaunchChecklistPage() {
           <Badge variant={checklist.seedVisibility.appsWithUpdates > 0 ? "ready" : "danger"}>
             {checklist.seedVisibility.appsWithUpdates} with updates
           </Badge>
-          <Badge variant={checklist.seedVisibility.registryPublishedListings > 0 ? "ready" : "danger"}>
-            {checklist.seedVisibility.registryPublishedListings} registry listings
-          </Badge>
-          <Badge variant={checklist.seedVisibility.activeCapabilities > 0 ? "ready" : "danger"}>
-            {checklist.seedVisibility.activeCapabilities} capabilities
-          </Badge>
         </CardContent>
       </Card>
 

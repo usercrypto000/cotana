@@ -1,6 +1,6 @@
 export * from "@prisma/client";
 export { prisma } from "./client";
-export * from "./services/agents";
+
 export * from "./services/apps";
 export * from "./services/catalog-import";
 export * from "./services/discovery";

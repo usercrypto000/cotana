@@ -84,7 +84,7 @@ export default async function CatalogCoveragePage() {
                   <Badge variant="ready">Verified {entry.appsWithVerifiedBadge}</Badge>
                   <Badge variant="ready">Community {entry.appsWithCommunityPickStatus}</Badge>
                   <Badge variant="secondary">Signals {entry.appsWithSignalSnapshots}</Badge>
-                  {entry.warnings.map((warning) => (
+                  {entry.warnings.map((warning: string) => (
                     <Badge key={warning} variant="warning">{warning}</Badge>
                   ))}
                 </div>
@@ -94,37 +94,6 @@ export default async function CatalogCoveragePage() {
         </div>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="font-heading text-xl font-semibold text-brand-text">Agent registry</h2>
-        <div className="grid gap-3">
-          {audit.agentCategories.map((entry) => (
-            <Card key={entry.category.slug}>
-              <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_2fr]">
-                <div>
-                  <p className="font-heading font-semibold text-brand-text">{entry.category.name}</p>
-                  <p className="font-body text-sm text-neutral-muted">
-                    {entry.totalRegistryApps} registry apps · {entry.activeCapabilities} active capabilities
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="ready">Published {entry.publishedRegistryListings}</Badge>
-                  <Badge variant="secondary">Draft {entry.draftRegistryListings}</Badge>
-                  <Badge variant="warning">Paused {entry.pausedRegistryListings}</Badge>
-                  <Badge variant="danger">Deprecated {entry.deprecatedCapabilities}</Badge>
-                  <Badge variant="agent">Quality {entry.averageCapabilityQuality}/100</Badge>
-                  <Badge variant="secondary">Schema {percent(entry.schemaCoverage)}</Badge>
-                  <Badge variant="secondary">Docs {percent(entry.docsCoverage)}</Badge>
-                  <Badge variant="secondary">Safety {percent(entry.safetyNotesCoverage)}</Badge>
-                  <Badge variant="ready">Read-only {percent(entry.readOnlyCoverage)}</Badge>
-                  {entry.warnings.map((warning) => (
-                    <Badge key={warning} variant="warning">{warning}</Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
     </AdminShell>
   );
 }

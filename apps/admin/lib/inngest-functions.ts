@@ -5,7 +5,6 @@ import {
   runCommunityPickRecompute,
   runEmbeddingRefresh,
   runRisingRecompute,
-  runSignalRefresh,
   runTrendingRecompute,
   runWeeklySnapshots,
   startJobStatus,
@@ -31,7 +30,7 @@ const buildChunkedSignalRefresh = (jobKey: string, categorySlug: "defi" | "lendi
 
       try {
         while (hasMore) {
-          const result = await step.run(`process-chunk-${cursorId || "start"}`, async () => {
+          const result: { nextCursor?: string, inserted: number, hasMore: boolean } = await step.run(`process-chunk-${cursorId || "start"}`, async () => {
             const apps = await listAppsForSignalCategoryPaginated(categorySlug, cursorId, 10);
             const inserted = await processSignalRefreshChunk(categorySlug, apps);
             return {

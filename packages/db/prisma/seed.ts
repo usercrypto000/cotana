@@ -1,10 +1,4 @@
 import {
-  AgentAuthType,
-  AgentCapabilityStatus,
-  AgentInteractionMode,
-  AgentInterfaceType,
-  AgentListingStatus,
-  AppAudience,
   AppPublisherType,
   AppStatus,
   AppUpdateType,
@@ -94,40 +88,8 @@ async function main() {
       logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=HarborYield",
       verified: true,
       verifiedNote: "Established lending interface with strong product clarity and internal review completed.",
-      agentAudience: AppAudience.HYBRID,
-      agentSummary: "Agents can compare yield options and return read-only product recommendations for a user intent.",
       categorySlug: "lending-yield",
       tags: ["yield", "savings", "stablecoins"],
-      agentCapabilities: [
-        {
-          name: "Compare yield options",
-          slug: "compare-yield-options",
-          description: "Returns a ranked read-only summary of available yield options for a requested asset profile.",
-          capabilityType: "comparison",
-          authType: AgentAuthType.API_KEY,
-          interfaceType: AgentInterfaceType.HTTP_API,
-          interactionMode: AgentInteractionMode.READ_ONLY,
-          status: AgentCapabilityStatus.ACTIVE,
-          endpointUrl: "https://example.com/harbor-yield/api/agent/yield-options",
-          inputSchemaJson: {
-            type: "object",
-            properties: {
-              asset: { type: "string" },
-              riskPreference: { type: "string" }
-            },
-            required: ["asset"]
-          },
-          outputSchemaJson: {
-            type: "object",
-            properties: {
-              options: { type: "array" }
-            }
-          },
-          safetyNotes: "Read-only discovery capability. No account actions.",
-          reliabilityScore: 0.92,
-          latencyP50Ms: 480
-        }
-      ],
       updates: [
         {
           versionLabel: "v1.8",
@@ -159,39 +121,8 @@ async function main() {
       logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=SignalBet",
       verified: true,
       verifiedNote: "Strong market clarity and liquidity coverage verified by internal review.",
-      agentAudience: AppAudience.HYBRID,
-      agentSummary: "Agents can inspect market availability and summarize event-market context for a user.",
       categorySlug: "prediction-markets",
       tags: ["events", "markets", "forecasts"],
-      agentCapabilities: [
-        {
-          name: "Find active markets",
-          slug: "find-active-markets",
-          description: "Searches active event markets and returns structured market summaries.",
-          capabilityType: "search",
-          authType: AgentAuthType.API_KEY,
-          interfaceType: AgentInterfaceType.HTTP_API,
-          interactionMode: AgentInteractionMode.READ_ONLY,
-          status: AgentCapabilityStatus.ACTIVE,
-          endpointUrl: "https://example.com/signal-bet/api/agent/markets",
-          inputSchemaJson: {
-            type: "object",
-            properties: {
-              topic: { type: "string" }
-            },
-            required: ["topic"]
-          },
-          outputSchemaJson: {
-            type: "object",
-            properties: {
-              markets: { type: "array" }
-            }
-          },
-          safetyNotes: "Market discovery only. No trading actions.",
-          reliabilityScore: 0.88,
-          latencyP50Ms: 620
-        }
-      ],
       updates: [
         {
           versionLabel: "v2.1",
@@ -216,39 +147,8 @@ async function main() {
       logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=FjordDefi",
       verified: true,
       verifiedNote: "Consistent liquidity coverage and polished consumer experience.",
-      agentAudience: AppAudience.HYBRID,
-      agentSummary: "Agents can retrieve route and liquidity context for comparison workflows.",
       categorySlug: "defi",
       tags: ["defi", "liquidity", "swaps"],
-      agentCapabilities: [
-        {
-          name: "Inspect liquidity routes",
-          slug: "inspect-liquidity-routes",
-          description: "Returns read-only liquidity route metadata for app comparison and discovery.",
-          capabilityType: "data",
-          authType: AgentAuthType.API_KEY,
-          interfaceType: AgentInterfaceType.DATA_FEED,
-          interactionMode: AgentInteractionMode.READ_ONLY,
-          status: AgentCapabilityStatus.ACTIVE,
-          endpointUrl: "https://example.com/fjord-defi/api/agent/routes",
-          inputSchemaJson: {
-            type: "object",
-            properties: {
-              assetPair: { type: "string" }
-            },
-            required: ["assetPair"]
-          },
-          outputSchemaJson: {
-            type: "object",
-            properties: {
-              routes: { type: "array" }
-            }
-          },
-          safetyNotes: "Read-only route inspection.",
-          reliabilityScore: 0.9,
-          latencyP50Ms: 540
-        }
-      ],
       updates: [
         {
           versionLabel: "v1.4",
@@ -273,11 +173,8 @@ async function main() {
       logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=AtlasTrade",
       verified: false,
       verifiedNote: null,
-      agentAudience: AppAudience.HUMAN,
-      agentSummary: null,
       categorySlug: "trading",
       tags: ["trading", "markets", "watchlists"],
-      agentCapabilities: [],
       updates: [
         {
           versionLabel: "Launch",
@@ -298,39 +195,8 @@ async function main() {
       logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=EchoSocial",
       verified: true,
       verifiedNote: "Internal review confirmed a strong consumer UX and clear moderation posture.",
-      agentAudience: AppAudience.HYBRID,
-      agentSummary: "Agents can fetch creator and community discovery metadata for planning workflows.",
       categorySlug: "social",
       tags: ["social", "creators", "communities"],
-      agentCapabilities: [
-        {
-          name: "Discover communities",
-          slug: "discover-communities",
-          description: "Finds public communities and creators that match a topic.",
-          capabilityType: "search",
-          authType: AgentAuthType.OAUTH2,
-          interfaceType: AgentInterfaceType.HTTP_API,
-          interactionMode: AgentInteractionMode.READ_ONLY,
-          status: AgentCapabilityStatus.ACTIVE,
-          endpointUrl: "https://example.com/echo-social/api/agent/communities",
-          inputSchemaJson: {
-            type: "object",
-            properties: {
-              topic: { type: "string" }
-            },
-            required: ["topic"]
-          },
-          outputSchemaJson: {
-            type: "object",
-            properties: {
-              communities: { type: "array" }
-            }
-          },
-          safetyNotes: "Public discovery metadata only.",
-          reliabilityScore: 0.84,
-          latencyP50Ms: 720
-        }
-      ],
       updates: [
         {
           versionLabel: "v1.2",
@@ -351,11 +217,8 @@ async function main() {
       logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=VaultStake",
       verified: false,
       verifiedNote: null,
-      agentAudience: AppAudience.HUMAN,
-      agentSummary: null,
       categorySlug: "staking",
       tags: ["staking", "validators", "guides"],
-      agentCapabilities: [],
       updates: [
         {
           versionLabel: "v1.0",
@@ -380,39 +243,8 @@ async function main() {
       logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=CivicPass",
       verified: true,
       verifiedNote: "Verified due to clear compliance posture and high trust utility.",
-      agentAudience: AppAudience.AGENT,
-      agentSummary: "Agents can request eligibility and verification-status checks through structured, permissioned workflows.",
       categorySlug: "identity",
       tags: ["identity", "trust", "access"],
-      agentCapabilities: [
-        {
-          name: "Check verification status",
-          slug: "check-verification-status",
-          description: "Returns a scoped status response for permissioned identity workflows.",
-          capabilityType: "workflow",
-          authType: AgentAuthType.OAUTH2,
-          interfaceType: AgentInterfaceType.HTTP_API,
-          interactionMode: AgentInteractionMode.READ_ONLY,
-          status: AgentCapabilityStatus.ACTIVE,
-          endpointUrl: "https://example.com/civic-pass/api/agent/status",
-          inputSchemaJson: {
-            type: "object",
-            properties: {
-              requestId: { type: "string" }
-            },
-            required: ["requestId"]
-          },
-          outputSchemaJson: {
-            type: "object",
-            properties: {
-              status: { type: "string" }
-            }
-          },
-          safetyNotes: "Requires delegated user consent.",
-          reliabilityScore: 0.94,
-          latencyP50Ms: 360
-        }
-      ],
       updates: [
         {
           versionLabel: "Spring 2026",
@@ -433,11 +265,8 @@ async function main() {
       logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=PixelPort",
       verified: false,
       verifiedNote: null,
-      agentAudience: AppAudience.HUMAN,
-      agentSummary: null,
       categorySlug: "gaming",
       tags: ["gaming", "quests", "worlds"],
-      agentCapabilities: [],
       updates: [
         {
           versionLabel: "v0.9",
@@ -458,39 +287,8 @@ async function main() {
       logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=RWAHub",
       verified: true,
       verifiedNote: "Verified for strong product clarity and curated scope.",
-      agentAudience: AppAudience.HYBRID,
-      agentSummary: "Agents can pull comparison metadata for asset-backed products.",
       categorySlug: "rwa",
       tags: ["rwa", "assets", "comparison"],
-      agentCapabilities: [
-        {
-          name: "Compare asset products",
-          slug: "compare-asset-products",
-          description: "Returns structured comparison metadata for asset-backed products.",
-          capabilityType: "comparison",
-          authType: AgentAuthType.API_KEY,
-          interfaceType: AgentInterfaceType.HTTP_API,
-          interactionMode: AgentInteractionMode.READ_ONLY,
-          status: AgentCapabilityStatus.ACTIVE,
-          endpointUrl: "https://example.com/rwa-hub/api/agent/products",
-          inputSchemaJson: {
-            type: "object",
-            properties: {
-              assetType: { type: "string" }
-            },
-            required: ["assetType"]
-          },
-          outputSchemaJson: {
-            type: "object",
-            properties: {
-              products: { type: "array" }
-            }
-          },
-          safetyNotes: "Read-only comparison data.",
-          reliabilityScore: 0.86,
-          latencyP50Ms: 690
-        }
-      ],
       updates: [
         {
           versionLabel: "v1.1",
@@ -515,28 +313,8 @@ async function main() {
         logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=PaySignal",
         verified: true,
         verifiedNote: "Launch catalog fixture with strong read-only payment metadata.",
-        agentAudience: AppAudience.HYBRID,
-        agentSummary: "Agents can discover supported payment metadata without initiating payment activity.",
         categorySlug: "payments",
         tags: ["payments", "checkout", "metadata"],
-        agentCapabilities: [
-          {
-            name: "Inspect payment metadata",
-            slug: "inspect-payment-metadata",
-            description: "Returns read-only payment rail, currency, and checkout capability metadata.",
-            capabilityType: "payment_metadata",
-            authType: AgentAuthType.API_KEY,
-            interfaceType: AgentInterfaceType.HTTP_API,
-            interactionMode: AgentInteractionMode.READ_ONLY,
-            status: AgentCapabilityStatus.ACTIVE,
-            endpointUrl: "https://example.com/pay-signal/api/agent/payment-metadata",
-            inputSchemaJson: { type: "object", properties: { region: { type: "string" } } },
-            outputSchemaJson: { type: "object", properties: { rails: { type: "array" } } },
-            safetyNotes: "Discovery-only payment metadata. No transfers or checkout sessions are created.",
-            reliabilityScore: 0.91,
-            latencyP50Ms: 430
-          }
-        ],
         updates: [],
         signals: [{ signalType: "category_metric", signalKey: "supported_rails", numericValue: 8 }]
       },
@@ -550,28 +328,8 @@ async function main() {
         logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=WalletAtlas",
         verified: true,
         verifiedNote: "Launch catalog fixture with complete portfolio-read metadata.",
-        agentAudience: AppAudience.HYBRID,
-        agentSummary: "Agents can discover wallet compatibility and portfolio-read support without requesting credentials.",
         categorySlug: "wallets",
         tags: ["wallets", "portfolio", "compatibility"],
-        agentCapabilities: [
-          {
-            name: "Read portfolio support",
-            slug: "read-portfolio-support",
-            description: "Returns supported portfolio-read surfaces and chain coverage metadata.",
-            capabilityType: "portfolio_read",
-            authType: AgentAuthType.NONE,
-            interfaceType: AgentInterfaceType.HTTP_API,
-            interactionMode: AgentInteractionMode.READ_ONLY,
-            status: AgentCapabilityStatus.ACTIVE,
-            endpointUrl: "https://example.com/wallet-atlas/api/agent/portfolio-support",
-            inputSchemaJson: { type: "object", properties: { chain: { type: "string" } } },
-            outputSchemaJson: { type: "object", properties: { supported: { type: "boolean" } } },
-            safetyNotes: "Read-only compatibility discovery. No wallet connection, signature, or credential handling.",
-            reliabilityScore: 0.93,
-            latencyP50Ms: 390
-          }
-        ],
         updates: [],
         signals: [{ signalType: "category_metric", signalKey: "supported_chains", numericValue: 24 }]
       },
@@ -585,28 +343,8 @@ async function main() {
         logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=StakeRadar",
         verified: true,
         verifiedNote: "Launch catalog fixture for staking opportunity discovery.",
-        agentAudience: AppAudience.HYBRID,
-        agentSummary: "Agents can inspect staking opportunity discovery metadata.",
         categorySlug: "staking",
         tags: ["staking", "validators", "apr"],
-        agentCapabilities: [
-          {
-            name: "Discover staking opportunities",
-            slug: "discover-staking-opportunities",
-            description: "Returns read-only staking opportunity and validator metadata.",
-            capabilityType: "staking_opportunity_discovery",
-            authType: AgentAuthType.API_KEY,
-            interfaceType: AgentInterfaceType.DATA_FEED,
-            interactionMode: AgentInteractionMode.READ_ONLY,
-            status: AgentCapabilityStatus.ACTIVE,
-            endpointUrl: "https://example.com/stake-radar/api/agent/opportunities",
-            inputSchemaJson: { type: "object", properties: { asset: { type: "string" } } },
-            outputSchemaJson: { type: "object", properties: { opportunities: { type: "array" } } },
-            safetyNotes: "Discovery-only. Cotana never initiates staking.",
-            reliabilityScore: 0.87,
-            latencyP50Ms: 740
-          }
-        ],
         updates: [],
         signals: [{ signalType: "category_metric", signalKey: "validator_count", numericValue: 118 }]
       },
@@ -620,29 +358,8 @@ async function main() {
         logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=LaunchLens",
         verified: false,
         verifiedNote: null,
-        agentAudience: AppAudience.HYBRID,
-        agentSummary: "Agents can discover launchpad project metadata and public eligibility requirements.",
         categorySlug: "launchpads",
         tags: ["launchpads", "projects", "eligibility"],
-        agentCapabilities: [
-          {
-            name: "Discover launchpad projects",
-            slug: "discover-launchpad-projects",
-            description: "Returns read-only launchpad project metadata and public eligibility notes.",
-            capabilityType: "market_discovery",
-            authType: AgentAuthType.NONE,
-            interfaceType: AgentInterfaceType.DOCS_ONLY,
-            interactionMode: AgentInteractionMode.READ_ONLY,
-            status: AgentCapabilityStatus.ACTIVE,
-            endpointUrl: null,
-            docsUrl: "https://example.com/launch-lens/docs/agent-projects",
-            inputSchemaJson: { type: "object" },
-            outputSchemaJson: { type: "object" },
-            safetyNotes: "Docs-backed discovery only. No allowlist, claim, or submission flow.",
-            reliabilityScore: 0.74,
-            latencyP50Ms: null
-          }
-        ],
         updates: [],
         signals: []
       },
@@ -656,30 +373,8 @@ async function main() {
         logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=RWAArchive",
         verified: false,
         verifiedNote: null,
-        agentAudience: AppAudience.AGENT,
-        agentSummary: "Agents can inspect historical RWA metadata manifest deprecation status.",
         categorySlug: "rwa",
         tags: ["rwa", "deprecated", "qa-fixture"],
-        agentCapabilities: [
-          {
-            name: "Legacy RWA asset metadata",
-            slug: "legacy-rwa-asset-metadata",
-            description: "Deprecated RWA asset metadata surface retained for direct manifest explanation.",
-            capabilityType: "rwa_asset_metadata",
-            authType: AgentAuthType.API_KEY,
-            interfaceType: AgentInterfaceType.HTTP_API,
-            interactionMode: AgentInteractionMode.READ_ONLY,
-            status: AgentCapabilityStatus.DEPRECATED,
-            endpointUrl: "https://example.com/rwa-archive/api/agent/assets",
-            inputSchemaJson: { type: "object" },
-            outputSchemaJson: { type: "object" },
-            safetyNotes: "Deprecated discovery surface. Use replacement documentation.",
-            reliabilityScore: 0.72,
-            latencyP50Ms: 1200,
-            deprecationReason: "Replaced by RWA Hub asset metadata.",
-            replacementDocsUrl: "https://example.com/rwa-hub/docs/agents#compare-asset-products"
-          }
-        ],
         updates: [],
         signals: []
       },
@@ -693,30 +388,8 @@ async function main() {
         logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=TradeGuardLab",
         verified: false,
         verifiedNote: null,
-        agentAudience: AppAudience.HYBRID,
-        agentListingStatus: AgentListingStatus.PAUSED,
-        agentSummary: "Paused fixture for unsafe trade routing metadata.",
         categorySlug: "trading",
         tags: ["trading", "paused", "qa-fixture"],
-        agentCapabilities: [
-          {
-            name: "Build trade route",
-            slug: "build-trade-route",
-            description: "Unsafe write-capable route builder fixture.",
-            capabilityType: "routing",
-            authType: AgentAuthType.OAUTH2,
-            interfaceType: AgentInterfaceType.SDK,
-            interactionMode: AgentInteractionMode.WRITE_ACTION,
-            status: AgentCapabilityStatus.ACTIVE,
-            endpointUrl: null,
-            docsUrl: "https://example.com/trade-guard-lab/docs",
-            inputSchemaJson: { type: "object" },
-            outputSchemaJson: { type: "object" },
-            safetyNotes: "Paused unsafe fixture. Cotana must not execute or rank this capability.",
-            reliabilityScore: 0.8,
-            latencyP50Ms: 900
-          }
-        ],
         updates: [],
         signals: []
       }
@@ -735,30 +408,8 @@ async function main() {
         logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=QAWeakSchemaLab",
         verified: false,
         verifiedNote: "Local QA fixture only.",
-        agentAudience: AppAudience.HYBRID,
-        agentListingStatus: AgentListingStatus.DRAFT,
-        agentSummary: "Local QA fixture for weak metadata classification.",
         categorySlug: "defi",
         tags: ["qa-fixture", "weak-metadata"],
-        agentCapabilities: [
-          {
-            name: "Weak schema quote lookup",
-            slug: "weak-schema-quote-lookup",
-            description: "Intentionally missing schemas for local registry QA.",
-            capabilityType: "data",
-            authType: AgentAuthType.API_KEY,
-            interfaceType: AgentInterfaceType.HTTP_API,
-            interactionMode: AgentInteractionMode.READ_ONLY,
-            status: AgentCapabilityStatus.ACTIVE,
-            endpointUrl: "https://example.com/qa-weak-schema-lab/api/quote",
-            docsUrl: null,
-            inputSchemaJson: null,
-            outputSchemaJson: null,
-            safetyNotes: "",
-            reliabilityScore: 0.55,
-            latencyP50Ms: 2600
-          }
-        ],
         updates: [],
         signals: []
       },
@@ -772,30 +423,8 @@ async function main() {
         logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=QAUnsafeActionLab",
         verified: false,
         verifiedNote: "Local QA fixture only.",
-        agentAudience: AppAudience.HYBRID,
-        agentListingStatus: AgentListingStatus.DRAFT,
-        agentSummary: "Local QA fixture for unsafe interaction mode classification.",
         categorySlug: "trading",
         tags: ["qa-fixture", "unsafe-mode"],
-        agentCapabilities: [
-          {
-            name: "Draft trade route builder",
-            slug: "draft-trade-route-builder",
-            description: "Intentionally write-capable fixture. Cotana must never execute or publish it as ready.",
-            capabilityType: "routing",
-            authType: AgentAuthType.OAUTH2,
-            interfaceType: AgentInterfaceType.SDK,
-            interactionMode: AgentInteractionMode.WRITE_ACTION,
-            status: AgentCapabilityStatus.ACTIVE,
-            endpointUrl: null,
-            docsUrl: "https://example.com/qa-unsafe-action-lab/docs",
-            inputSchemaJson: { type: "object" },
-            outputSchemaJson: { type: "object" },
-            safetyNotes: "Unsafe local fixture. Not a read-only discovery capability.",
-            reliabilityScore: 0.82,
-            latencyP50Ms: 900
-          }
-        ],
         updates: [],
         signals: []
       },
@@ -809,30 +438,8 @@ async function main() {
         logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=QADocsOnlyLab",
         verified: false,
         verifiedNote: "Local QA fixture only.",
-        agentAudience: AppAudience.HYBRID,
-        agentListingStatus: AgentListingStatus.PAUSED,
-        agentSummary: "Local QA fixture for docs-only registry metadata.",
         categorySlug: "lending-yield",
         tags: ["qa-fixture", "docs-only"],
-        agentCapabilities: [
-          {
-            name: "Docs-only yield guide",
-            slug: "docs-only-yield-guide",
-            description: "Intentionally docs-only fixture with no endpoint URL.",
-            capabilityType: "documentation",
-            authType: AgentAuthType.NONE,
-            interfaceType: AgentInterfaceType.DOCS_ONLY,
-            interactionMode: AgentInteractionMode.READ_ONLY,
-            status: AgentCapabilityStatus.ACTIVE,
-            endpointUrl: null,
-            docsUrl: "https://example.com/qa-docs-only-lab/docs",
-            inputSchemaJson: { type: "object" },
-            outputSchemaJson: null,
-            safetyNotes: "Read-only docs surface for local QA.",
-            reliabilityScore: 0.68,
-            latencyP50Ms: null
-          }
-        ],
         updates: [],
         signals: []
       }
@@ -841,29 +448,18 @@ async function main() {
 
   for (const app of exampleApps) {
     const categoryId = categoryLookup.get(app.categorySlug);
-    const appAgentMetadata = app as {
-      agentListingStatus?: AgentListingStatus;
-      agentDocsUrl?: string | null;
-    };
-    const agentListingStatus =
-      appAgentMetadata.agentListingStatus ??
-      (app.agentAudience === AppAudience.HUMAN ? AgentListingStatus.NOT_APPLICABLE : AgentListingStatus.PUBLISHED);
-    const agentDocsUrl =
-      app.agentAudience === AppAudience.HUMAN ? null : (appAgentMetadata.agentDocsUrl ?? `https://example.com/${app.slug}/docs/agents`);
+
     const seededTrustMetadata = {
       verificationStatus: app.verified ? AppVerificationStatus.verified : AppVerificationStatus.unreviewed,
       publisherName: `${app.name} team`,
-      publisherType: app.agentAudience === AppAudience.AGENT ? AppPublisherType.protocol : AppPublisherType.team,
+      publisherType: AppPublisherType.team,
       supportedChains:
         app.categorySlug === "prediction-markets"
           ? ["Polygon", "Base"]
           : app.categorySlug === "staking"
             ? ["Ethereum", "Solana"]
             : ["Ethereum", "Base"],
-      permissionScopes:
-        app.agentAudience === AppAudience.HUMAN
-          ? ["Website session"]
-          : ["Public metadata", "Read-only API"],
+      permissionScopes: ["Website session"],
       paymentCapabilities:
         app.categorySlug === "payments" ? ["Stablecoin payments", "Checkout links"] : ["None listed"],
       custodyModel:
@@ -896,14 +492,7 @@ async function main() {
         verified: app.verified,
         verifiedNote: app.verifiedNote,
         ...seededTrustMetadata,
-        agentAudience: app.agentAudience,
-        agentListingStatus,
-        agentSummary: app.agentSummary,
-        agentDocsUrl,
-        agentIntegrationNotes:
-          app.agentAudience === AppAudience.HUMAN
-            ? null
-            : "Seeded as a discovery-only registry listing. Cotana does not execute this capability.",
+
         categoryId,
         status: AppStatus.PUBLISHED,
         publishedAt: new Date()
@@ -918,14 +507,7 @@ async function main() {
         verified: app.verified,
         verifiedNote: app.verifiedNote,
         ...seededTrustMetadata,
-        agentAudience: app.agentAudience,
-        agentListingStatus,
-        agentSummary: app.agentSummary,
-        agentDocsUrl,
-        agentIntegrationNotes:
-          app.agentAudience === AppAudience.HUMAN
-            ? null
-            : "Seeded as a discovery-only registry listing. Cotana does not execute this capability.",
+
         categoryId,
         status: AppStatus.PUBLISHED,
         createdByUserId: adminUser.id,
@@ -992,55 +574,8 @@ async function main() {
       }))
     });
 
-    await prisma.agentCapability.deleteMany({
-      where: {
-        appId: createdApp.id
-      }
-    });
 
-    if (app.agentCapabilities.length > 0) {
-      await prisma.agentCapability.createMany({
-        data: app.agentCapabilities.map((capability) => {
-          const capabilityMetadata = capability as {
-            docsUrl?: string | null;
-            status: AgentCapabilityStatus;
-            deprecatedAt?: Date | null;
-            deprecationReason?: string | null;
-            replacementCapabilityId?: string | null;
-            replacementDocsUrl?: string | null;
-          };
 
-          return {
-            appId: createdApp.id,
-            name: capability.name,
-            slug: capability.slug,
-            description: capability.description,
-            capabilityType: capability.capabilityType,
-            authType: capability.authType,
-            interfaceType: capability.interfaceType,
-            interactionMode: capability.interactionMode,
-            endpointUrl: capability.endpointUrl,
-            docsUrl:
-              capabilityMetadata.docsUrl === undefined
-                ? `https://example.com/${app.slug}/docs/agents#${capability.slug}`
-                : capabilityMetadata.docsUrl,
-            inputSchemaJson: capability.inputSchemaJson,
-            outputSchemaJson: capability.outputSchemaJson,
-            safetyNotes: capability.safetyNotes,
-            status: capability.status,
-            reliabilityScore: capability.reliabilityScore,
-            latencyP50Ms: capability.latencyP50Ms,
-            deprecatedAt:
-              capabilityMetadata.status === AgentCapabilityStatus.DEPRECATED
-                ? (capabilityMetadata.deprecatedAt ?? new Date())
-                : null,
-            deprecationReason: capabilityMetadata.deprecationReason ?? null,
-            replacementCapabilityId: capabilityMetadata.replacementCapabilityId ?? null,
-            replacementDocsUrl: capabilityMetadata.replacementDocsUrl ?? null
-          };
-        })
-      });
-    }
   }
 
   const seededApps = await prisma.app.findMany({

@@ -54,8 +54,7 @@ export const demoApps: AppSummary[] = [
     name: "Harbor Yield",
     logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=HarborYield",
     verified: true,
-    communityPick: true,
-    agentAudience: "HYBRID",
+    isCommunityPick: true,
     shortDescription: "Stablecoin yield strategies for passive savers.",
     longDescription:
       "Harbor Yield helps users compare curated yield vaults, monitor risk posture, and move through a simple saving workflow without a technical interface.",
@@ -71,8 +70,7 @@ export const demoApps: AppSummary[] = [
     name: "Signal Bet",
     logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=SignalBet",
     verified: true,
-    communityPick: false,
-    agentAudience: "HYBRID",
+    isCommunityPick: false,
     shortDescription: "Prediction markets for real-world events.",
     longDescription:
       "Signal Bet packages market discovery and position tracking into an approachable interface focused on clarity and daily relevance.",
@@ -88,8 +86,7 @@ export const demoApps: AppSummary[] = [
     name: "Fjord DeFi",
     logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=FjordDefi",
     verified: true,
-    communityPick: true,
-    agentAudience: "HYBRID",
+    isCommunityPick: true,
     shortDescription: "Discover liquid DeFi opportunities fast.",
     longDescription:
       "Fjord DeFi surfaces trusted routes for swaps, liquidity, and lending through a consumer-friendly discovery layer.",
@@ -105,8 +102,7 @@ export const demoApps: AppSummary[] = [
     name: "Atlas Trade",
     logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=AtlasTrade",
     verified: false,
-    communityPick: false,
-    agentAudience: "HUMAN",
+    isCommunityPick: false,
     shortDescription: "Fast cross-market trading tools.",
     longDescription:
       "Atlas Trade wraps market scanning, execution shortcuts, and portfolio cues in a streamlined interface for active traders.",
@@ -122,8 +118,7 @@ export const demoApps: AppSummary[] = [
     name: "Echo Social",
     logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=EchoSocial",
     verified: true,
-    communityPick: false,
-    agentAudience: "HYBRID",
+    isCommunityPick: false,
     shortDescription: "Social discovery for crypto communities.",
     longDescription:
       "Echo Social helps users discover conversations, creators, and communities through a feed that feels familiar.",
@@ -139,8 +134,7 @@ export const demoApps: AppSummary[] = [
     name: "Vault Stake",
     logoUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=VaultStake",
     verified: false,
-    communityPick: false,
-    agentAudience: "HUMAN",
+    isCommunityPick: false,
     shortDescription: "Simple staking choices with guided setup.",
     longDescription:
       "Vault Stake makes validator selection and staking comparisons feel straightforward for mainstream users.",

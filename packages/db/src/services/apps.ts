@@ -61,7 +61,7 @@ export type AdminAppRecord = {
     imageUrl: string;
     sortOrder: number;
   }[];
-  agentCapabilities: AgentCapabilitySummary[];
+
   rating: number;
   reviewCount: number;
   likeCount: number;
@@ -91,7 +91,7 @@ export type AppDetailRecord = {
     imageUrl: string;
     sortOrder: number;
   }[];
-  agentCapabilities: AgentCapabilitySummary[];
+
   rating: number;
   reviewCount: number;
   likeCount: number;
@@ -362,7 +362,7 @@ async function enrichAdminApps(
       imageUrl: string;
       sortOrder: number;
     }[];
-    agentCapabilities: AgentCapabilitySummary[];
+
   }>,
 ) {
   const appIds = apps.map((app) => app.id);
@@ -388,7 +388,6 @@ async function enrichAdminApps(
     category: app.category,
     tags: app.tags.map((tag) => tag.tag),
     screenshots: app.screenshots,
-    agentCapabilities: app.agentCapabilities.map(toAgentCapabilitySummary),
     rating: reviewStats.get(app.id)?.rating ?? 0,
     reviewCount: reviewStats.get(app.id)?.reviewCount ?? 0,
     likeCount: likeStats.get(app.id)?.likeCount ?? 0
@@ -483,11 +482,6 @@ async function replaceTagsAndScreenshots(appId: string, input: AdminAppInput) {
     });
   }
 }
-
-function toJsonValue(value: unknown) {
-  return value === undefined ? Prisma.JsonNull : (JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue);
-}
-
 function trustMetadataData(input: AdminAppInput) {
   return {
     verificationStatus: input.trustMetadata?.verificationStatus ?? (input.verified ? "verified" : "unreviewed"),
@@ -502,11 +496,6 @@ function trustMetadataData(input: AdminAppInput) {
     reviewSummary: input.trustMetadata?.reviewSummary?.trim() || null
   };
 }
-
-function valuesEqual(left: unknown, right: unknown) {
-  return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
-}
-
 
 export async function createAdminApp(input: AdminAppInput, createdByUserId: string) {
   const app = await prisma.app.create({
@@ -528,7 +517,8 @@ export async function createAdminApp(input: AdminAppInput, createdByUserId: stri
   return getAdminAppById(app.id);
 }
 
-export async function updateAdminApp(id: string, input: AdminAppInput, updatedByUserId?: string | null) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function updateAdminApp(id: string, input: AdminAppInput, _updatedByUserId?: string | null) {
   const previous = await prisma.app.findUnique({
     where: {
       id
@@ -614,6 +604,7 @@ export async function listPublishedApps(categorySlug?: string): Promise<AppSumma
 export async function searchAppsByHumanIntent(embedding: number[]) {
   const vectorString = `[${embedding.map((value) => Number(value.toFixed(8))).join(",")}]`;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rows = await prisma.$queryRawUnsafe<any[]>(
     `
     SELECT 

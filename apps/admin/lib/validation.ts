@@ -1,11 +1,5 @@
 import { appStatusValues } from "./app-status";
 import {
-  AgentAuthType,
-  AgentCapabilityStatus,
-  AgentInteractionMode,
-  AgentInterfaceType,
-  AgentListingStatus,
-  AppAudience,
   AppUpdateType
 } from "@cotana/db";
 import { EditorialShelfStatus, EditorialShelfVisibility } from "@cotana/db";
@@ -27,113 +21,10 @@ export const adminAppPayloadSchema = z.object({
   logoUrl: z.string().url("Logo URL must be valid."),
   verified: z.boolean().default(false),
   verifiedNote: z.string().optional().nullable().default(""),
-  agentAudience: z.nativeEnum(AppAudience).default(AppAudience.HUMAN),
-  agentListingStatus: z.nativeEnum(AgentListingStatus).default(AgentListingStatus.NOT_APPLICABLE),
-  agentSummary: z.string().optional().nullable().default(""),
-  agentDocsUrl: z.string().url("Agent docs URL must be valid.").nullable().optional(),
-  agentIntegrationNotes: z.string().optional().nullable().default(""),
   categoryId: z.string().min(1, "Category is required."),
   tags: z.array(z.string()).default([]),
   screenshots: z.array(z.string().url("Screenshot URL must be valid.")).default([]),
-  agentCapabilities: z
-    .array(
-      z.object({
-        name: z.string().min(1, "Capability name is required."),
-        slug: z.string().optional().default(""),
-        description: z.string().min(1, "Capability description is required."),
-        capabilityType: z.string().min(1, "Capability type is required."),
-        authType: z.nativeEnum(AgentAuthType).default(AgentAuthType.NONE),
-        interfaceType: z.nativeEnum(AgentInterfaceType).default(AgentInterfaceType.HTTP_API),
-        interactionMode: z.nativeEnum(AgentInteractionMode).default(AgentInteractionMode.READ_ONLY),
-        endpointUrl: z.string().url("Endpoint URL must be valid.").nullable().optional(),
-        docsUrl: z.string().url("Capability docs URL must be valid.").nullable().optional(),
-        inputSchemaJson: z.unknown().nullable().optional(),
-        outputSchemaJson: z.unknown().nullable().optional(),
-        safetyNotes: z.string().nullable().optional(),
-        status: z.nativeEnum(AgentCapabilityStatus).default(AgentCapabilityStatus.ACTIVE),
-        reliabilityScore: z.coerce.number().min(0).max(1).nullable().optional(),
-        latencyP50Ms: z.coerce.number().int().min(0).nullable().optional(),
-        lastReviewedAt: z.coerce.date().nullable().optional(),
-        deprecatedAt: z.coerce.date().nullable().optional(),
-        deprecationReason: z.string().nullable().optional(),
-        replacementCapabilityId: z.string().nullable().optional(),
-        replacementDocsUrl: z.string().url("Replacement docs URL must be valid.").nullable().optional()
-      }),
-    )
-    .default([]),
   status: z.enum(appStatusValues).optional()
-}).superRefine((value, context) => {
-  if (value.agentAudience === AppAudience.HUMAN && value.agentListingStatus !== AgentListingStatus.NOT_APPLICABLE) {
-    context.addIssue({
-      code: "custom",
-      path: ["agentListingStatus"],
-      message: "Human-only apps cannot be published to the agent registry."
-    });
-  }
-
-  if (value.agentListingStatus !== AgentListingStatus.PUBLISHED) {
-    return;
-  }
-
-  if (value.agentAudience === AppAudience.HUMAN) {
-    context.addIssue({
-      code: "custom",
-      path: ["agentAudience"],
-      message: "Agent registry listings must be agent-only or hybrid."
-    });
-  }
-
-  if (!value.agentSummary?.trim() || value.agentSummary.trim().length < 20) {
-    context.addIssue({
-      code: "custom",
-      path: ["agentSummary"],
-      message: "Published agent listings need a clear agent summary."
-    });
-  }
-
-  const activeCapabilities = value.agentCapabilities.filter((capability) => capability.status === AgentCapabilityStatus.ACTIVE);
-
-  if (activeCapabilities.length === 0) {
-    context.addIssue({
-      code: "custom",
-      path: ["agentCapabilities"],
-      message: "Published agent listings need at least one active capability."
-    });
-  }
-
-  activeCapabilities.forEach((capability, index) => {
-    if (capability.interfaceType !== AgentInterfaceType.DOCS_ONLY && !capability.endpointUrl && !capability.docsUrl) {
-      context.addIssue({
-        code: "custom",
-        path: ["agentCapabilities", index, "endpointUrl"],
-        message: "Active capabilities need an endpoint URL or docs URL."
-      });
-    }
-
-    if (capability.interactionMode !== AgentInteractionMode.READ_ONLY) {
-      context.addIssue({
-        code: "custom",
-        path: ["agentCapabilities", index, "interactionMode"],
-        message: "Cotana's current registry only publishes read-only agent capabilities."
-      });
-    }
-
-    if (!capability.inputSchemaJson || !capability.outputSchemaJson) {
-      context.addIssue({
-        code: "custom",
-        path: ["agentCapabilities", index],
-        message: "Active capabilities need input and output schemas."
-      });
-    }
-
-    if (!capability.safetyNotes?.trim()) {
-      context.addIssue({
-        code: "custom",
-        path: ["agentCapabilities", index, "safetyNotes"],
-        message: "Active capabilities need safety notes."
-      });
-    }
-  });
 });
 
 export const publishActionSchema = z.object({

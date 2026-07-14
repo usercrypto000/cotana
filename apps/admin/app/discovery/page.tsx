@@ -2,17 +2,11 @@ import { isAdminUser } from "@cotana/auth";
 import {
   listDiscoveryConfigEntries,
   listDiscoveryDebugRows,
-  listAgentRegistryQualityRows,
-  getAgentRegistryQualitySummary,
-  listAgentIntentTestCases,
-  listAgentRegistryEvaluationLogs,
   listSignalSnapshotHealth
 } from "@cotana/db";
-import { runAgentIntentTestSuite } from "@cotana/search";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@cotana/ui";
 import { AdminAuthGate } from "../../components/admin-auth-gate";
 import { AdminShell } from "../../components/admin-shell";
-import { AgentRegistryPreviewPanel } from "../../components/agent-registry-preview-panel";
 import { DiscoveryConfigPanel } from "../../components/discovery-config-panel";
 import { getSessionUser } from "../../lib/session";
 
@@ -37,23 +31,14 @@ export default async function DiscoveryPage() {
     rising,
     communityPick,
     configEntries,
-    snapshotHealth,
-    agentQualityRows,
-    agentQualitySummary,
-    agentEvaluationLogs,
-    agentIntentTestCases
+    snapshotHealth
   ] = await Promise.all([
     listDiscoveryDebugRows("TRENDING", { limit: 8 }),
     listDiscoveryDebugRows("RISING", { limit: 8 }),
     listDiscoveryDebugRows("COMMUNITY_PICK", { limit: 8 }),
     listDiscoveryConfigEntries(),
-    listSignalSnapshotHealth(),
-    listAgentRegistryQualityRows(),
-    getAgentRegistryQualitySummary(),
-    listAgentRegistryEvaluationLogs(8),
-    listAgentIntentTestCases()
+    listSignalSnapshotHealth()
   ]);
-  const agentIntentResults = await runAgentIntentTestSuite(agentIntentTestCases);
 
   return (
     <AdminShell
@@ -113,199 +98,7 @@ export default async function DiscoveryPage() {
         ))}
       </section>
 
-      <section className="space-y-4">
-        <div>
-          <h2 className="font-heading text-xl font-semibold text-brand-text">Agent registry preview</h2>
-          <p className="text-sm text-neutral-muted">
-            Simulate outside-agent discovery with compatibility filters before changing registry metadata.
-          </p>
-        </div>
-        <AgentRegistryPreviewPanel />
-      </section>
 
-      <section className="space-y-4">
-        <div>
-          <h2 className="font-heading text-xl font-semibold text-brand-text">Agent registry quality</h2>
-          <p className="text-sm text-neutral-muted">
-            Discovery-only readiness checks for apps exposed to outside agents.
-          </p>
-        </div>
-        <div className="grid gap-3 md:grid-cols-4">
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-neutral-muted">Listings</p>
-              <p className="mt-1 text-2xl font-semibold text-brand-text">{agentQualitySummary.totalListings}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-neutral-muted">Ready</p>
-              <p className="mt-1 text-2xl font-semibold text-brand-text">{agentQualitySummary.readyListings}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-neutral-muted">Needs work</p>
-              <p className="mt-1 text-2xl font-semibold text-brand-text">{agentQualitySummary.needsWorkListings}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-neutral-muted">Avg readiness</p>
-              <p className="mt-1 text-2xl font-semibold text-brand-text">
-                {agentQualitySummary.averageReadinessScore}/100
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-        {agentQualitySummary.topIssues.length > 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Top registry issues</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              {agentQualitySummary.topIssues.map((entry) => (
-                <Badge key={entry.issue} variant="secondary">
-                  {entry.count}x {entry.issue}
-                </Badge>
-              ))}
-            </CardContent>
-          </Card>
-        ) : null}
-        <div className="grid gap-3 md:grid-cols-4">
-          {Object.entries(agentQualitySummary.statusCounts).map(([status, count]) => (
-            <Card key={status}>
-              <CardContent className="p-4">
-                <p className="text-sm capitalize text-neutral-muted">{status.replace(/_/g, " ")}</p>
-                <p className="mt-1 text-2xl font-semibold text-brand-text">{count}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <div className="grid gap-3 lg:grid-cols-2">
-          {agentQualityRows.map((row) => (
-            <Card key={row.appId}>
-              <CardHeader className="flex flex-row items-start justify-between gap-4">
-                <div>
-                  <CardTitle>{row.name}</CardTitle>
-                  <p className="text-sm text-neutral-muted">{row.category.name}</p>
-                </div>
-                <Badge variant={row.ready ? "ready" : "warning"}>{row.ready ? "Ready" : "Needs work"}</Badge>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">{row.agentAudience}</Badge>
-                  <Badge variant="secondary">{row.agentListingStatus}</Badge>
-                  <Badge variant="secondary">
-                    {row.activeCapabilityCount}/{row.totalCapabilityCount} active
-                  </Badge>
-                  <Badge variant={row.readinessScore >= 80 ? "ready" : "warning"}>
-                    {row.readinessScore}/100 readiness
-                  </Badge>
-                  <Badge variant={row.ready ? "ready" : "warning"}>{row.readinessStatus.replace(/_/g, " ")}</Badge>
-                  {row.blockingIssueCount > 0 ? (
-                    <Badge variant="danger">{row.blockingIssueCount} blocking</Badge>
-                  ) : null}
-                </div>
-                {row.issues.length > 0 ? (
-                  <ul className="space-y-2 text-sm text-brand-text/72">
-                    {row.issues.map((issue) => (
-                      <li key={`${row.appId}-${issue}`}>{issue}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-neutral-muted">No registry quality issues found.</p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-          {agentQualityRows.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-sm text-neutral-muted">
-                No agent or hybrid listings have been configured yet.
-              </CardContent>
-            </Card>
-          ) : null}
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div>
-          <h2 className="font-heading text-xl font-semibold text-brand-text">Agent intent tests</h2>
-          <p className="text-sm text-neutral-muted">
-            Seeded discovery checks for whether common outside-agent intents land on the right capability type.
-          </p>
-        </div>
-        <div className="grid gap-3 lg:grid-cols-2">
-          {agentIntentResults.map((result) => (
-            <Card key={result.id}>
-              <CardHeader className="flex flex-row items-start justify-between gap-4">
-                <div>
-                  <CardTitle>{result.intent}</CardTitle>
-                  <p className="mt-1 text-sm text-neutral-muted">{result.reason}</p>
-                </div>
-                <Badge variant={result.passed ? "ready" : "warning"}>{result.passed ? "Pass" : "Inspect"}</Badge>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                <Badge variant="secondary">{result.categorySlug ?? "all"}</Badge>
-                <Badge variant="secondary">App {result.topAppSlug ?? "none"}</Badge>
-                <Badge variant="secondary">Capability {result.topCapabilitySlug ?? "none"}</Badge>
-                <Badge variant="secondary">Type {result.topCapabilityType ?? "none"}</Badge>
-                {typeof result.topScore === "number" ? (
-                  <Badge variant="secondary">Score {result.topScore.toFixed(3)}</Badge>
-                ) : null}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div>
-          <h2 className="font-heading text-xl font-semibold text-brand-text">Registry evaluation logs</h2>
-          <p className="text-sm text-neutral-muted">
-            Recent agent searches with matched capability, score, similarity, exclusions, and blocking counts.
-          </p>
-        </div>
-        <div className="grid gap-3">
-          {agentEvaluationLogs.map((log) => (
-            <Card key={log.id}>
-              <CardHeader className="flex flex-row items-start justify-between gap-4">
-                <div>
-                  <CardTitle>{log.query}</CardTitle>
-                  <p className="mt-1 text-sm text-neutral-muted">
-                    {new Date(log.createdAt).toLocaleString()} · {log.resultCount} results · {log.candidateCount} candidates
-                  </p>
-                </div>
-                <Badge variant={log.blockingIssueCount > 0 ? "warning" : "ready"}>
-                  {log.blockingIssueCount} excluded
-                </Badge>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm text-brand-text/72">
-                <p>{log.topMatchReason ?? "No top match recorded."}</p>
-                <div className="flex flex-wrap gap-2">
-                  {typeof log.topSimilarity === "number" ? (
-                    <Badge variant="secondary">Similarity {log.topSimilarity.toFixed(3)}</Badge>
-                  ) : null}
-                  {typeof log.topScore === "number" ? (
-                    <Badge variant="secondary">Score {log.topScore.toFixed(3)}</Badge>
-                  ) : null}
-                  {typeof log.topQualityScore === "number" ? (
-                    <Badge variant="secondary">Quality {log.topQualityScore}/100</Badge>
-                  ) : null}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {agentEvaluationLogs.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-sm text-neutral-muted">
-                Agent search evaluation logs will appear after registry searches run.
-              </CardContent>
-            </Card>
-          ) : null}
-        </div>
-      </section>
 
       <section className="space-y-4">
         <div>

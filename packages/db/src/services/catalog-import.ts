@@ -1,4 +1,4 @@
-import { AgentListingStatus, AppAudience, AppStatus } from "@prisma/client";
+import { AppStatus } from "@prisma/client";
 import type { AdminAppInput } from "./apps";
 
 export type CatalogImportRow = {
@@ -138,15 +138,9 @@ export function validateCatalogImportRows(
         logoUrl: row.logoUrl?.trim() ?? "",
         verified: parseBoolean(row.verified),
         verifiedNote: null,
-        agentAudience: AppAudience.HUMAN,
-        agentListingStatus: AgentListingStatus.NOT_APPLICABLE,
-        agentSummary: null,
-        agentDocsUrl: null,
-        agentIntegrationNotes: null,
         categoryId: category.id,
         tags: parseStringList(row.tags),
-        screenshots: parseStringList(row.screenshots),
-        agentCapabilities: []
+        screenshots: parseStringList(row.screenshots)
       }
     });
   });

@@ -12,8 +12,7 @@ import type {
   SearchSort
 } from "@cotana/types";
 import OpenAI from "openai";
-import { embed } from "ai";
-import { google } from "@ai-sdk/google";
+
 import { z } from "zod";
 import { boostSimilarCandidates } from "./similar";
 import { sortSearchCandidateList } from "./sort";
@@ -229,26 +228,7 @@ function serializeVector(vector: number[]) {
   return `[${vector.map((value) => Number(value.toFixed(8))).join(",")}]`;
 }
 
-function cosineSimilarity(left: number[], right: number[]) {
-  const length = Math.min(left.length, right.length);
-  let dotProduct = 0;
-  let leftMagnitude = 0;
-  let rightMagnitude = 0;
 
-  for (let index = 0; index < length; index += 1) {
-    const leftValue = left[index] ?? 0;
-    const rightValue = right[index] ?? 0;
-    dotProduct += leftValue * rightValue;
-    leftMagnitude += leftValue ** 2;
-    rightMagnitude += rightValue ** 2;
-  }
-
-  if (leftMagnitude === 0 || rightMagnitude === 0) {
-    return 0;
-  }
-
-  return dotProduct / (Math.sqrt(leftMagnitude) * Math.sqrt(rightMagnitude));
-}
 
 function inferCategoryHint(query: string): SearchCategoryHint {
   const normalized = normalizeQuery(query);
@@ -582,16 +562,7 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
 }
 
 export async function generateHumanSearchVector(query: string): Promise<number[]> {
-  if (!process.env.GOOGLE_API_KEY) {
-    throw new Error("GOOGLE_API_KEY environment variable is missing.");
-  }
-
-  const { embedding } = await embed({
-    model: google("models/gemini-embedding-001"),
-    value: query,
-  });
-
-  return embedding;
+  return await embedText(query);
 }
 
 

@@ -1,19 +1,5 @@
 "use client";
 
-import {
-  agentAuthTypeValues,
-  agentCapabilityStatusValues,
-  agentInteractionModeValues,
-  agentInterfaceTypeValues,
-  agentListingStatusValues,
-  appAudienceValues,
-  type AgentAuthTypeValue,
-  type AgentCapabilityStatusValue,
-  type AgentInteractionModeValue,
-  type AgentInterfaceTypeValue,
-  type AgentListingStatusValue,
-  type AppAudienceValue
-} from "../lib/agent-config";
 import { AppStatus, type AppStatusValue } from "../lib/app-status";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@cotana/ui";
 import { useRouter } from "next/navigation";
@@ -35,13 +21,6 @@ type AppRecord = {
   logoUrl: string;
   verified: boolean;
   verifiedNote: string | null;
-  agentAudience: AppAudienceValue;
-  agentListingStatus: AgentListingStatusValue;
-  agentSummary: string | null;
-  agentDocsUrl: string | null;
-  agentIntegrationNotes: string | null;
-  agentManifestVersion: number;
-  agentLastReviewedAt: Date | string | null;
   status: AppStatusValue;
   category: {
     id: string;
@@ -50,32 +29,8 @@ type AppRecord = {
   screenshots: {
     imageUrl: string;
   }[];
-  agentCapabilities: AgentCapabilityFormRecord[];
 };
 
-type AgentCapabilityFormRecord = {
-  name: string;
-  slug?: string;
-  description: string;
-  capabilityType: string;
-  authType: AgentAuthTypeValue;
-  interfaceType: AgentInterfaceTypeValue;
-  interactionMode: AgentInteractionModeValue;
-  endpointUrl?: string | null;
-  docsUrl?: string | null;
-  inputSchemaJson?: unknown | null;
-  outputSchemaJson?: unknown | null;
-  safetyNotes?: string | null;
-  status: AgentCapabilityStatusValue;
-  reliabilityScore?: number | null;
-  latencyP50Ms?: number | null;
-  manifestVersion?: number;
-  lastReviewedAt?: Date | string | null;
-  deprecatedAt?: Date | string | null;
-  deprecationReason?: string | null;
-  replacementCapabilityId?: string | null;
-  replacementDocsUrl?: string | null;
-};
 
 type FormState = {
   slug: string;
@@ -86,52 +41,12 @@ type FormState = {
   logoUrl: string;
   verified: boolean;
   verifiedNote: string;
-  agentAudience: AppAudienceValue;
-  agentListingStatus: AgentListingStatusValue;
-  agentSummary: string;
-  agentDocsUrl: string;
-  agentIntegrationNotes: string;
   categoryId: string;
   tags: string;
   screenshots: string;
-  agentCapabilitiesJson: string;
-};
-
-const defaultAgentCapability: AgentCapabilityFormRecord = {
-  name: "Search catalog",
-  slug: "search-catalog",
-  description: "Lets an agent discover relevant app data for a user intent.",
-  capabilityType: "search",
-  authType: "NONE",
-  interfaceType: "HTTP_API",
-  interactionMode: "READ_ONLY",
-  endpointUrl: null,
-  docsUrl: "https://example.com/docs/agent-api",
-  inputSchemaJson: {
-    type: "object",
-    properties: {
-      query: {
-        type: "string"
-      }
-    },
-    required: ["query"]
-  },
-  outputSchemaJson: {
-    type: "object",
-    properties: {
-      results: {
-        type: "array"
-      }
-    }
-  },
-  safetyNotes: "Read-only capability.",
-  status: "ACTIVE",
-  reliabilityScore: null,
-  latencyP50Ms: null
 };
 
 function buildInitialState(app?: AppRecord): FormState {
-  const agentCapabilities = app?.agentCapabilities?.length ? app.agentCapabilities : [];
 
   return {
     slug: app?.slug ?? "",
@@ -142,15 +57,9 @@ function buildInitialState(app?: AppRecord): FormState {
     logoUrl: app?.logoUrl ?? "",
     verified: app?.verified ?? false,
     verifiedNote: app?.verifiedNote ?? "",
-    agentAudience: app?.agentAudience ?? "HUMAN",
-    agentListingStatus: app?.agentListingStatus ?? "NOT_APPLICABLE",
-    agentSummary: app?.agentSummary ?? "",
-    agentDocsUrl: app?.agentDocsUrl ?? "",
-    agentIntegrationNotes: app?.agentIntegrationNotes ?? "",
     categoryId: app?.category.id ?? "",
     tags: app?.tags.join(", ") ?? "",
-    screenshots: app?.screenshots.map((item) => item.imageUrl).join("\n") ?? "",
-    agentCapabilitiesJson: JSON.stringify(agentCapabilities, null, 2)
+    screenshots: app?.screenshots.map((item) => item.imageUrl).join("\n") ?? ""
   };
 }
 
@@ -161,21 +70,7 @@ function normalizeList(value: string) {
     .filter(Boolean);
 }
 
-function parseAgentCapabilities(value: string) {
-  const trimmed = value.trim();
 
-  if (!trimmed) {
-    return [];
-  }
-
-  const parsed = JSON.parse(trimmed) as unknown;
-
-  if (!Array.isArray(parsed)) {
-    throw new Error("Agent capabilities must be a JSON array.");
-  }
-
-  return parsed as AgentCapabilityFormRecord[];
-}
 
 export function AdminAppForm({
   mode,
@@ -190,22 +85,12 @@ export function AdminAppForm({
   const [form, setForm] = useState<FormState>(() => buildInitialState(app));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
-  const capabilityPreview = (() => {
-    try {
-      return parseAgentCapabilities(form.agentCapabilitiesJson);
-    } catch {
-      return [];
-    }
-  })();
-  const deprecatedCapabilities = capabilityPreview.filter((capability) => capability.status === "DEPRECATED");
-  const pausedCapabilities = capabilityPreview.filter((capability) => capability.status === "PAUSED");
 
   async function submit(status?: AppStatusValue) {
     setSaving(status ?? "SAVE");
     setError(null);
 
     try {
-      const agentCapabilities = parseAgentCapabilities(form.agentCapabilitiesJson);
       const payload = {
         slug: form.slug,
         name: form.name,
@@ -215,15 +100,9 @@ export function AdminAppForm({
         logoUrl: form.logoUrl,
         verified: form.verified,
         verifiedNote: form.verifiedNote,
-        agentAudience: form.agentAudience,
-        agentListingStatus: form.agentListingStatus,
-        agentSummary: form.agentSummary,
-        agentDocsUrl: form.agentDocsUrl || null,
-        agentIntegrationNotes: form.agentIntegrationNotes,
         categoryId: form.categoryId,
         tags: normalizeList(form.tags),
         screenshots: normalizeList(form.screenshots),
-        agentCapabilities,
         status
       };
 
@@ -251,13 +130,6 @@ export function AdminAppForm({
     } finally {
       setSaving(null);
     }
-  }
-
-  function setAgentCapabilitiesToExample() {
-    setForm((current) => ({
-      ...current,
-      agentCapabilitiesJson: JSON.stringify([defaultAgentCapability], null, 2)
-    }));
   }
 
   async function submitWithErrorBoundary(status?: AppStatusValue) {
@@ -310,10 +182,6 @@ export function AdminAppForm({
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           {app ? <Badge>{app.status}</Badge> : null}
-          {app ? <Badge variant="agent">Manifest v{app.agentManifestVersion}</Badge> : null}
-          {app?.agentLastReviewedAt ? (
-            <Badge variant="secondary">Reviewed {new Date(app.agentLastReviewedAt).toLocaleDateString()}</Badge>
-          ) : null}
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -377,73 +245,6 @@ export function AdminAppForm({
           </label>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className="space-y-2 text-sm text-brand-text/72">
-            <span>Audience</span>
-            <select
-              value={form.agentAudience}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  agentAudience: event.target.value as AppAudienceValue,
-                  agentListingStatus:
-                    event.target.value === "HUMAN" ? "NOT_APPLICABLE" : current.agentListingStatus
-                }))
-              }
-              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
-            >
-              {appAudienceValues.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="space-y-2 text-sm text-brand-text/72">
-            <span>Agent registry status</span>
-            <select
-              value={form.agentListingStatus}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, agentListingStatus: event.target.value as AgentListingStatusValue }))
-              }
-              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
-            >
-              {agentListingStatusValues.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="space-y-2 text-sm text-brand-text/72">
-            <span>Agent summary</span>
-            <textarea
-              value={form.agentSummary}
-              onChange={(event) => setForm((current) => ({ ...current, agentSummary: event.target.value }))}
-              className="min-h-24 w-full rounded-xl border bg-neutral-panel px-4 py-3 text-sm text-brand-text"
-              placeholder="What can an AI agent safely use this app for?"
-            />
-          </label>
-          <label className="space-y-2 text-sm text-brand-text/72">
-            <span>Agent docs URL</span>
-            <input
-              value={form.agentDocsUrl}
-              onChange={(event) => setForm((current) => ({ ...current, agentDocsUrl: event.target.value }))}
-              className="h-11 w-full rounded-xl border bg-neutral-panel px-4 text-sm text-brand-text"
-              placeholder="https://docs.example.com/agents"
-            />
-          </label>
-        </div>
-
-        <label className="space-y-2 text-sm text-brand-text/72">
-          <span>Agent integration notes</span>
-          <textarea
-            value={form.agentIntegrationNotes}
-            onChange={(event) => setForm((current) => ({ ...current, agentIntegrationNotes: event.target.value }))}
-            className="min-h-24 w-full rounded-xl border bg-neutral-panel px-4 py-3 text-sm text-brand-text"
-            placeholder="Internal notes for registry review. This is not shown publicly."
-          />
-        </label>
 
         <label className="space-y-2 text-sm text-brand-text/72">
           <span>Verified note</span>
@@ -494,32 +295,6 @@ export function AdminAppForm({
           </label>
         </div>
 
-        <label className="space-y-2 text-sm text-brand-text/72">
-          <span>Agent capabilities JSON</span>
-          <textarea
-            value={form.agentCapabilitiesJson}
-            onChange={(event) => setForm((current) => ({ ...current, agentCapabilitiesJson: event.target.value }))}
-            className="min-h-72 w-full rounded-xl border bg-neutral-panel px-4 py-3 font-mono text-xs text-brand-text"
-            placeholder={`Allowed auth types: ${agentAuthTypeValues.join(", ")}. Interface values: ${agentInterfaceTypeValues.join(", ")}. Interaction modes: ${agentInteractionModeValues.join(", ")}. Status values: ${agentCapabilityStatusValues.join(", ")}.`}
-          />
-        </label>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="agent">{capabilityPreview.length} capabilities</Badge>
-          <Badge variant={pausedCapabilities.length > 0 ? "warning" : "secondary"}>
-            {pausedCapabilities.length} paused
-          </Badge>
-          <Badge variant={deprecatedCapabilities.length > 0 ? "danger" : "secondary"}>
-            {deprecatedCapabilities.length} deprecated
-          </Badge>
-          {deprecatedCapabilities.map((capability) => (
-            <Badge key={capability.slug ?? capability.name} variant="danger">
-              {capability.slug ?? capability.name} deprecated
-            </Badge>
-          ))}
-        </div>
-        <Button type="button" variant="outline" onClick={setAgentCapabilitiesToExample}>
-          Reset agent example
-        </Button>
 
         {error ? <p className="text-sm ui-copy-danger">{error}</p> : null}
 

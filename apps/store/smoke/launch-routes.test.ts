@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+
 import React from "react";
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
@@ -148,27 +148,7 @@ vi.mock("@cotana/db", () => ({
   recordSearchClick: mocks.recordSearchClick,
   trackAppView: mocks.trackAppView,
   getLaunchHealth: mocks.getLaunchHealth,
-  recordAgentRegistryEvaluationLog: mocks.recordAgentRegistryEvaluationLog,
-  getAgentRegistryPublicReadinessMetadata: vi.fn(async () => ({
-    registryVersion: "2026-05-17",
-    schemaVersion: "2026-05-17",
-    publishedAppCount: 0,
-    activeCapabilityCount: 0,
-    supportedCapabilityTypes: [],
-    supportedAuthTypes: [],
-    supportedInterfaceTypes: [],
-    supportedInteractionModes: [],
-    docsUrl: "/agent-registry/docs",
-    policyUrl: "/api/agent-registry/policy"
-  })),
-  getAgentCapabilityQualitySignals: vi.fn(() => ({
-    schemaComplete: true,
-    safetyNotesPresent: true,
-    docsAvailable: true,
-    endpointAvailable: true,
-    qualityScore: 90,
-    qualityGrade: "excellent"
-  })),
+  getLaunchHealthHttpStatus: vi.fn((status: string) => status === "healthy" ? 200 : 503),
   getEmptyStateMessage: (kind: string) => `empty:${kind}`
 }));
 
@@ -302,7 +282,7 @@ describe("staging launch smoke routes", () => {
     mocks.checkRateLimit.mockResolvedValue({ allowed: true });
 
     const health = await storeHealthGET();
-    const llms = await llmsGET();
+    await llmsGET();
 
     expect((await health.json()).app).toBe("cotana-store");
   });
