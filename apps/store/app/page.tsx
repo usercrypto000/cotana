@@ -12,6 +12,7 @@ import {
 import type { AppSummary } from "@cotana/types";
 import { Badge, Button, SectionHeading, cn } from "@cotana/ui";
 import Link from "next/link";
+import { Compass, Wallet, Activity, BarChart3, AppWindow } from "lucide-react";
 import { AppCard, TopChartCard } from "../components/app-card";
 import { StoreHeader } from "../components/store-header";
 import { demoApps, uniqueDemoCategories } from "../lib/demo-catalog";
@@ -339,7 +340,7 @@ export default async function StoreHomePage() {
             </div>
             <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-[#84CC16] opacity-[0.07] blur-3xl"></div>
           </div>
-          <form action="/search" className="flex flex-col justify-between rounded-2xl border border-[#1F2937] bg-[#161B26] p-6 shadow-panel transition-all hover:border-[#84CC16]/40 hover:shadow-[0_0_15px_rgba(132,204,22,0.1)]">
+          <form action="/search" className="flex flex-col justify-between rounded-2xl border border-[#1F2937] bg-[rgba(22,27,38,0.75)] backdrop-blur-[12px] p-6 shadow-panel transition-all hover:border-[#84CC16]/40 hover:shadow-[0_0_15px_rgba(132,204,22,0.15)]">
             <div>
               <label htmlFor="home-search" className="font-sans text-[15px] font-bold text-white">
                 Search by intent
@@ -376,18 +377,28 @@ export default async function StoreHomePage() {
         <FeaturedBanners />
 
         <nav className="flex gap-2 overflow-x-auto py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Store categories">
-          {displayCategories.map((category) => (
-            <Link key={category.slug} href={categoryHref(category)} className="shrink-0 no-underline transition-transform hover:-translate-y-0.5">
-              <div className={cn(
-                "rounded-full border px-4 py-1.5 font-sans text-[13px] font-medium transition-all duration-300",
-                category.slug === "all" 
-                  ? "border-[#84CC16] bg-[#84CC16] text-[#0B0F19] hover:bg-[#65a30d]" 
-                  : "border-[#1F2937] bg-[#161B26] text-gray-400 hover:border-[#84CC16]/70 hover:text-white hover:shadow-[0_0_10px_rgba(132,204,22,0.2)]"
-              )}>
-                {category.name}
-              </div>
-            </Link>
-          ))}
+          {displayCategories.map((category) => {
+            const getIcon = () => {
+              if (category.slug === "all") return <Compass className="mr-1.5 h-3.5 w-3.5" />;
+              if (category.slug === "defi") return <Wallet className="mr-1.5 h-3.5 w-3.5" />;
+              if (category.slug === "lending-yield") return <Activity className="mr-1.5 h-3.5 w-3.5" />;
+              if (category.name.toLowerCase().includes("trading")) return <BarChart3 className="mr-1.5 h-3.5 w-3.5" />;
+              return <AppWindow className="mr-1.5 h-3.5 w-3.5" />;
+            };
+            return (
+              <Link key={category.slug} href={categoryHref(category)} className="shrink-0 no-underline transition-transform hover:-translate-y-0.5">
+                <div className={cn(
+                  "flex items-center rounded-full border px-4 py-1.5 font-sans text-[13px] font-medium transition-all duration-300",
+                  category.slug === "all" 
+                    ? "border-[#84CC16] bg-[#84CC16] text-[#0B0F19] hover:bg-[#65a30d] shadow-[0_0_12px_rgba(132,204,22,0.4)]" 
+                    : "border-[#1F2937] bg-[rgba(22,27,38,0.75)] backdrop-blur-sm text-gray-400 hover:border-[#84CC16]/70 hover:text-white hover:shadow-[0_0_12px_rgba(132,204,22,0.15)]"
+                )}>
+                  {getIcon()}
+                  {category.name}
+                </div>
+              </Link>
+            );
+          })}
         </nav>
 
         <div id="apps" className="pt-0">

@@ -50,7 +50,7 @@ export function AppCard({
 
   return (
     <Link href={href ?? `/apps/${app.slug}`} className={cn("group block w-full no-underline", className)}>
-      <div className="flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-[#1F2937] bg-[#161B26] p-3 transition-all duration-300 hover:scale-[1.02] hover:border-[#84CC16]/50 hover:shadow-[0_0_15px_rgba(132,204,22,0.1)] focus-within:border-[#84CC16]">
+      <div className="flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-[#1F2937] bg-[#161B26] p-3 transition-all duration-300 hover:scale-[1.02] hover:border-[#84CC16]/50 hover:shadow-[0_0_15px_rgba(132,204,22,0.15)] focus-within:border-[#84CC16]">
         <AppLogo app={app} />
         <div className="flex min-w-0 flex-col justify-center">
           <div className="flex items-center gap-2">
@@ -87,7 +87,7 @@ export function TopChartCard({
   const roundedRating = app.rating ? app.rating.toFixed(1) : "0.0";
   return (
     <Link href={href ?? `/apps/${app.slug}`} className={cn("group block w-full no-underline", className)}>
-      <div className="flex w-full items-center gap-4 py-2 transition-all hover:bg-white/5 rounded-lg px-2 -mx-2">
+      <div className="flex w-full items-center gap-4 rounded-lg border border-transparent px-2 py-2 transition-all duration-300 hover:scale-[1.02] hover:border-[#84CC16]/50 hover:bg-[#161B26] hover:shadow-[0_0_15px_rgba(132,204,22,0.15)] -mx-2">
         <div className="flex w-6 shrink-0 justify-center font-sans text-lg font-bold text-[#84CC16]">
           {rank}
         </div>

@@ -19,7 +19,7 @@ export function StoreHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-neutral-border/70 bg-brand-surface/88 backdrop-blur-2xl">
+    <header className="sticky top-0 z-20 border-b border-[#1F2937]/70 bg-[rgba(22,27,38,0.75)] backdrop-blur-[12px]">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6">
         <div className="flex items-center gap-2.5">
           <Link
