@@ -30,7 +30,7 @@ export default function Loading() {
   return (
     <main className="cotana-store-dark cotana-store-shell min-h-screen text-brand-text">
       <StoreHeader />
-      <section className="mx-auto max-w-7xl px-8 pb-10 pt-6 sm:pt-8 md:px-16">
+      <section className="mx-auto max-w-7xl px-4 pb-10 pt-6 sm:pt-8 md:px-8">
         
         {/* Hero Section Skeleton */}
         <div className="grid gap-4 pb-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch">
@@ -54,7 +54,7 @@ export default function Loading() {
 
         <div className="pt-0">
           {/* Spotlight Shelf Skeleton (Wide horizontal) */}
-          <section className="mb-20 space-y-6">
+          <section className="mb-10 space-y-6">
             <div className="h-8 w-1/3 animate-pulse rounded bg-[#1F2937]" />
             <div className="flex flex-row overflow-x-hidden gap-6 pb-4">
               {[...Array(4)].map((_, i) => (
@@ -64,7 +64,7 @@ export default function Loading() {
           </section>
 
           {/* Top Charts Skeleton */}
-          <section className="mb-20 space-y-6 border-t border-slate-900/50 py-10">
+          <section className="mb-10 space-y-6 border-t border-slate-900/50 py-5">
             <div className="h-8 w-1/3 animate-pulse rounded bg-[#1F2937]" />
             <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
               {[...Array(3)].map((_, col) => (
@@ -81,7 +81,7 @@ export default function Loading() {
           </section>
 
           {/* Rising Skeleton (Compact horizontal) */}
-          <section className="mb-20 space-y-6 border-t border-slate-900/50 py-10">
+          <section className="mb-10 space-y-6 border-t border-slate-900/50 py-5">
             <div className="h-8 w-1/3 animate-pulse rounded bg-[#1F2937]" />
             <div className="flex flex-row overflow-x-hidden gap-4 pb-4">
               {[...Array(5)].map((_, i) => (
@@ -91,7 +91,7 @@ export default function Loading() {
           </section>
 
           {/* Category Shelf Skeleton (Grid) */}
-          <section className="mb-20 space-y-6 border-t border-slate-900/50 py-10">
+          <section className="mb-10 space-y-6 border-t border-slate-900/50 py-5">
             <div className="h-8 w-1/3 animate-pulse rounded bg-[#1F2937]" />
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {[...Array(6)].map((_, i) => (

@@ -133,7 +133,7 @@ function SectionGrid({
   layout?: "grid" | "horizontal-compact";
 }) {
   return (
-    <section className="mb-20 space-y-6 border-t border-slate-900/50 py-10">
+    <section className="mb-10 space-y-6 border-t border-slate-900/50 py-5">
       <SectionHeading eyebrow={eyebrow} title={title} description={description} />
       {apps.length > 0 ? (
         layout === "horizontal-compact" ? (
@@ -179,7 +179,7 @@ function TopChartsShelf({ apps }: { apps: AppSummary[] }) {
   const topTrading = apps.filter((a) => a.category.slug !== "defi" && a.category.slug !== "lending-yield").slice(0, 3);
 
   return (
-    <section className="mb-20 space-y-6 border-t border-slate-900/50 py-10">
+    <section className="mb-10 space-y-6 border-t border-slate-900/50 py-5">
       <SectionHeading eyebrow="Trending" title="Top Charts" description="The most popular apps across key categories right now." />
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div>
@@ -254,7 +254,7 @@ function SpotlightShelf({ shelf, fallbackApps }: { shelf: PublicEditorialShelf |
   const desc = shelf ? shelf.description : "Demo listings keep Cotana useful while the launch catalog is still filling in.";
 
   return (
-    <section className="mb-20 space-y-6">
+    <section className="mb-10 space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <SectionHeading eyebrow={shelf ? "Spotlight" : "Curated picks"} title={title} description={desc} />
         {shelf && (
@@ -315,7 +315,7 @@ export default async function StoreHomePage() {
   return (
     <main className="cotana-store-dark cotana-store-shell min-h-screen text-brand-text">
       <StoreHeader />
-      <section className="mx-auto max-w-7xl px-8 md:px-16 pb-10 pt-6 sm:pt-8">
+      <section className="mx-auto max-w-7xl px-4 md:px-8 pb-10 pt-6 sm:pt-8">
         <div className="grid gap-4 pb-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch">
           <div className="relative flex flex-col justify-end overflow-hidden rounded-2xl border border-[#1F2937] bg-gradient-to-b from-[#1E293B] to-[#161B26] p-6 sm:p-8">
             <div className="relative z-10 space-y-4">
