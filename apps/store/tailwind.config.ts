@@ -13,7 +13,10 @@ const config: Config = {
       colors: {
         ...tailwindBrandColors
       },
-      fontFamily: tailwindFontFamily,
+      fontFamily: {
+        ...tailwindFontFamily,
+        sans: ["var(--font-plus-jakarta)", "sans-serif"]
+      },
       borderRadius: {
         control: cotanaBrand.radius.control,
         card: cotanaBrand.radius.card

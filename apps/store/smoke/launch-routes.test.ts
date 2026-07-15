@@ -2,7 +2,7 @@
 import React from "react";
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import { AppCard } from "@cotana/ui";
+import { AppCard } from "../components/app-card";
 
 (globalThis as typeof globalThis & { React: typeof React }).React = React;
 
@@ -238,7 +238,7 @@ describe("staging launch smoke routes", () => {
     const detail = await AppDetailPage({ params: Promise.resolve({ slug: "harbor-yield" }), searchParams: Promise.resolve({}) });
 
     expect(countElementsByName(home, "AppCard")).toBeGreaterThanOrEqual(6);
-    expect(collectText(home)).toContain("The Curated, Verified Portal to Web3.");
+    expect(collectText(home)).toContain("Discover the Best of Web3");
     expect(collectText(home)).toContain("Apps people are checking out");
     expect(collectText(home)).toContain("Apps gaining momentum");
     expect(countElementsByName(category, "AppCard")).toBeGreaterThanOrEqual(3);
@@ -258,10 +258,10 @@ describe("staging launch smoke routes", () => {
     const missingMetadataText = collectText(missingMetadataCard);
     const authControlsSource = readFileSync("apps/store/components/store-auth-controls.tsx", "utf8");
 
-    expect(visibleText).toContain("Verified");
+    expect(visibleText).not.toContain("Verified");
     expect(visibleText).not.toContain("Harbor Labs");
     expect(visibleText).not.toContain("External protocol risk remains outside Cotana review.");
-    expect(missingMetadataText).toContain("Verified");
+    expect(missingMetadataText).not.toContain("Verified");
     expect(authControlsSource).toContain("<Button");
     expect(authControlsSource).toContain("Sign in");
   });

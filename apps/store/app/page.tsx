@@ -10,7 +10,7 @@ import {
   type PublicEditorialShelf
 } from "@cotana/db";
 import type { AppSummary } from "@cotana/types";
-import { Badge, Button, SectionHeading } from "@cotana/ui";
+import { Badge, Button, SectionHeading, cn } from "@cotana/ui";
 import Link from "next/link";
 import { AppCard } from "../components/app-card";
 import { StoreHeader } from "../components/store-header";
@@ -133,7 +133,7 @@ function SectionGrid({
     <section className="space-y-3.5">
       <SectionHeading eyebrow={eyebrow} title={title} description={description} />
       {apps.length > 0 ? (
-        <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {apps.map((app, index) => (
             <AppCard
               key={`${title}-${app.id}`}
@@ -223,12 +223,12 @@ function SpotlightShelf({ shelf, fallbackApps }: { shelf: PublicEditorialShelf |
           <Badge variant="secondary">{shelf.items.length} apps</Badge>
         </div>
       </div>
-        <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {shelf.items.slice(0, 8).map((app, index) => (
           <AppCard
             key={app.id}
             app={app}
-            className="min-w-[250px] sm:min-w-[270px]"
+            className="w-full"
             href={`/apps/${app.slug}?ref=shelf&shelfSlug=${shelf.slug}&position=${index + 1}`}
           />
         ))}
@@ -275,61 +275,77 @@ export default async function StoreHomePage() {
     <main className="cotana-store-dark cotana-store-shell min-h-screen text-brand-text">
       <StoreHeader />
       <section className="mx-auto max-w-7xl px-4 pb-10 pt-6 sm:px-6 sm:pt-8">
-        <div className="grid gap-4 pb-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch">
-          <div className="max-w-4xl space-y-4">
-            <Badge className="w-fit border border-[#84CC16]/30 bg-[#84CC16]/10 text-[#84CC16]">Curated crypto app discovery</Badge>
-            <div className="space-y-2.5">
-              <h1 className="max-w-4xl font-heading text-[2.3rem] font-semibold leading-[1.05] tracking-tight text-[#F9FAFB] sm:text-[2.85rem] lg:text-[3.2rem]">
-                The Curated, Verified Portal to Web3.
-              </h1>
-              <p className="max-w-2xl text-[0.94rem] leading-[1.65] text-[#9CA3AF]">
-                Find apps by what you want to do, not by chain, protocol, or dashboard noise.
-              </p>
+        <div className="grid gap-4 pb-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch">
+          <div className="relative flex flex-col justify-end overflow-hidden rounded-2xl border border-[#1F2937] bg-gradient-to-b from-[#1E293B] to-[#161B26] p-6 sm:p-8">
+            <div className="relative z-10 space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center rounded bg-[#84CC16]/15 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-[#84CC16]">
+                  Editor's Choice
+                </span>
+              </div>
+              <div className="space-y-2.5">
+                <h1 className="font-sans text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                  Discover the Best of Web3
+                </h1>
+                <p className="max-w-xl font-sans text-sm leading-relaxed text-gray-400">
+                  Cotana verifies and curates top crypto applications so you can explore DeFi, NFTs, and more with confidence. Hand-picked for quality and safety.
+                </p>
+              </div>
+              <div className="pt-2">
+                <Button asChild className="min-h-10 bg-[#84CC16] px-5 font-sans font-semibold text-[#0B0F19] hover:bg-[#65a30d]">
+                  <Link href="#apps">Explore Curated Picks</Link>
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button asChild className="min-h-9 px-3.5 bg-[#84CC16] text-[#0B0F19] hover:bg-[#65a30d]">
-                <Link href="/search">Try intent search</Link>
-              </Button>
-              <Button asChild variant="outline" className="min-h-9 px-3.5 border-[#1F2937] text-[#F9FAFB] hover:border-[#84CC16]/50 hover:text-[#84CC16] hover:bg-transparent">
-                <Link href="#apps">Explore apps</Link>
-              </Button>
-            </div>
+            <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-[#84CC16] opacity-[0.07] blur-3xl"></div>
           </div>
-          <form action="/search" className="cotana-hero-panel rounded-2xl border border-[#1F2937] bg-[#161B26] p-4 shadow-panel transition-all hover:border-[#84CC16]/40 hover:shadow-[0_0_15px_rgba(132,204,22,0.1)]">
-            <label htmlFor="home-search" className="font-heading text-[0.85rem] font-semibold text-[#F9FAFB]">
-              Search by intent
-            </label>
-            <div className="mt-2.5 flex flex-col gap-2 sm:flex-row">
-              <input
-                id="home-search"
-                name="q"
-                placeholder="earn yield on stablecoins"
-                className="min-h-10 min-w-0 flex-1 rounded-control border border-[#1F2937] bg-[#0B0F19] px-3 text-[0.82rem] text-[#F9FAFB] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#84CC16] focus:ring-1 focus:ring-[#84CC16]"
-              />
-              <Button type="submit" className="min-h-10 px-4 bg-[#84CC16] text-[#0B0F19] hover:bg-[#65a30d]">
-                Search
-              </Button>
+          <form action="/search" className="flex flex-col justify-between rounded-2xl border border-[#1F2937] bg-[#161B26] p-6 shadow-panel transition-all hover:border-[#84CC16]/40 hover:shadow-[0_0_15px_rgba(132,204,22,0.1)]">
+            <div>
+              <label htmlFor="home-search" className="font-sans text-[15px] font-bold text-white">
+                Search by intent
+              </label>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <input
+                  id="home-search"
+                  name="q"
+                  placeholder="earn yield on stablecoins"
+                  className="min-h-11 min-w-0 flex-1 rounded-lg border border-[#1F2937] bg-[#0B0F19] px-3 font-sans text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-[#84CC16] focus:ring-1 focus:ring-[#84CC16]"
+                />
+                <Button type="submit" className="min-h-11 bg-[#84CC16] px-4 font-sans font-semibold text-[#0B0F19] hover:bg-[#65a30d]">
+                  Search
+                </Button>
+              </div>
             </div>
-            <div className="mt-3.5 flex flex-wrap gap-2">
-              {quickIntents.map((intent) => (
-                <Link
-                  key={intent.label}
-                  href={intent.href}
-                  className="rounded-full border border-[#1F2937] bg-[#0B0F19] px-3 py-1.5 text-[0.72rem] text-[#9CA3AF] no-underline transition hover:border-[#84CC16]/50 hover:text-[#84CC16] hover:bg-[#84CC16]/10"
-                >
-                  {intent.label}
-                </Link>
-              ))}
+            <div className="mt-6">
+              <p className="mb-2 font-sans text-xs font-semibold uppercase tracking-wider text-gray-500">Suggested searches</p>
+              <div className="flex flex-wrap gap-2">
+                {quickIntents.map((intent) => (
+                  <Link
+                    key={intent.label}
+                    href={intent.href}
+                    className="rounded-full border border-[#1F2937] bg-[#0B0F19] px-3 py-1.5 font-sans text-xs font-medium text-gray-400 no-underline transition hover:border-[#84CC16]/50 hover:bg-[#84CC16]/10 hover:text-[#84CC16]"
+                  >
+                    {intent.label}
+                  </Link>
+                ))}
+              </div>
             </div>
           </form>
         </div>
 
         <FeaturedBanners />
 
-        <nav className="flex gap-2 overflow-x-auto py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Store categories">
+        <nav className="flex gap-2 overflow-x-auto py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Store categories">
           {displayCategories.map((category) => (
             <Link key={category.slug} href={categoryHref(category)} className="shrink-0 no-underline transition-transform hover:-translate-y-0.5">
-              <Badge variant={category.slug === "all" ? "default" : "outline"} className={category.slug === "all" ? "bg-[#84CC16] text-[#0B0F19] hover:bg-[#65a30d]" : "border-[#1F2937] text-[#9CA3AF] hover:border-[#84CC16]/50 hover:text-[#F9FAFB] bg-[#161B26]"}>{category.name}</Badge>
+              <div className={cn(
+                "rounded-full border px-4 py-1.5 font-sans text-[13px] font-medium transition-all duration-300",
+                category.slug === "all" 
+                  ? "border-[#84CC16] bg-[#84CC16] text-[#0B0F19] hover:bg-[#65a30d]" 
+                  : "border-[#1F2937] bg-[#161B26] text-gray-400 hover:border-[#84CC16]/70 hover:text-white hover:shadow-[0_0_10px_rgba(132,204,22,0.2)]"
+              )}>
+                {category.name}
+              </div>
             </Link>
           ))}
         </nav>
