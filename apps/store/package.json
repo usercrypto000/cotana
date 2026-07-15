@@ -18,6 +18,7 @@
     "@cotana/types": "workspace:*",
     "@cotana/ui": "workspace:*",
     "@privy-io/react-auth": "^3.18.0",
+    "lucide-react": "^0.542.0",
     "next": "^15.5.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

@@ -238,7 +238,7 @@ describe("staging launch smoke routes", () => {
     const detail = await AppDetailPage({ params: Promise.resolve({ slug: "harbor-yield" }), searchParams: Promise.resolve({}) });
 
     expect(countElementsByName(home, "AppCard")).toBeGreaterThanOrEqual(6);
-    expect(collectText(home)).toContain("Discover the best crypto apps.");
+    expect(collectText(home)).toContain("The Curated, Verified Portal to Web3.");
     expect(collectText(home)).toContain("Apps people are checking out");
     expect(collectText(home)).toContain("Apps gaining momentum");
     expect(countElementsByName(category, "AppCard")).toBeGreaterThanOrEqual(3);

@@ -3,3 +3,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #0B0F19; /* Deep Obsidian */
+    color: #F9FAFB; /* Off-white */
+    font-family: 'Outfit', 'Inter', sans-serif;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #161B26; /* Midnight Ash */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #84CC16; /* Lime Green */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #65a30d;
+}

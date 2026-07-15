@@ -10,8 +10,9 @@ import {
   type PublicEditorialShelf
 } from "@cotana/db";
 import type { AppSummary } from "@cotana/types";
-import { AppCard, Badge, Button, SectionHeading } from "@cotana/ui";
+import { Badge, Button, SectionHeading } from "@cotana/ui";
 import Link from "next/link";
+import { AppCard } from "../components/app-card";
 import { StoreHeader } from "../components/store-header";
 import { demoApps, uniqueDemoCategories } from "../lib/demo-catalog";
 
@@ -158,7 +159,7 @@ function AppIconCluster({ apps }: { apps: AppSummary[] }) {
       {apps.map((app) => (
         <div
           key={`${app.id}-cluster`}
-          className="flex h-7 w-7 items-center justify-center rounded-[0.58rem] border border-neutral-inverse/20 bg-neutral-inverse/10 font-heading text-[0.62rem] font-semibold text-neutral-inverse shadow-sm backdrop-blur"
+          className="flex h-7 w-7 items-center justify-center rounded-[0.58rem] border border-[#1F2937] bg-[#0B0F19] font-heading text-[0.62rem] font-semibold text-[#84CC16] shadow-sm backdrop-blur"
         >
           {app.name.slice(0, 2).toUpperCase()}
         </div>
@@ -174,17 +175,17 @@ function FeaturedBanners() {
         <Link
           key={banner.title}
           href={banner.href}
-          className={`${banner.className} group overflow-hidden rounded-card border border-neutral-inverse/12 p-3.5 text-neutral-inverse no-underline shadow-panel transition duration-200 hover:-translate-y-0.5 hover:shadow-raised`}
+          className={`group overflow-hidden rounded-2xl border border-[#1F2937] bg-[#161B26] p-4 text-[#F9FAFB] no-underline shadow-panel transition-all duration-300 hover:-translate-y-1 hover:border-[#84CC16]/50 hover:shadow-[0_0_15px_rgba(132,204,22,0.15)]`}
         >
           <div className="flex min-h-28 flex-col justify-between gap-5">
             <div>
-              <p className="font-heading text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-neutral-inverse/64">Featured</p>
+              <p className="font-heading text-[0.6rem] font-semibold uppercase tracking-[0.08em] text-[#84CC16]">Featured</p>
               <h2 className="mt-2 max-w-sm font-heading text-[1.05rem] font-semibold leading-tight tracking-tight">{banner.title}</h2>
-              <p className="mt-1 max-w-sm text-[0.78rem] leading-[1.55] text-neutral-inverse/74">{banner.subtitle}</p>
+              <p className="mt-1 max-w-sm text-[0.78rem] leading-[1.55] text-[#9CA3AF]">{banner.subtitle}</p>
             </div>
             <div className="flex items-end justify-between gap-3">
               <AppIconCluster apps={banner.apps} />
-              <span className="rounded-full bg-neutral-inverse/10 px-2 py-0.5 font-heading text-[0.66rem] font-semibold text-neutral-inverse/86 transition group-hover:bg-neutral-inverse/18">
+              <span className="rounded-full bg-[#0B0F19] px-2 py-0.5 font-heading text-[0.66rem] font-semibold text-[#F9FAFB] transition group-hover:text-[#84CC16]">
                 Browse
               </span>
             </div>
@@ -276,45 +277,45 @@ export default async function StoreHomePage() {
       <section className="mx-auto max-w-7xl px-4 pb-10 pt-6 sm:px-6 sm:pt-8">
         <div className="grid gap-4 pb-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch">
           <div className="max-w-4xl space-y-4">
-            <Badge className="w-fit border border-brand-primary/18 bg-brand-primary/10 text-brand-primary/90">Curated crypto app discovery</Badge>
+            <Badge className="w-fit border border-[#84CC16]/30 bg-[#84CC16]/10 text-[#84CC16]">Curated crypto app discovery</Badge>
             <div className="space-y-2.5">
-              <h1 className="max-w-4xl font-heading text-[2.3rem] font-semibold leading-[1.05] tracking-tight text-brand-text sm:text-[2.85rem] lg:text-[3.2rem]">
-                Discover the best crypto apps.
+              <h1 className="max-w-4xl font-heading text-[2.3rem] font-semibold leading-[1.05] tracking-tight text-[#F9FAFB] sm:text-[2.85rem] lg:text-[3.2rem]">
+                The Curated, Verified Portal to Web3.
               </h1>
-              <p className="max-w-2xl text-[0.94rem] leading-[1.65] text-neutral-muted">
+              <p className="max-w-2xl text-[0.94rem] leading-[1.65] text-[#9CA3AF]">
                 Find apps by what you want to do, not by chain, protocol, or dashboard noise.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button asChild className="min-h-9 px-3.5">
+              <Button asChild className="min-h-9 px-3.5 bg-[#84CC16] text-[#0B0F19] hover:bg-[#65a30d]">
                 <Link href="/search">Try intent search</Link>
               </Button>
-              <Button asChild variant="outline" className="min-h-9 px-3.5">
+              <Button asChild variant="outline" className="min-h-9 px-3.5 border-[#1F2937] text-[#F9FAFB] hover:border-[#84CC16]/50 hover:text-[#84CC16] hover:bg-transparent">
                 <Link href="#apps">Explore apps</Link>
               </Button>
             </div>
           </div>
-          <form action="/search" className="cotana-hero-panel rounded-card border border-neutral-border/80 p-3.5 shadow-panel">
-            <label htmlFor="home-search" className="font-heading text-[0.8rem] font-semibold text-brand-text">
+          <form action="/search" className="cotana-hero-panel rounded-2xl border border-[#1F2937] bg-[#161B26] p-4 shadow-panel transition-all hover:border-[#84CC16]/40 hover:shadow-[0_0_15px_rgba(132,204,22,0.1)]">
+            <label htmlFor="home-search" className="font-heading text-[0.85rem] font-semibold text-[#F9FAFB]">
               Search by intent
             </label>
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+            <div className="mt-2.5 flex flex-col gap-2 sm:flex-row">
               <input
                 id="home-search"
                 name="q"
                 placeholder="earn yield on stablecoins"
-                className="min-h-10 min-w-0 flex-1 rounded-control border border-neutral-border bg-neutral-surface/90 px-3 text-[0.82rem] text-brand-text outline-none transition placeholder:text-neutral-subtle focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                className="min-h-10 min-w-0 flex-1 rounded-control border border-[#1F2937] bg-[#0B0F19] px-3 text-[0.82rem] text-[#F9FAFB] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#84CC16] focus:ring-1 focus:ring-[#84CC16]"
               />
-              <Button type="submit" className="min-h-10 px-3.5">
+              <Button type="submit" className="min-h-10 px-4 bg-[#84CC16] text-[#0B0F19] hover:bg-[#65a30d]">
                 Search
               </Button>
             </div>
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
+            <div className="mt-3.5 flex flex-wrap gap-2">
               {quickIntents.map((intent) => (
                 <Link
                   key={intent.label}
                   href={intent.href}
-                  className="rounded-full border border-neutral-border bg-neutral-surface/76 px-2.5 py-1 text-[0.72rem] text-brand-text no-underline transition hover:border-brand-primary/40 hover:bg-brand-primary/10"
+                  className="rounded-full border border-[#1F2937] bg-[#0B0F19] px-3 py-1.5 text-[0.72rem] text-[#9CA3AF] no-underline transition hover:border-[#84CC16]/50 hover:text-[#84CC16] hover:bg-[#84CC16]/10"
                 >
                   {intent.label}
                 </Link>
@@ -325,10 +326,10 @@ export default async function StoreHomePage() {
 
         <FeaturedBanners />
 
-        <nav className="flex gap-1.5 overflow-x-auto py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Store categories">
+        <nav className="flex gap-2 overflow-x-auto py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Store categories">
           {displayCategories.map((category) => (
-            <Link key={category.slug} href={categoryHref(category)} className="shrink-0 no-underline">
-              <Badge variant={category.slug === "all" ? "default" : "outline"}>{category.name}</Badge>
+            <Link key={category.slug} href={categoryHref(category)} className="shrink-0 no-underline transition-transform hover:-translate-y-0.5">
+              <Badge variant={category.slug === "all" ? "default" : "outline"} className={category.slug === "all" ? "bg-[#84CC16] text-[#0B0F19] hover:bg-[#65a30d]" : "border-[#1F2937] text-[#9CA3AF] hover:border-[#84CC16]/50 hover:text-[#F9FAFB] bg-[#161B26]"}>{category.name}</Badge>
             </Link>
           ))}
         </nav>
