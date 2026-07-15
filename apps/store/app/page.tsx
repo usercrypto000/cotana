@@ -12,7 +12,7 @@ import {
 import type { AppSummary } from "@cotana/types";
 import { Badge, Button, SectionHeading, cn } from "@cotana/ui";
 import Link from "next/link";
-import { AppCard } from "../components/app-card";
+import { AppCard, TopChartCard } from "../components/app-card";
 import { StoreHeader } from "../components/store-header";
 import { demoApps, uniqueDemoCategories } from "../lib/demo-catalog";
 
@@ -119,7 +119,8 @@ function SectionGrid({
   apps,
   emptyTitle,
   refName,
-  categorySlug
+  categorySlug,
+  layout = "grid"
 }: {
   eyebrow: string;
   title: string;
@@ -128,27 +129,77 @@ function SectionGrid({
   emptyTitle: string;
   refName?: string;
   categorySlug?: string;
+  layout?: "grid" | "horizontal-compact";
 }) {
   return (
-    <section className="space-y-3.5">
+    <section className="mb-20 space-y-6 border-t border-slate-900/50 py-10">
       <SectionHeading eyebrow={eyebrow} title={title} description={description} />
       {apps.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {apps.map((app, index) => (
-            <AppCard
-              key={`${title}-${app.id}`}
-              app={app}
-              href={
-                refName
-                  ? `/apps/${app.slug}?ref=${refName}${categorySlug ? `&category=${categorySlug}` : ""}&position=${index + 1}`
-                  : undefined
-              }
-            />
-          ))}
-        </div>
+        layout === "horizontal-compact" ? (
+          <div className="flex flex-row overflow-x-auto gap-4 scrollbar-none snap-x pb-4">
+            {apps.map((app, index) => (
+              <AppCard
+                key={`${title}-${app.id}`}
+                app={app}
+                className="w-[260px] shrink-0 snap-start"
+                href={
+                  refName
+                    ? `/apps/${app.slug}?ref=${refName}${categorySlug ? `&category=${categorySlug}` : ""}&position=${index + 1}`
+                    : undefined
+                }
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {apps.map((app, index) => (
+              <AppCard
+                key={`${title}-${app.id}`}
+                app={app}
+                href={
+                  refName
+                    ? `/apps/${app.slug}?ref=${refName}${categorySlug ? `&category=${categorySlug}` : ""}&position=${index + 1}`
+                    : undefined
+                }
+              />
+            ))}
+          </div>
+        )
       ) : (
         <EmptySection title={emptyTitle} />
       )}
+    </section>
+  );
+}
+
+function TopChartsShelf({ apps }: { apps: AppSummary[] }) {
+  const topDeFi = apps.filter((a) => a.category.slug === "defi").slice(0, 3);
+  const topYield = apps.filter((a) => a.category.slug === "lending-yield").slice(0, 3);
+  const topTrading = apps.filter((a) => a.category.slug !== "defi" && a.category.slug !== "lending-yield").slice(0, 3);
+
+  return (
+    <section className="mb-20 space-y-6 border-t border-slate-900/50 py-10">
+      <SectionHeading eyebrow="Trending" title="Top Charts" description="The most popular apps across key categories right now." />
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div>
+          <h4 className="mb-4 font-sans text-sm font-bold uppercase tracking-wider text-white">Top DeFi</h4>
+          <div className="flex flex-col gap-2">
+            {topDeFi.map((app, i) => <TopChartCard key={app.id} app={app} rank={i + 1} />)}
+          </div>
+        </div>
+        <div>
+          <h4 className="mb-4 font-sans text-sm font-bold uppercase tracking-wider text-white">Top Yield</h4>
+          <div className="flex flex-col gap-2">
+            {topYield.map((app, i) => <TopChartCard key={app.id} app={app} rank={i + 1} />)}
+          </div>
+        </div>
+        <div>
+          <h4 className="mb-4 font-sans text-sm font-bold uppercase tracking-wider text-white">Top Trading</h4>
+          <div className="flex flex-col gap-2">
+            {topTrading.map((app, i) => <TopChartCard key={app.id} app={app} rank={i + 1} />)}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -197,39 +248,28 @@ function FeaturedBanners() {
 }
 
 function SpotlightShelf({ shelf, fallbackApps }: { shelf: PublicEditorialShelf | null; fallbackApps: AppSummary[] }) {
-  if (!shelf || shelf.items.length === 0) {
-    return (
-      <SectionGrid
-        eyebrow="Curated picks"
-        title="A strong starter shelf"
-        description="Demo listings keep Cotana useful while the launch catalog is still filling in."
-        apps={fallbackApps.slice(0, 8)}
-        emptyTitle="Homepage spotlight is empty"
-        refName="starter"
-      />
-    );
-  }
+  const apps = shelf && shelf.items.length > 0 ? shelf.items.slice(0, 8) : fallbackApps.slice(0, 8);
+  const title = shelf ? shelf.title : "A strong starter shelf";
+  const desc = shelf ? shelf.description : "Demo listings keep Cotana useful while the launch catalog is still filling in.";
 
   return (
-    <section className="space-y-3.5">
+    <section className="mb-20 space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <SectionHeading
-          eyebrow="Spotlight"
-          title={shelf.title}
-          description={shelf.description}
-        />
-        <div className="flex flex-wrap gap-2">
-          {shelf.pinned ? <Badge>Pinned</Badge> : null}
-          <Badge variant="secondary">{shelf.items.length} apps</Badge>
-        </div>
+        <SectionHeading eyebrow={shelf ? "Spotlight" : "Curated picks"} title={title} description={desc} />
+        {shelf && (
+          <div className="flex flex-wrap gap-2">
+            {shelf.pinned ? <Badge>Pinned</Badge> : null}
+            <Badge variant="secondary">{shelf.items.length} apps</Badge>
+          </div>
+        )}
       </div>
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {shelf.items.slice(0, 8).map((app, index) => (
+      <div className="flex flex-row overflow-x-auto gap-6 scrollbar-none snap-x snap-mandatory pb-4">
+        {apps.map((app, index) => (
           <AppCard
             key={app.id}
             app={app}
-            className="w-full"
-            href={`/apps/${app.slug}?ref=shelf&shelfSlug=${shelf.slug}&position=${index + 1}`}
+            className="w-[340px] shrink-0 snap-start"
+            href={`/apps/${app.slug}?ref=shelf&shelfSlug=${shelf?.slug ?? 'starter'}&position=${index + 1}`}
           />
         ))}
       </div>
@@ -274,7 +314,7 @@ export default async function StoreHomePage() {
   return (
     <main className="cotana-store-dark cotana-store-shell min-h-screen text-brand-text">
       <StoreHeader />
-      <section className="mx-auto max-w-7xl px-4 pb-10 pt-6 sm:px-6 sm:pt-8">
+      <section className="mx-auto max-w-7xl px-8 md:px-16 pb-10 pt-6 sm:pt-8">
         <div className="grid gap-4 pb-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch">
           <div className="relative flex flex-col justify-end overflow-hidden rounded-2xl border border-[#1F2937] bg-gradient-to-b from-[#1E293B] to-[#161B26] p-6 sm:p-8">
             <div className="relative z-10 space-y-4">
@@ -350,16 +390,9 @@ export default async function StoreHomePage() {
           ))}
         </nav>
 
-        <div id="apps" className="space-y-7 pt-0">
+        <div id="apps" className="pt-0">
           <SpotlightShelf shelf={spotlightShelf} fallbackApps={displayApps} />
-          <SectionGrid
-            eyebrow="Trending"
-            title="Apps people are checking out"
-            description="A fast read on the apps drawing the most attention right now."
-            apps={trendingApps}
-            emptyTitle="Trending is empty"
-            refName="trending"
-          />
+          <TopChartsShelf apps={displayApps} />
           <SectionGrid
             eyebrow="Rising"
             title="Apps gaining momentum"
@@ -367,6 +400,7 @@ export default async function StoreHomePage() {
             apps={risingApps}
             emptyTitle="Rising is empty"
             refName="rising"
+            layout="horizontal-compact"
           />
           {categorySections.length > 0 ? (
             categorySections.map(({ category, apps }) => (

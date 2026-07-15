@@ -239,7 +239,7 @@ describe("staging launch smoke routes", () => {
 
     expect(countElementsByName(home, "AppCard")).toBeGreaterThanOrEqual(6);
     expect(collectText(home)).toContain("Discover the Best of Web3");
-    expect(collectText(home)).toContain("Apps people are checking out");
+    expect(collectText(home)).toContain("Top Charts");
     expect(collectText(home)).toContain("Apps gaining momentum");
     expect(countElementsByName(category, "AppCard")).toBeGreaterThanOrEqual(3);
     expect(collectText(detail)).toContain("Latest changelog");

@@ -72,3 +72,41 @@ export function AppCard({
     </Link>
   );
 }
+
+export function TopChartCard({
+  app,
+  rank,
+  href,
+  className
+}: {
+  app: AppSummary;
+  rank: number;
+  href?: string;
+  className?: string;
+}) {
+  const roundedRating = app.rating ? app.rating.toFixed(1) : "0.0";
+  return (
+    <Link href={href ?? `/apps/${app.slug}`} className={cn("group block w-full no-underline", className)}>
+      <div className="flex w-full items-center gap-4 py-2 transition-all hover:bg-white/5 rounded-lg px-2 -mx-2">
+        <div className="flex w-6 shrink-0 justify-center font-sans text-lg font-bold text-[#84CC16]">
+          {rank}
+        </div>
+        <div className="relative flex h-[40px] w-[40px] shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-[#1F2937] bg-[#0B0F19]">
+          {app.logoUrl ? (
+            <Image src={app.logoUrl} alt={app.name} width={40} height={40} unoptimized className="h-full w-full object-cover" />
+          ) : (
+            <span className="font-sans text-[12px] font-bold text-[#84CC16]">{app.name.slice(0, 2).toUpperCase()}</span>
+          )}
+        </div>
+        <div className="flex min-w-0 flex-col justify-center">
+          <h3 className="truncate font-sans text-[14px] font-bold text-white">{app.name}</h3>
+          <div className="mt-0.5 flex items-center gap-1.5 font-sans text-[12px] font-medium text-gray-400">
+            <span className="truncate">{app.category.name}</span>
+            <span className="text-[#1F2937]">|</span>
+            <span className="flex items-center text-[#F9FAFB]">{roundedRating} <Star className="ml-0.5 h-3 w-3 fill-[#FBBF24] text-[#FBBF24]" /></span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
