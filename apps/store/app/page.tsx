@@ -280,7 +280,7 @@ export default async function StoreHomePage() {
             <div className="relative z-10 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center rounded bg-[#84CC16]/15 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-[#84CC16]">
-                  Editor's Choice
+                  Editor&apos;s Choice
                 </span>
               </div>
               <div className="space-y-2.5">
